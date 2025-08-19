@@ -173,7 +173,6 @@ bool executeCurrentPredicate(ProcessPredicatePayload payload) {
         break;
       }
       if (predicates_peekType(payload.stream) == TSQueryPredicateStepTypeDone) {
-        payload.qmatch.
         break;
       }
     }
