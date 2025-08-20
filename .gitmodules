@@ -55,3 +55,6 @@
 [submodule "lib/tree-sitter-vhdl"]
 	path = lib/tree-sitter-vhdl
 	url = https://github.com/jpt13653903/tree-sitter-vhdl.git
+[submodule "lib/cJSON"]
+	path = lib/cJSON
+	url = https://github.com/DaveGamble/cJSON.git
