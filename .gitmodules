@@ -16,3 +16,6 @@
 [submodule "lib/tree-sitter-dart"]
 	path = lib/tree-sitter-dart
 	url = https://github.com/UserNobody14/tree-sitter-dart.git
+[submodule "lib/tree-sitter-java"]
+	path = lib/tree-sitter-java
+	url = https://github.com/tree-sitter/tree-sitter-java.git
