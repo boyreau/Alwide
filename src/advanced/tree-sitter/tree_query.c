@@ -242,7 +242,7 @@ bool TSQueryCursorNextMatchWithPredicates(Cursor* tmp, TSQuery* query, TSQueryCu
   while (ts_query_cursor_next_match(qcursor, &_qmatch)) {
     uint32_t length;
     const TSQueryPredicateStep* predicates = ts_query_predicates_for_pattern(query, _qmatch.pattern_index, &length);
-    cJSON* predicate_result = NULL;
+    cJSON* predicate_result = NULL; // contain additional data used for #set!
 
     // Pattern don't contain any predicates. We can send it.  OR  If predicates matching send it.
     if (length == 0 || arePredicatesMatching(tmp, query, _qmatch, predicates, length, regex_map, &predicate_result)) {
