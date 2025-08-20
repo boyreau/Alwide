@@ -52,3 +52,6 @@
 [submodule "lib/tree-sitter-markdown"]
 	path = lib/tree-sitter-markdown
 	url = https://github.com/tree-sitter-grammars/tree-sitter-markdown.git
+[submodule "lib/tree-sitter-vhdl"]
+	path = lib/tree-sitter-vhdl
+	url = https://github.com/jpt13653903/tree-sitter-vhdl.git
