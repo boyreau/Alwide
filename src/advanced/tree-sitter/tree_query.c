@@ -164,7 +164,13 @@ bool executeCurrentPredicate(ProcessPredicatePayload* payload) {
     }
     String capture_name;
     String string_value;
+    if (predicates_peekType(payload->stream) != TSQueryPredicateStepTypeString) {
+      return false;
+    }
     predicates_consumeString(payload->stream, payload->query, &capture_name);
+    if (predicates_peekType(payload->stream) != TSQueryPredicateStepTypeString) {
+      return false;
+    }
     predicates_consumeString(payload->stream, payload->query, &string_value);
     cJSON_AddItemToObject(payload->predicate_result, capture_name.content, cJSON_CreateString(string_value.content));
     return true;

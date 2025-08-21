@@ -77,8 +77,7 @@ int main(int file_count, char** args) {
 
   setlocale(LC_ALL, "");
   // TODO Remove when lsp_logs.txt will be unused.
-  system("echo "
-         " > lsp_logs.txt");
+  system("echo > lsp_logs.txt");
   // system("echo "" > tree_logs.txt");
 
   // remove first args which is the executable file name.

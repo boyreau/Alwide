@@ -96,10 +96,10 @@ void printEditor_printLineNumber(GUIContext* gui_context, Cursor cursor, int scr
   }
   wprintw(gui_context->lnw, "%s", line_number);
   if (file_cur.absolute_row == cursor.file_id.absolute_row) {
-    wprintw(gui_context->lnw, "🭳");
+    wprintw(gui_context->lnw, "│");
   }
   else {
-    wprintw(gui_context->lnw, "🭵");
+    wprintw(gui_context->lnw, "│");
   }
 
   if (file_cur.absolute_row != cursor.file_id.absolute_row) {
