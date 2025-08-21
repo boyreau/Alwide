@@ -53,3 +53,7 @@ It should compile fine.
 
 
 ![image](https://github.com/user-attachments/assets/3f2de19a-f6e1-4cec-95f4-be5137e6bd1c)
+
+## Language Injection
+
+<img width="1237" height="1107" alt="image" src="https://github.com/user-attachments/assets/c8bebda5-67fb-438b-bcd2-9d1ca03d8efd" />
