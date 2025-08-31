@@ -23,13 +23,13 @@
 "only" @operator
 
 (attribute_selector (plain_value) @string)
-(pseudo_element_selector (tag_name) @attribute)
-(pseudo_class_selector (class_name) @attribute)
+(pseudo_element_selector (tag_name) @type)
+(pseudo_class_selector (class_name) @type)
 
-(class_name) @property
-(id_name) @property
+(class_name) @type
+(id_name) @type
 (namespace_name) @property
-(property_name) @property
+(property_name) @type
 (feature_name) @property
 
 (attribute_name) @attribute

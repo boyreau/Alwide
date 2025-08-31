@@ -47,9 +47,9 @@ void saveWorkspaceSettings(char* dir_path, WorkspaceSettings* settings) {
   char abs_dir_path[PATH_MAX];
   realpath(dir_path, abs_dir_path);
 
-  int hash_dir_path = hashFileName(abs_dir_path);
+  unsigned long long hash_dir_path = hashFileName(abs_dir_path);
 
-  sprintf(abs_dir_path, "%s/%s/%s/%d", getenv("HOME"), CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
+  sprintf(abs_dir_path, "%s/%s/%s/%llu", getenv("HOME"), CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
 
   FILE* f = fopen(abs_dir_path, "w");
   if (f == NULL) {
@@ -72,9 +72,9 @@ bool loadWorkspaceSettings(char* dir_path, WorkspaceSettings* settings) {
   char abs_dir_path[PATH_MAX];
   realpath(dir_path, abs_dir_path);
 
-  int hash_dir_path = hashFileName(abs_dir_path);
+  unsigned long long hash_dir_path = hashFileName(abs_dir_path);
 
-  sprintf(abs_dir_path, "%s/%s/%s/%d", getenv("HOME"), CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
+  sprintf(abs_dir_path, "%s/%s/%s/%llu", getenv("HOME"), CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
 
   FILE* f = fopen(abs_dir_path, "r");
   if (f == NULL) {

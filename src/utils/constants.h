@@ -28,6 +28,8 @@
 
 #define MAX_SIZE_FILE_LOGIC 4000000 /*4 Mb*/
 
+#define SKIP_MOUSE_EVENT_DELAY 0
+
 extern int color_index;
 extern int color_pair;
 

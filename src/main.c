@@ -5,6 +5,7 @@
 #include <ncurses.h>
 #include <stdlib.h>
 #include <sys/ttydefaults.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "advanced/lsp/lsp_client.h"
@@ -141,10 +142,13 @@ int main(int file_count, char** args) {
   whd_init(&highlight_descriptor);
   Cursor tmp;
   MEVENT m_event;
+  int peek_c = -1;
   History* old_history_frame;
   PayloadStateChange payload_state_change;
   bool mouse_drag = false;
   time_val last_time_mouse_drag = timeInMilliseconds();
+  time_val t_date;
+  clock_t t_clock;
   while (true) {
     //// --------------- Post Processing -----------------
 
@@ -223,9 +227,24 @@ int main(int file_count, char** args) {
     assert(checkFileIntegrity(*root) == true);
     assert(checkByteCountIntegrity(*root) == true);
 
+    t_clock = clock() - t_clock;
+    double time_taken = (double)t_clock / CLOCKS_PER_SEC * 1000;
+    fprintf(stderr, "Complete loop took about reel %5ld ms, took cpu %5.3lf ms.\n",
+            diff2Time(timeInMilliseconds(), t_date), time_taken);
+
   read_input:;
-    int c = getch();
+    int c;
+    if (peek_c == -1) {
+      c = getch();
+    }
+    else {
+      c = peek_c;
+      peek_c = -1;
+    }
     int hash = c;
+
+    t_date = timeInMilliseconds();
+    t_clock = clock();
 
     // When available use keyname instead of key_code which is not portable.
     if (c != KEY_MOUSE && c != -1) {
@@ -271,9 +290,12 @@ int main(int file_count, char** args) {
       case KEY_MOUSE:
         if (getmouse(&m_event) != OK) {
           fprintf(stderr, "MOUVE_EVENT_NOT_OK !\r\n");
-          exit(0);
-          break;
+          goto read_input;
+          // exit(0);
+          // break;
         }
+
+      mouse_read:;
 
         detectComplexMouseEvents(&m_event);
 
@@ -284,15 +306,31 @@ int main(int file_count, char** args) {
 
         // Avoid too much refresh, to avoid input buffer full.
         if (m_event.bstate == NO_EVENT_MOUSE && mouse_drag == true) {
-          if (diff2Time(last_time_mouse_drag, timeInMilliseconds()) < 30) {
-            goto read_input;
+          time_val current_time = timeInMilliseconds();
+          if (diff2Time(last_time_mouse_drag, current_time) < SKIP_MOUSE_EVENT_DELAY) {
+            peek_c = getch();
+            if (peek_c != ERR && peek_c == KEY_MOUSE) {
+              MEVENT tmp_event;
+              if (getmouse(&tmp_event) == OK) {
+                // skip current event.
+                c = peek_c;
+                peek_c = -1;
+                m_event = tmp_event;
+                t_date = timeInMilliseconds();
+                t_clock = clock();
+                goto mouse_read;
+              }
+              else {
+                goto read_input;
+              }
+            }
           }
-          last_time_mouse_drag = timeInMilliseconds();
+          last_time_mouse_drag = current_time;
         }
 
 
         // If pressed enable drag
-        if (m_event.bstate & BUTTON1_PRESSED) {
+        if (m_event.bstate & BUTTON1_PRESSED && mouse_drag == false) {
           mouse_drag = true;
         }
 
@@ -323,7 +361,7 @@ int main(int file_count, char** args) {
                             mouse_drag);
         }
 
-        if (m_event.bstate & BUTTON1_RELEASED) {
+        if (m_event.bstate & BUTTON1_RELEASED || m_event.bstate & BUTTON1_CLICKED) {
           gui_context.focus_w = NULL;
           mouse_drag = false;
         }

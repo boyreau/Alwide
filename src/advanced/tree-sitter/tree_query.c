@@ -235,10 +235,6 @@ void extractInjectionData(Cursor* tmp, TSQuery* query, InjectionDescriptor* inje
     override_lang_id = cJSON_GetStringValue(lang_item);
   }
   extractInjectionDataFromCapture(tmp, query, &_qmatch, injection, override_lang_id);
-
-  if (injection_isActive(injection)) {
-    injection_print(injection, tmp);
-  }
 }
 
 bool TSQueryCursorNextMatchWithPredicates(Cursor* tmp, TSQuery* query, TSQueryCursor* qcursor, TSQueryMatch* qmatch,

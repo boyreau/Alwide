@@ -17,9 +17,9 @@ void createConfigDir() {
 void getLastFilePosition(char* fileName, int* row, int* column, int* screen_x, int* screen_y) {
   createConfigDir();
 
-  int path_len = 60 /* Size of str can contain int */ + strlen(getenv("HOME")) + strlen(FILE_HISTORY_PATH);
+  int path_len = 200 /* Size of str can contain int */ + strlen(getenv("HOME")) + strlen(FILE_HISTORY_PATH);
   char path[path_len + 10];
-  sprintf(path, "%s%s%lld", getenv("HOME"), FILE_HISTORY_PATH, hashFileName(fileName));
+  sprintf(path, "%s%s%llu", getenv("HOME"), FILE_HISTORY_PATH, hashFileName(fileName));
 
   FILE* f = fopen(path, "r");
 
@@ -39,7 +39,7 @@ void setlastFilePosition(char* fileName, int row, int column, int screen_x, int 
 
   int path_len = 20 /* Size of str can contain int */ + strlen(getenv("HOME")) + strlen(FILE_HISTORY_PATH);
   char path[path_len + 10];
-  sprintf(path, "%s%s%lld", getenv("HOME"), FILE_HISTORY_PATH, hashFileName(fileName));
+  sprintf(path, "%s%s%llu", getenv("HOME"), FILE_HISTORY_PATH, hashFileName(fileName));
 
   FILE* f = fopen(path, "w");
 

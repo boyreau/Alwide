@@ -9,7 +9,7 @@
 ////// -------------- CLICK FUNCTIONS --------------
 
 void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_cursor, int* desired_column,
-                       int* screen_x, int* screen_y, MEVENT* m_event, bool button1_down);
+                       int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag);
 
 void handleOpenedFileClick(GUIContext* gui_context, FileContainer* files, int* file_count, int* current_file,
                            MEVENT m_event, bool* refresh_local_vars, bool mouse_drag);

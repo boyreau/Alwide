@@ -13,7 +13,7 @@
 
 
 void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_cursor, int* desired_column,
-                       int* screen_x, int* screen_y, MEVENT* m_event, bool button1_down) {
+                       int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag) {
   int edws_offset_x = getbegx(gui_context->ftw);
   int edws_offset_y = gui_context->ofw_height;
   if (m_event->y - edws_offset_y < 0) {
@@ -23,7 +23,7 @@ void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
 
   // ---------- CURSOR ACTION ------------
 
-  if (button1_down) {
+  if (mouse_drag) {
     FileIdentifier new_file_id = tryToReachAbsRow(cursor->file_id, *screen_y + m_event->y - edws_offset_y);
     LineIdentifier new_line_id = getLineIdForScreenX(moduloLineIdentifierR(getLineForFileIdentifier(new_file_id), 0),
                                                      *screen_x, m_event->x - edws_offset_x);

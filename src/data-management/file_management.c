@@ -102,13 +102,13 @@ void setupFileContainer(char* path, FileContainer* container) {
   container->history_frame = container->history_root;
 
   container->cursor = createRoot(container->io_file);
-  container->old_cur = container->cursor;
   container->select_cursor = disableCursor(container->cursor);
   setDesiredColumn(container->cursor, &container->desired_column);
 
   container->root = container->cursor.file_id.file;
   assert(container->root->prev == NULL);
   fetchSavedCursorPosition(container->io_file, &container->cursor, &container->screen_x, &container->screen_y);
+  container->old_cur = container->cursor; // set the old_cursor after
   loadCurrentStateControl(container->history_root, &container->history_frame, container->io_file);
 
   setFileHighlightDatas(&container->highlight_data, container->io_file);

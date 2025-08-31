@@ -45,3 +45,6 @@
 #define MOUSE_IN_OUT 589
 
 void detectComplexMouseEvents(MEVENT* event);
+
+
+void printEventList(MEVENT* event);
