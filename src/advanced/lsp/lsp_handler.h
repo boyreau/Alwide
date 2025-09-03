@@ -19,6 +19,7 @@ typedef struct {
   char lang_id[LANG_ID_LENGTH];
   bool is_enable;
   LSP_ComputedData* computed;
+  char path_abs[PATH_MAX];
 } LSP_Data;
 
 struct _LSPServerLinkedList_Cell {
@@ -34,7 +35,7 @@ typedef struct {
 } LSPServerLinkedList;
 
 
-void setLspDatas(LSP_Data* lsp_datas, IO_FileID io_file);
+void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file);
 
 void destroyLspDatas(LSP_Data* lsp_datas);
 

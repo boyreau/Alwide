@@ -8,20 +8,21 @@
 #include "../../utils/tools.h"
 
 
-void setLspDatas(LSP_Data* lsp_datas, IO_FileID io_file) {
-  bool did_lang_was_found = getLanguageStringIDForFile(lsp_datas->lang_id, io_file);
+void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file) {
+  bool did_lang_was_found = getLanguageStringIDForFile(lsp_data->lang_id, io_file);
 
   LSP_Server* lsp_server = NULL;
   if (did_lang_was_found == true) {
-    lsp_server = getLSPServerForLanguage(&lsp_servers, lsp_datas->lang_id);
+    lsp_server = getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id);
   }
-  lsp_datas->is_enable = lsp_server != NULL;
-  lsp_datas->computed = NULL;
+  lsp_data->is_enable = lsp_server != NULL;
+  lsp_data->computed = NULL;
+  strncpy(lsp_data->path_abs, io_file.path_abs, PATH_MAX-1);
 
-  if (lsp_datas->is_enable) {
-    lsp_datas->computed = malloc(sizeof(LSP_ComputedData));
-    assert(lsp_datas->computed != NULL);
-    LSP_initPayload(lsp_datas->computed);
+  if (lsp_data->is_enable) {
+    lsp_data->computed = malloc(sizeof(LSP_ComputedData));
+    assert(lsp_data->computed != NULL);
+    LSP_initPayload(lsp_data->computed);
   }
 }
 

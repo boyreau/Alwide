@@ -18,10 +18,7 @@ void LSP_highlightCurrentFile(LSP_Data* lsp_datas, Cursor cursor, WindowHighligh
 
     attr_t attr = A_UNDERLINE | A_ITALIC;
     NCURSES_PAIRS_T color = COLOR_RED;
-    fprintf(stderr, "BEFORE ADD\n");
-    whd_print(highlight_descriptor);
+
     whd_insertDescriptor(highlight_descriptor, begin_cursor, end_cursor, color, attr, 0, false);
-    fprintf(stderr, "AFTER ADD\n");
-    whd_print(highlight_descriptor);
   }
 }

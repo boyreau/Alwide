@@ -226,11 +226,9 @@ int main(int file_count, char** args) {
     t_clock = clock() - t_clock;
     double time_taken = (double)t_clock / CLOCKS_PER_SEC * 1000;
 
-
     fprintf(stderr, "Complete loop took about reel %5ld ms, took cpu %5.3lf ms.\n",
             diff2Time(timeInMilliseconds(), t_date), time_taken);
-
-
+		
   read_input:;
     int c;
     if (peek_c == -1) {

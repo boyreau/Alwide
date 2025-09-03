@@ -100,6 +100,8 @@ cJSON* LSP_getJSONTextDocumentIdentifier(char* file_name);
 TextDocumentIdentifier LSP_getTextDocumentIdentifierFromJSON(cJSON* json);
 void LSP_destroyTextDocumentIdentifier(TextDocumentIdentifier text_document_identifier);
 
+cJSON* LSP_getJSONTextDocumentIdentifierVersionned(char* file_name, int version);
+
 typedef struct {
   TextDocumentIdentifier text_id;
   Position position;
@@ -183,7 +185,6 @@ bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, vo
 //// -------- Send Functions --------
 
 void LSP_notifyLspFileDidOpen(LSP_Server lsp, char* file_name, char* file_content);
-void LSP_notifyLspFileDidChange(LSP_Server lsp, char* file_name, char* file_content);
-
+void LSP_notifyLspFileDidChange(LSP_Server lsp, char* file_name, cJSON* array_of_changes, int version);
 
 #endif // CLIENT_H

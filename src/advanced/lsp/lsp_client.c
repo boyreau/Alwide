@@ -432,6 +432,16 @@ cJSON* LSP_getJSONTextDocumentIdentifier(char* file_name) {
   return text_document_id;
 }
 
+cJSON* LSP_getJSONTextDocumentIdentifierVersionned(char* file_name, int version) {
+  cJSON* text_document_id = cJSON_CreateObject();
+  char uri[PATH_MAX];
+  getLocalURI(file_name, uri);
+  cJSON_AddStringToObject(text_document_id, "uri", uri);
+  cJSON_AddNumberToObject(text_document_id, "version", version);
+
+  return text_document_id;
+}
+
 TextDocumentIdentifier LSP_getTextDocumentIdentifierFromJSON(cJSON* json) {
   return LSP_getTextDocumentIdentifierOf(cJSON_GetStringValue(cJSON_GetObjectItem(json, "uri")));
 }
@@ -628,12 +638,12 @@ void LSP_notifyLspFileDidOpen(LSP_Server lsp, char* file_name, char* file_conten
 }
 
 
-void LSP_notifyLspFileDidChange(LSP_Server lsp, char* file_name, char* file_content) {
+void LSP_notifyLspFileDidChange(LSP_Server lsp, char* file_name, cJSON* array_of_changes, int version) {
   cJSON* request_content = cJSON_CreateObject();
 
-  cJSON* text_document = LSP_getJSONTextDocumentItem(file_name, lsp.language, 1, file_content);
+  cJSON* text_document = LSP_getJSONTextDocumentIdentifierVersionned(file_name, version);
   cJSON_AddItemToObject(request_content, "textDocument", text_document);
-
+  cJSON_AddItemToObject(request_content, "contentChanges", array_of_changes);
 
   LSP_sendPacketWithJSON(&lsp, "textDocument/didChange", request_content, NOTIFICATION);
 
