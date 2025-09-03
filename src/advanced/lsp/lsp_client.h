@@ -10,6 +10,8 @@
 
 #include "../../../lib/cJSON/cJSON.h"
 
+#define MESSAGE_LENGTH 4092
+
 typedef enum { REQUEST, NOTIFICATION, RESPONSE } PACKET_TYPE;
 
 typedef struct {
@@ -140,9 +142,40 @@ cJSON* LSP_getJSONLocation(char* file_name, int cur1_row, int cur1_column, int c
 Location LSP_getLocationFromJSON(cJSON* json);
 void LSP_destroyLocation(Location location);
 
+typedef struct {
+  Location location;
+  char message[MESSAGE_LENGTH];
+} DiagnosticRelatedInformation;
+
+// TODO implement if needed
+DiagnosticRelatedInformation LSP_getDiagnosticRelatedInformationOf(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
+cJSON* LSP_getJSONDiagnosticRelatedInformation(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
+DiagnosticRelatedInformation LSP_getDiagnosticRelatedInformationFromJSON(cJSON* json);
+void LSP_destroyDiagnosticRelatedInformation(DiagnosticRelatedInformation location);
+
+typedef enum { ERROR = 1, WARNING = 2, INFORMATION = 3, HINT = 4, SEVERITY_NONE = 0 } DiagnosticSeverity;
+typedef enum { UNNECESSARY = 1, DEPRECATED = 2, TAG_NONE = 0 } DiagnosticTag;
+typedef struct {
+  DiagnosticSeverity severity;
+  Range range;
+  char source[100];
+  char code[MESSAGE_LENGTH];
+  char message[MESSAGE_LENGTH];
+  char codeDescription[MESSAGE_LENGTH];
+  // TODO implement if needed
+  DiagnosticTag tags[100];
+  // TODO implement if needed
+  DiagnosticRelatedInformation infos[0];
+} Diagnostic;
+
+Diagnostic LSP_getDiagnosticOf(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
+cJSON* LSP_getJSONDiagnostic(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
+Diagnostic LSP_getDiagnosticFromJSON(cJSON* json);
+void LSP_destroyDiagnostic(Diagnostic diagnostic);
+
 //// -------- Receive Functions --------
 
-bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, long* payload), long* payload);
+bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, void* payload), void* payload);
 
 
 //// -------- Send Functions --------

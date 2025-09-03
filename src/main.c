@@ -4,11 +4,14 @@
 #include <locale.h>
 #include <ncurses.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/ttydefaults.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "advanced/lsp/lsp_client.h"
+#include "advanced/lsp/lsp_dispatcher.h"
+#include "advanced/lsp/lsp_highlighter.h"
 #include "advanced/theme.h"
 #include "advanced/tree-sitter/tree_manager.h"
 #include "advanced/tree-sitter/tree_sitter_highlighter.h"
@@ -36,7 +39,6 @@
  *      - Implement lsp bitch !!
  *      - Patch conditional jump (valgrind) when opening untitled file from a workspace.
  *      - Upgrade mouse handle to be more portable.
- *      - Upgrade mouse drag to avoid non handled movement.
  *
  */
 
@@ -49,17 +51,6 @@ ParserList parsers;
 LSPServerLinkedList lsp_servers;
 WorkspaceSettings loaded_settings;
 
-
-void dispatcher(cJSON* packet, long* payload) {
-  if (packet != NULL) {
-    fprintf(stderr, "\n\n <<< ================ %s ================\n",
-            cJSON_GetStringValue(cJSON_GetObjectItem(packet, "method")));
-    cJSON* params = cJSON_GetObjectItem(packet, "params");
-    char* text = cJSON_Print(params);
-    fprintf(stderr, "%s\n", text);
-    free(text);
-  }
-}
 
 int main(int file_count, char** args) {
   // manage logs
@@ -134,6 +125,8 @@ int main(int file_count, char** args) {
   History** history_root;             // Root of History object for the current File
   History** history_frame;            // Current node of the History. Before -> Undo, After -> Redo.
   FileHighlightDatas* highlight_data; // Contain the configuration for file higlight.
+  LSP_Datas* lsp_datas;               // Object which contain all the datas of lsp.
+
 
   bool refresh_local_vars = true; // Need to re-set local vars
 
@@ -154,8 +147,8 @@ int main(int file_count, char** args) {
 
     if (refresh_local_vars == true) {
       setupLocalVars(files, current_file_index, &io_file, &root, &cursor, &select_cursor, &old_cur, &desired_column,
-                     &screen_x, &screen_y, &old_screen_x, &old_screen_y, &history_root, &history_frame,
-                     &highlight_data);
+                     &screen_x, &screen_y, &old_screen_x, &old_screen_y, &history_root, &history_frame, &highlight_data,
+                     &lsp_datas);
       refresh_local_vars = false;
       old_history_frame = *history_frame;
       payload_state_change = getPayloadStateChange(highlight_data);
@@ -215,7 +208,10 @@ int main(int file_count, char** args) {
       whd_reset(&highlight_descriptor);
 
       // calculate tree_sitter Highlight
-      highlightCurrentFile(highlight_data, gui_context.ftw, *screen_x, *screen_y, *cursor, &highlight_descriptor);
+      TS_highlightCurrentFile(highlight_data, gui_context.ftw, *screen_x, *screen_y, *cursor, &highlight_descriptor);
+
+      // add lsp highlights
+      LSP_highlightCurrentFile(lsp_datas, *cursor, &highlight_descriptor);
 
       printEditor(&gui_context, *cursor, *select_cursor, *screen_x, *screen_y, &highlight_descriptor);
 
@@ -229,8 +225,66 @@ int main(int file_count, char** args) {
 
     t_clock = clock() - t_clock;
     double time_taken = (double)t_clock / CLOCKS_PER_SEC * 1000;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     fprintf(stderr, "Complete loop took about reel %5ld ms, took cpu %5.3lf ms.\n",
             diff2Time(timeInMilliseconds(), t_date), time_taken);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   read_input:;
     int c;
@@ -262,9 +316,14 @@ int main(int file_count, char** args) {
 
     // TODO Here check to do background operation like lsp_servers.
 
+
+    DispatcherPayload payload;
+    payload.files = files;
+    payload.size = file_count;
+
     LSPServerLinkedList_Cell* cell = lsp_servers.head;
     while (cell != NULL) {
-      LSP_dispatchOnReceive(&cell->lsp_server, dispatcher, NULL);
+      LSP_dispatchOnReceive(&cell->lsp_server, dispatcher, &payload);
       cell = cell->next;
     }
 

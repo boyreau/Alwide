@@ -1,5 +1,6 @@
 #include "lsp_handler.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -15,8 +16,27 @@ void setLspDatas(LSP_Datas* lsp_datas, IO_FileID io_file) {
     lsp_server = getLSPServerForLanguage(&lsp_servers, lsp_datas->lang_id);
   }
   lsp_datas->is_enable = lsp_server != NULL;
+  lsp_datas->computed = NULL;
+
+  if (lsp_datas->is_enable) {
+    lsp_datas->computed = malloc(sizeof(LSP_ComputedData));
+    assert(lsp_datas->computed != NULL);
+    LSP_initPayload(lsp_datas->computed);
+  }
 }
 
+void destroyLspDatas(LSP_Datas* lsp_datas) {
+  LSP_destroyPayload(lsp_datas->computed);
+  free(lsp_datas->computed);
+}
+
+void LSP_destroyPayload(LSP_ComputedData* lsp_payload) {
+  if (lsp_payload) {
+    free(lsp_payload->diagnostics);
+  }
+}
+
+void LSP_initPayload(LSP_ComputedData* payload) { payload->diagnostics = NULL; }
 
 void initLSPServerList(LSPServerLinkedList* list) { list->head = NULL; }
 
@@ -48,7 +68,7 @@ void addLSPServerCellToLSPServerList(LSPServerLinkedList* list, LSPServerLinkedL
 
 bool getProgName(char* language, char* prog_name, char* args) {
   // LSP_TOGGLE
-  return false;
+  // return false;
 
   if (strcmp(language, "bash") == 0) {
     strcpy(prog_name, "bash-language-server");

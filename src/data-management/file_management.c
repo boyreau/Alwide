@@ -24,6 +24,7 @@ void destroyFileContainer(FileContainer* container) {
   destroyEndOfHistory(container->history_root);
   free(container->history_root);
   ts_tree_delete(container->highlight_data.tree);
+  destroyLspDatas(&container->lsp_datas);
 }
 
 void openNewFile(char* file_path, FileContainer** files, int* file_count, int* current_file, bool* refresh_ofw,
@@ -119,7 +120,7 @@ void setupFileContainer(char* path, FileContainer* container) {
 void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file, FileNode*** root, Cursor** cursor,
                     Cursor** select_cursor, Cursor** old_cur, int** desired_column, int** screen_x, int** screen_y,
                     int** old_screen_x, int** old_screen_y, History*** history_root, History*** history_frame,
-                    FileHighlightDatas** highlight_data) {
+                    FileHighlightDatas** highlight_data, LSP_Datas **lsp_datas) {
   *io_file = &files[current_file].io_file;               // Describe the IO file on OS
   *root = &files[current_file].root;                     // The root of the File object
   *cursor = &files[current_file].cursor;                 // The current cursor for the root File
@@ -134,6 +135,7 @@ void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file,
   *history_frame = &files[current_file].history_frame; // Current node of the History. Before -> Undo, After -> Redo.
   *highlight_data = &files[current_file].highlight_data;
   **old_screen_y = -1;
+  *lsp_datas = &files[current_file].lsp_datas;
 }
 
 

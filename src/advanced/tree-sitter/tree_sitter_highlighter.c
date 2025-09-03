@@ -46,7 +46,7 @@ void saveCaptureToHighlightDescriptor(HighlightThemeList theme_list, Cursor tmp,
 
   Cursor begin_cursor = moveRight(byteCursorToCursor(tmp, start_point.row, start_point.column));
   Cursor end_cursor = byteCursorToCursor(tmp, end_point.row, end_point.column);
-  whd_insertDescriptor(highlight_descriptor, begin_cursor, end_cursor, color, attr, priority, false);
+  whd_insertDescriptor(highlight_descriptor, begin_cursor, end_cursor, color, attr, priority + 1, false);
 }
 
 
@@ -112,7 +112,7 @@ void executeHighlightQuery(TSQuery* query, TSQueryCursor* qcursor, RegexMap* reg
 }
 
 
-void highlightCurrentFile(FileHighlightDatas* highlight_data, WINDOW* ftw, int screen_x, int screen_y, Cursor cursor,
+void TS_highlightCurrentFile(FileHighlightDatas* highlight_data, WINDOW* ftw, int screen_x, int screen_y, Cursor cursor,
                           WindowHighlightDescriptor* highlight_descriptor) {
   if (highlight_data->is_active == false) {
     return;

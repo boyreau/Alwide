@@ -25,7 +25,12 @@ MODULES= \
 	src/terminal/click_handler.o \
 	src/config/config.o \
 	src/io_management/workspace_settings.o \
-	src/advanced/lsp/lsp_handler.o
+	src/advanced/lsp/lsp_handler.o \
+	src/advanced/lsp/lsp_diagnostic_handler.o \
+	src/advanced/lsp/lsp_highlighter.o \
+	src/advanced/lsp/lsp_dispatcher.o
+
+
 
 LIBS_MODULES= \
 	lib/cJSON/cJSON.o \

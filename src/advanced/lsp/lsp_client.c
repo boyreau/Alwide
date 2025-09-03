@@ -229,6 +229,7 @@ int LSP_sendPacket(LSP_Server* server, char* method, char* params, PACKET_TYPE t
   char* text = cJSON_Print(params_2);
   fprintf(stderr, "%s\n", text);
   free(text);
+  cJSON_Delete(params_2);
   // TODO end remove
 
   free(content_str);
@@ -544,10 +545,56 @@ Location LSP_getLocationFromJSON(cJSON* json) {
   return LSP_getLocationOf(text_id.file_name, range.pos1.row, range.pos1.column, range.pos2.row, range.pos2.column);
 }
 
+void initDiagnostic(Diagnostic* diagnostic) {
+  diagnostic->code[0] = '\0';
+  diagnostic->message[0] = '\0';
+  diagnostic->codeDescription[0] = '\0';
+  diagnostic->tags[0] = TAG_NONE;
+  diagnostic->severity = SEVERITY_NONE;
+  diagnostic->source[0] = '\0';
+}
+Diagnostic LSP_getDiagnosticOf(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
+cJSON* LSP_getJSONDiagnostic(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
+Diagnostic LSP_getDiagnosticFromJSON(cJSON* json) {
+  Diagnostic diagnostic;
+  initDiagnostic(&diagnostic);
+
+  diagnostic.range = LSP_getRangeFromJSON(cJSON_GetObjectItem(json, "range"));
+
+  cJSON* code = cJSON_GetObjectItem(json, "code");
+  if (code) {
+    if (cJSON_GetStringValue(code)) {
+      strncpy(diagnostic.code, cJSON_GetStringValue(code), MESSAGE_LENGTH - 1);
+    }
+  }
+
+  cJSON* severity = cJSON_GetObjectItem(json, "severity");
+  if (code) {
+    diagnostic.severity = (int)cJSON_GetNumberValue(severity);
+  }
+
+  cJSON* message = cJSON_GetObjectItem(json, "message");
+  if (message) {
+    if (cJSON_GetStringValue(message)) {
+      strncpy(diagnostic.message, cJSON_GetStringValue(message), MESSAGE_LENGTH - 1);
+    }
+  }
+
+  cJSON* codeDescription = cJSON_GetObjectItem(json, "codeDescription");
+  if (codeDescription) {
+    if (cJSON_GetStringValue(codeDescription)) {
+      strncpy(diagnostic.codeDescription, cJSON_GetStringValue(codeDescription), MESSAGE_LENGTH - 1);
+    }
+  }
+
+  return diagnostic;
+}
+void LSP_destroyDiagnostic(Diagnostic diagnostic) {}
+
 
 //// -------- Receive Functions --------
 
-bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, long* payload), long* payload) {
+bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, void* payload), void* payload) {
   if (lsp == NULL) {
     return false;
   }
