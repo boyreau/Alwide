@@ -40,24 +40,24 @@ LIBS_MODULES= \
 	lib/cJSON/cJSON.o \
 	\
 	lib/tree-sitter/lib/src/lib.o \
-	lib/tree-sitter-c/target/debug/libtree_sitter_c.rlib \
-	lib/tree-sitter-python/target/debug/libtree_sitter_python.rlib \
-	lib/tree-sitter-java/target/debug/libtree_sitter_java.rlib \
-	lib/tree-sitter-cpp/target/debug/libtree_sitter_cpp.rlib \
-	lib/tree-sitter-c-sharp/target/debug/libtree_sitter_c_sharp.rlib \
-	lib/tree-sitter-make/target/debug/libtree_sitter_make.rlib \
-	lib/tree-sitter-css/target/debug/libtree_sitter_css.rlib \
-	lib/tree-sitter-dart/target/debug/libtree_sitter_dart.rlib \
-	lib/tree-sitter-go/target/debug/libtree_sitter_go.rlib \
-	lib/tree-sitter-javascript/target/debug/libtree_sitter_javascript.rlib \
-	lib/tree-sitter-json/target/debug/libtree_sitter_json.rlib \
-	lib/tree-sitter-bash/target/debug/libtree_sitter_bash.rlib \
-	lib/tree-sitter-markdown/target/debug/libtree_sitter_md.rlib \
-	lib/tree-sitter-query/target/debug/libtree_sitter_query.rlib \
-	lib/tree-sitter-vhdl/target/debug/libtree_sitter_vhdl.rlib \
-	lib/tree-sitter-lua/target/debug/libtree_sitter_lua.rlib \
-	lib/tree-sitter-asm/target/debug/libtree_sitter_asm.rlib \
-	lib/tree-sitter-html/target/debug/libtree_sitter_html.rlib
+	lib/tree-sitter-c/target/release/libtree_sitter_c.rlib \
+	lib/tree-sitter-python/target/release/libtree_sitter_python.rlib \
+	lib/tree-sitter-java/target/release/libtree_sitter_java.rlib \
+	lib/tree-sitter-cpp/target/release/libtree_sitter_cpp.rlib \
+	lib/tree-sitter-c-sharp/target/release/libtree_sitter_c_sharp.rlib \
+	lib/tree-sitter-make/target/release/libtree_sitter_make.rlib \
+	lib/tree-sitter-css/target/release/libtree_sitter_css.rlib \
+	lib/tree-sitter-dart/target/release/libtree_sitter_dart.rlib \
+	lib/tree-sitter-go/target/release/libtree_sitter_go.rlib \
+	lib/tree-sitter-javascript/target/release/libtree_sitter_javascript.rlib \
+	lib/tree-sitter-json/target/release/libtree_sitter_json.rlib \
+	lib/tree-sitter-bash/target/release/libtree_sitter_bash.rlib \
+	lib/tree-sitter-markdown/target/release/libtree_sitter_md.rlib \
+	lib/tree-sitter-query/target/release/libtree_sitter_query.rlib \
+	lib/tree-sitter-vhdl/target/release/libtree_sitter_vhdl.rlib \
+	lib/tree-sitter-lua/target/release/libtree_sitter_lua.rlib \
+	lib/tree-sitter-asm/target/release/libtree_sitter_asm.rlib \
+	lib/tree-sitter-html/target/release/libtree_sitter_html.rlib
 
 ALL_MODULES= $(MODULES) $(LIBS_MODULES)
 
