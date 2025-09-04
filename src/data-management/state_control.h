@@ -25,6 +25,20 @@ typedef struct {
   unsigned int byte_end;
 } Action;
 
+typedef struct {
+  uint32_t row;
+  uint32_t column;
+} ChangePoint;
+
+typedef struct {
+  uint32_t start_byte;
+  uint32_t old_end_byte;
+  uint32_t new_end_byte;
+  ChangePoint start_point;
+  ChangePoint old_end_point;
+  ChangePoint new_end_point;
+} ChangeDescriptor;
+
 struct History_ {
   Action action;
 
@@ -60,5 +74,6 @@ void loadCurrentStateControl(History* root, History** current_state, IO_FileID i
 
 void optimizeHistory(History* root, History** history_frame);
 
+ChangeDescriptor actionToChangeDescriptor(Action action);
 
 #endif // STATE_CONTROL_H

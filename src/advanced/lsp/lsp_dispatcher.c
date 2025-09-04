@@ -5,11 +5,11 @@
 
 
 void printPacket(cJSON* packet, cJSON* params) {
-  // fprintf(stderr, "\n\n <<< ================ %s ================\n",
-          // cJSON_GetStringValue(cJSON_GetObjectItem(packet, "method")));
-  // char* text = cJSON_Print(params);
-  // fprintf(stderr, "%s\n", text);
-  // free(text);
+  fprintf(stderr, "\n\n <<< ================ %s ================\n",
+          cJSON_GetStringValue(cJSON_GetObjectItem(packet, "method")));
+  char* text = cJSON_Print(params);
+  fprintf(stderr, "%s\n", text);
+  free(text);
 }
 
 
