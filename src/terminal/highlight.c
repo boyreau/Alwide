@@ -23,6 +23,8 @@ void tphd_init(TextPartHighlightDescriptor* self, FilePosition begin, FilePositi
   self->a_blink_priority = self->a_bold_priority = self->a_dim_priority = self->a_invis_priority =
     self->a_italic_priority = self->a_protect_priority = self->a_reverse_priority = self->a_standout_priority =
       self->a_underline_priority = 0;
+
+  self->line_marker = LINE_MARKER_NONE;
 }
 
 bool tphd_isCursorIn(TextPartHighlightDescriptor* self, Cursor cursor) {
@@ -98,7 +100,7 @@ FilePosition maxPosition(FilePosition pos1, FilePosition pos2) {
 }
 
 void tphd_mergeAttributes(TextPartHighlightDescriptor* self, NCURSES_PAIRS_T color, attr_t attributes,
-                          uint16_t priority, bool override_attributes) {
+                          uint16_t priority, bool override_attributes, LineMarker marker) {
   if (self->color_priority <= priority) {
     self->color = color;
     self->color_priority = priority;
@@ -194,11 +196,17 @@ void tphd_mergeAttributes(TextPartHighlightDescriptor* self, NCURSES_PAIRS_T col
       self->a_invis_priority = priority;
     }
   }
+
+  if (marker != 0) {
+    if (self->line_marker == 0 || self->line_marker > marker) {
+      self->line_marker = marker;
+    }
+  }
 }
 
 
 void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor end, NCURSES_PAIRS_T color,
-                          attr_t attributes, uint16_t priority, bool override_attributes) {
+                          attr_t attributes, uint16_t priority, bool override_attributes, LineMarker marker) {
   FilePosition current_pos = {begin.file_id.absolute_row, begin.line_id.absolute_column};
   FilePosition end_pos = {end.file_id.absolute_row, end.line_id.absolute_column};
   // fprintf(stderr, "insert (%d, %d) -> (%d, %d)\n", current_pos.abs_row, current_pos.abs_column, end_pos.abs_row,
@@ -255,7 +263,7 @@ void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor 
       }
 
       tphd_init(self->descriptors + i, current_pos, new_field_end);
-      tphd_mergeAttributes(self->descriptors + i, color, attributes, priority, override_attributes);
+      tphd_mergeAttributes(self->descriptors + i, color, attributes, priority, override_attributes, marker);
 
       i++;
     }
@@ -299,7 +307,7 @@ void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor 
       self->descriptors[i + middle_offset].begin = current_pos;
       self->descriptors[i + middle_offset].end = new_field_end;
 
-      tphd_mergeAttributes(self->descriptors + i + middle_offset, color, attributes, priority, override_attributes);
+      tphd_mergeAttributes(self->descriptors + i + middle_offset, color, attributes, priority, override_attributes, marker);
 
       if (after_offset) {
         // should happen max once !

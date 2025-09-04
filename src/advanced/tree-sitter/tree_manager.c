@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "../../../lib/tree-sitter/lib/include/tree_sitter/api.h"
 #include "../../terminal/highlight.h"
@@ -226,12 +225,10 @@ char read_buffer[CHAR_CHUNK_SIZE_TSINPUT * 4];
 
 const char* internalReaderForTree(void* payload, uint32_t byte_index, TSPoint position, uint32_t* bytes_read) {
   PayloadInternalReader* values = payload;
-  // fprintf(stderr, "READ FROM READER\n");
   *bytes_read =
     readNu8CharAtPosition(&values->cursor, position.row, position.column, read_buffer, CHAR_CHUNK_SIZE_TSINPUT);
   return read_buffer;
 }
-
 
 void parseTree(FileNode** root, History** history_frame, TS_Data* highlight_data, History** old_history_frame) {
   if (highlight_data->is_active == false)
@@ -249,18 +246,9 @@ void parseTree(FileNode** root, History** history_frame, TS_Data* highlight_data
   input.read = internalReaderForTree;
   input.payload = &reader_payload;
 
-  clock_t t;
-  t = clock();
-
   TSTree* old_tree = highlight_data->tree;
   highlight_data->tree = ts_parser_parse(parser->parser, highlight_data->tree, input);
   ts_tree_delete(old_tree);
-
-
-  t = clock() - t;
-  double time_taken = ((double)t) / CLOCKS_PER_SEC; // in seconds
-
-  // fprintf(stderr, "parse() took %f seconds to execute \n", time_taken);
 
   *old_history_frame = *history_frame;
 }

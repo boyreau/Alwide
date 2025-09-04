@@ -45,7 +45,7 @@
 
 
 // Global vars.
-int color_pair = 3;
+int color_pair = 5;
 int color_index = 100;
 cJSON* config;
 ParserList parsers;
@@ -143,6 +143,8 @@ int main(int file_count, char** args) {
   time_val last_time_mouse_drag = timeInMilliseconds();
   time_val t_date;
   clock_t t_clock;
+
+
   while (true) {
     //// --------------- Post Processing -----------------
 
@@ -228,7 +230,7 @@ int main(int file_count, char** args) {
 
     fprintf(stderr, "Complete loop took about reel %5ld ms, took cpu %5.3lf ms.\n",
             diff2Time(timeInMilliseconds(), t_date), time_taken);
-		
+
   read_input:;
     int c;
     if (peek_c == -1) {

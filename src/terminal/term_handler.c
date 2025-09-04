@@ -62,8 +62,15 @@ void initNCurses(GUIContext* gui_context) {
   init_color(COLOR_HOVER, 390, 390, 390);
   init_pair(DEFAULT_COLOR_PAIR, COLOR_WHITE, COLOR_BLACK);
   init_pair(DEFAULT_COLOR_HOVER_PAIR, COLOR_WHITE, COLOR_HOVER);
+
   init_pair(ERROR_COLOR_PAIR, COLOR_RED, COLOR_BLACK);
   init_pair(ERROR_COLOR_HOVER_PAIR, COLOR_RED, COLOR_HOVER);
+
+  init_pair(WARNING_COLOR_PAIR, COLOR_YELLOW, COLOR_BLACK);
+  init_pair(WARNING_COLOR_HOVER_PAIR, COLOR_YELLOW, COLOR_HOVER);
+
+  init_pair(INFO_COLOR_PAIR, COLOR_CYAN, COLOR_BLACK);
+  init_pair(INFO_COLOR_HOVER_PAIR, COLOR_CYAN, COLOR_HOVER);
 }
 
 
@@ -77,17 +84,61 @@ void printChar_U8ToNcurses(WINDOW* w, Char_U8 ch) {
   }
 }
 
-void printEditor_printLineNumber(GUIContext* gui_context, Cursor cursor, int screen_y, FileIdentifier file_cur,
-                                 int row) {
+
+LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset) {
+  LineMarker marker = LINE_MARKER_NONE;
+
+  while (whd_offset < highlight_descriptor->size &&
+         highlight_descriptor->descriptors[whd_offset].begin.abs_row <= row) {
+
+    if (highlight_descriptor->descriptors[whd_offset].end.abs_row >= row) {
+      if (highlight_descriptor->descriptors[whd_offset].line_marker != 0) {
+        if (highlight_descriptor->descriptors[whd_offset].line_marker < marker || marker == 0) {
+          marker = highlight_descriptor->descriptors[whd_offset].line_marker;
+        }
+      }
+    }
+    whd_offset++;
+  }
+
+  return marker;
+}
+
+void printEditor_printLineNumber(GUIContext* gui_context, Cursor cursor, int screen_y, FileIdentifier file_cur, int row,
+                                 WindowHighlightDescriptor* highlight_descriptor, int whd_offset) {
   char line_number[40];
   sprintf(line_number, "%d", file_cur.absolute_row);
   int lineNumberSize = strlen(line_number);
 
-  if (file_cur.absolute_row != cursor.file_id.absolute_row) {
-    wattron(gui_context->lnw, A_DIM);
+  NCURSES_PAIRS_T color = DEFAULT_COLOR_PAIR;
+  attr_t attr = A_BOLD | A_ITALIC;
+
+
+  LineMarker marker = getMarkerForCurrentLine(row, highlight_descriptor, whd_offset);
+  switch (marker) {
+    case LSP_ERROR:
+      color = ERROR_COLOR_PAIR;
+      break;
+    case LSP_WARNING:
+      color = WARNING_COLOR_PAIR;
+      break;
+    case LSP_INFORMATION:
+      color = INFO_COLOR_PAIR;
+      break;
+    default:
+      attr = A_DIM;
+      break;
+  }
+
+  wattr_set(gui_context->lnw, attr, color, NULL);
+
+  if (file_cur.absolute_row == cursor.file_id.absolute_row) {
+    attr = A_BOLD;
+    wattroff(gui_context->lnw, A_DIM);
+    wattron(gui_context->lnw, A_BOLD);
   }
   else {
-    wattron(gui_context->lnw, A_BOLD);
+    attr = A_DIM;
   }
 
   wmove(gui_context->lnw, row - screen_y, 0);
@@ -95,19 +146,8 @@ void printEditor_printLineNumber(GUIContext* gui_context, Cursor cursor, int scr
     wprintw(gui_context->lnw, " ");
   }
   wprintw(gui_context->lnw, "%s", line_number);
-  if (file_cur.absolute_row == cursor.file_id.absolute_row) {
-    wprintw(gui_context->lnw, "│");
-  }
-  else {
-    wprintw(gui_context->lnw, "│");
-  }
-
-  if (file_cur.absolute_row != cursor.file_id.absolute_row) {
-    wattroff(gui_context->lnw, A_DIM);
-  }
-  else {
-    wattroff(gui_context->lnw, A_BOLD);
-  }
+  wattr_set(gui_context->lnw, attr, DEFAULT_COLOR_PAIR, NULL);
+  wprintw(gui_context->lnw, "│");
 }
 
 void printEditor_printFileContent(GUIContext* gui_context, Cursor cursor, Cursor select_cursor, int screen_x,
@@ -269,7 +309,7 @@ void printEditor(GUIContext* gui_context, Cursor cursor, Cursor select_cursor, i
     }
 
     // ===============  Print line number  ===============
-    printEditor_printLineNumber(gui_context, cursor, screen_y, file_cur, row);
+    printEditor_printLineNumber(gui_context, cursor, screen_y, file_cur, row, highlight_descriptor, whd_offset);
 
 
     // ===============  Print File Content  ===============

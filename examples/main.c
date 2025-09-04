@@ -1,6 +1,6 @@
 #include <stdio.h>
+#include <stdbool.h>
 
-#define TEST true
 
 // test !
 
@@ -19,6 +19,6 @@ int main(int argc, char **args){
 		printf("Ceci est un test !");
 	}
 	
-	return;
+	return 0;
 }
 
