@@ -4,7 +4,7 @@
 
 int global_version = 2;
 
-void onStateChangeLSP(Action action, LSP_Data* data) {
+void onStateChangeLSP(Action action, LSP_Data* data, Cursor* cursor) {
   if (!data->is_enable) {
     return;
   }
@@ -25,9 +25,9 @@ void onStateChangeLSP(Action action, LSP_Data* data) {
                                   action_change.old_end_point.row + 1, action_change.old_end_point.column);
   cJSON_AddItemToObject(change, "range", range);
   // Add the 'text' field to the change
-  char* new_text = dumpSelection(
-    action.cur,
-    tryToReachAbsPosition(action.cur, action_change.new_end_point.row + 1, action_change.new_end_point.column));
+  Cursor begin = tryToReachAbsPosition(*cursor, action_change.start_point.row + 1, action_change.start_point.column);
+  Cursor end = tryToReachAbsPosition(*cursor, action_change.new_end_point.row + 1, action_change.new_end_point.column);
+  char* new_text = dumpSelection(begin, end);
   cJSON_AddStringToObject(change, "text", new_text);
   free(new_text);
 

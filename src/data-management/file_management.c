@@ -422,6 +422,7 @@ Cursor goToBegin(Cursor cursor) {
 
 
 bool isCursorDisabled(Cursor cursor) { return cursor.file_id.absolute_row == -1; }
+bool isCursorDescriptorDisabled(CursorDescriptor cursor) { return cursor.row == -1; }
 
 int utf8CharBetween2Cursor(Cursor cur1, Cursor cur2) {
   if (isCursorPreviousThanOther(cur2, cur1)) {
@@ -538,7 +539,7 @@ void deleteSelection(Cursor* cursor, Cursor* select_cursor) {
 
 void deleteSelectionWithState(History** history_p, Cursor* cursor, Cursor* select_cursor,
                               PayloadStateChange payload_state_change) {
-  saveAction(history_p, createDeleteAction(*cursor, *select_cursor), globalOnStageChange, (void*)&payload_state_change);
+  saveAction(history_p, createDeleteAction(*cursor, cursorToDescriptor(select_cursor)), globalOnStageChange, (void*)&payload_state_change);
   deleteSelection(cursor, select_cursor);
 }
 

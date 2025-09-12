@@ -81,6 +81,7 @@ Cursor goToBegin(Cursor cursor);
 
 
 bool isCursorDisabled(Cursor cursor);
+bool isCursorDescriptorDisabled(CursorDescriptor cursor);
 
 int utf8CharBetween2Cursor(Cursor cur1, Cursor cur2);
 

@@ -14,16 +14,18 @@ void createTmpDir();
 typedef enum { INSERT = 'i', DELETE = 'd', DELETE_ONE = 'D', ACTION_NONE = 'n' } ACTION_TYPE;
 
 
+
 typedef struct {
   ACTION_TYPE action;
   char unique_ch;
   char* ch;
   time_val time;
-  Cursor cur;
+  CursorDescriptor cur;
   unsigned int byte_start;
-  Cursor cur_end;
+  CursorDescriptor cur_end;
   unsigned int byte_end;
 } Action;
+
 
 typedef struct {
   uint32_t row;
@@ -38,6 +40,7 @@ typedef struct {
   ChangePoint old_end_point;
   ChangePoint new_end_point;
 } ChangeDescriptor;
+
 
 struct History_ {
   Action action;
@@ -60,9 +63,9 @@ void saveAction(History** history_p, Action action, void (*onEachStateChange)(Ac
 Cursor doReverseAction(Action* action_p, Cursor cursor, void (*onEachStateChange)(Action action, void* payload),
                        void* payload);
 
-Action createDeleteAction(Cursor cur1, Cursor cur2);
+Action createDeleteAction(Cursor cur1, CursorDescriptor cur2);
 
-Action createInsertAction(Cursor cur1, Cursor cur2);
+Action createInsertAction(Cursor cur1, CursorDescriptor cur2);
 
 void destroyAction(Action action);
 

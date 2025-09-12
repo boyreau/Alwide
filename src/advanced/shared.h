@@ -7,9 +7,10 @@
 typedef struct {
   TS_Data* ts_data;
   LSP_Data* lsp_data;
+  Cursor *cursor;
 } PayloadStateChange;
 
-PayloadStateChange getPayloadStateChange(TS_Data* highlight_datas, LSP_Data* lsp_data);
+PayloadStateChange getPayloadStateChange(TS_Data* highlight_datas, LSP_Data* lsp_data, Cursor *cursor);
 
 void globalOnStageChange(Action action, void* payload_p);
 

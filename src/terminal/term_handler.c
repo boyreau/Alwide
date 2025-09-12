@@ -53,7 +53,7 @@ void initNCurses(GUIContext* gui_context) {
   // Mouse setup
   mouseinterval(0);
   mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
-  timeout(20);
+  timeout(100);
   printf("\033[?1003h"); // enable mouse tracking
   fflush(stdout);
   // Color setup

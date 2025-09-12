@@ -83,6 +83,11 @@ typedef struct {
   LineIdentifier line_id;
 } Cursor;
 
+typedef struct {
+  int row;
+  int column;
+} CursorDescriptor;
+
 
 ////// --------------------UTILS-----------------------------
 
@@ -330,5 +335,7 @@ int readNBytesCharAtCursor(Cursor* cursor, char* dest, int length);
 
 int readNBytesAtPosition(Cursor* cursor, int row_raw, int column_raw, char* dest, int length);
 
+
+CursorDescriptor cursorToDescriptor(Cursor *cursor);
 
 #endif

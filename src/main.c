@@ -5,7 +5,6 @@
 #include <ncurses.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/ttydefaults.h>
 #include <time.h>
 #include <unistd.h>
@@ -13,7 +12,6 @@
 #include "advanced/lsp/lsp_client.h"
 #include "advanced/lsp/lsp_dispatcher.h"
 #include "advanced/lsp/lsp_highlighter.h"
-#include "advanced/theme.h"
 #include "advanced/tree-sitter/tree_manager.h"
 #include "advanced/tree-sitter/tree_sitter_highlighter.h"
 #include "config/config.h"
@@ -134,7 +132,7 @@ int main(int file_count, char** args) {
   //  --- Begin of the Automaton ---
   WindowHighlightDescriptor highlight_descriptor;
   whd_init(&highlight_descriptor);
-  Cursor tmp;
+  CursorDescriptor tmp;
   MEVENT m_event;
   int peek_c = -1;
   History* old_history_frame;
@@ -154,7 +152,7 @@ int main(int file_count, char** args) {
                      &lsp_data);
       refresh_local_vars = false;
       old_history_frame = *history_frame;
-      payload_state_change = getPayloadStateChange(ts_data, lsp_data);
+      payload_state_change = getPayloadStateChange(ts_data, lsp_data, cursor);
     }
 
     // flag cursor change
@@ -514,7 +512,7 @@ int main(int file_count, char** args) {
         break;
       case CTRL('v'):
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-        tmp = *cursor;
+        tmp = cursorToDescriptor(cursor);
         *cursor = loadFromClipBoard(*cursor);
         saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, (long*)&payload_state_change);
         setDesiredColumn(*cursor, desired_column);
@@ -563,9 +561,9 @@ int main(int file_count, char** args) {
       case '\n':
       case KEY_ENTER:
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-        tmp = *cursor;
+        tmp = cursorToDescriptor(cursor);
         *cursor = insertNewLineInLineC(*cursor);
-        saveAction(history_frame, createInsertAction(tmp, *cursor), globalOnStageChange, (long*)&payload_state_change);
+        saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, (long*)&payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         break;
       case H_KEY_DELETE:
@@ -590,7 +588,7 @@ int main(int file_count, char** args) {
         break;
       case KEY_TAB:
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-        tmp = *cursor;
+        tmp = cursorToDescriptor(cursor);
         if (TAB_CHAR_USE) {
           *cursor = insertCharInLineC(*cursor, readChar_U8FromInput('\t'));
         }
@@ -599,7 +597,7 @@ int main(int file_count, char** args) {
             *cursor = insertCharInLineC(*cursor, readChar_U8FromInput(' '));
           }
         }
-        saveAction(history_frame, createInsertAction(tmp, *cursor), globalOnStageChange, (long*)&payload_state_change);
+        saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, (long*)&payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         break;
       case CTRL('d'):
@@ -640,10 +638,10 @@ int main(int file_count, char** args) {
         }
         else {
           deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-          tmp = *cursor;
+          tmp = cursorToDescriptor(cursor);
           *cursor = insertCharInLineC(*cursor, readChar_U8FromInput(c));
           setDesiredColumn(*cursor, desired_column);
-          saveAction(history_frame, createInsertAction(tmp, *cursor), globalOnStageChange,
+          saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange,
                      (long*)&payload_state_change);
         }
         break;
