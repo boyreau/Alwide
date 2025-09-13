@@ -9,7 +9,6 @@
 ////// ---------------- HIGHLIGHTS DESCRIPTOR ---------------
 
 
-
 typedef enum {
   LINE_MARKER_NONE = 0,
   LSP_ERROR = 1,

@@ -307,7 +307,8 @@ void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor 
       self->descriptors[i + middle_offset].begin = current_pos;
       self->descriptors[i + middle_offset].end = new_field_end;
 
-      tphd_mergeAttributes(self->descriptors + i + middle_offset, color, attributes, priority, override_attributes, marker);
+      tphd_mergeAttributes(self->descriptors + i + middle_offset, color, attributes, priority, override_attributes,
+                           marker);
 
       if (after_offset) {
         // should happen max once !

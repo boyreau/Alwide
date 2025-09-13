@@ -63,8 +63,7 @@ void openNewFile(char* file_path, FileContainer** files, int* file_count, int* c
   *current_file = *file_count - 1;
 }
 
-void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_ofw, bool* refresh_edw,
-               bool* refresh_local_vars) {
+void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_local_vars) {
   if (*file_count == 1) // Always need to keep one file.
   {
     return;
@@ -81,8 +80,6 @@ void closeFile(FileContainer** files, int* file_count, int* current_file, bool* 
 
   // realloc files to avoid excess of mem.
   *files = realloc(*files, *file_count * sizeof(FileContainer));
-  *refresh_ofw = true;
-  *refresh_edw = true;
   *refresh_local_vars = true;
 }
 
@@ -539,7 +536,8 @@ void deleteSelection(Cursor* cursor, Cursor* select_cursor) {
 
 void deleteSelectionWithState(History** history_p, Cursor* cursor, Cursor* select_cursor,
                               PayloadStateChange payload_state_change) {
-  saveAction(history_p, createDeleteAction(*cursor, cursorToDescriptor(select_cursor)), globalOnStageChange, (void*)&payload_state_change);
+  saveAction(history_p, createDeleteAction(*cursor, cursorToDescriptor(select_cursor)), globalOnStageChange,
+             (void*)&payload_state_change);
   deleteSelection(cursor, select_cursor);
 }
 

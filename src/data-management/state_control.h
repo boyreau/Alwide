@@ -14,7 +14,6 @@ void createTmpDir();
 typedef enum { INSERT = 'i', DELETE = 'd', DELETE_ONE = 'D', ACTION_NONE = 'n' } ACTION_TYPE;
 
 
-
 typedef struct {
   ACTION_TYPE action;
   char unique_ch;

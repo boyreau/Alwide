@@ -25,6 +25,9 @@
 #include "terminal/click_handler.h"
 #include "terminal/highlight.h"
 #include "terminal/term_handler.h"
+#include "terminal/windows/edw.h"
+#include "terminal/windows/few.h"
+#include "terminal/windows/ofw.h"
 #include "utils/clipboard_manager.h"
 #include "utils/constants.h"
 #include "utils/global-variables.h"
@@ -129,9 +132,13 @@ int main(int file_count, char** args) {
 
   bool refresh_local_vars = true; // Need to re-set local vars
 
-  //  --- Begin of the Automaton ---
+
+  // Contain the highlight datas for the current file
   WindowHighlightDescriptor highlight_descriptor;
   whd_init(&highlight_descriptor);
+
+
+  //  --- Begin of the Automaton ---
   CursorDescriptor tmp;
   MEVENT m_event;
   int peek_c = -1;
@@ -158,7 +165,7 @@ int main(int file_count, char** args) {
     // flag cursor change
     if (!areCursorEqual(*cursor, *old_cur)) {
       *old_cur = *cursor;
-      moveScreenToMatchCursor(gui_context.ftw, *cursor, screen_x, screen_y);
+      moveScreenToMatchCursor(&gui_context, *cursor, screen_x, screen_y);
     }
 
     // flag screen_x change
@@ -171,9 +178,9 @@ int main(int file_count, char** args) {
     if (*old_screen_y != *screen_y) {
       *old_screen_y = *screen_y;
       // resize lnw_w to match with line_number_length
-      int new_lnw_width = numberOfDigitOfNumber(*screen_y + getmaxy(gui_context.ftw)) + 1 /* +1 for the line */;
-      if (new_lnw_width != getbegx(gui_context.ftw)) {
-        resizeEditorWindows(&gui_context, new_lnw_width);
+      int new_lnw_width = numberOfDigitOfNumber(*screen_y + getmaxy(gui_context.edw_context.ftw));
+      if (new_lnw_width != getEDW_LengthLineNumber(&gui_context)) {
+        resizeEDW(&gui_context, new_lnw_width);
       }
     }
 
@@ -188,36 +195,19 @@ int main(int file_count, char** args) {
 
     refresh();
 
-    // Refresh File Explorer Window
-    if (gui_context.refresh_few == true && gui_context.few_width != 0 && gui_context.few != NULL) {
-      printFileExplorer(&gui_context, &pwd);
-      wrefresh(gui_context.few);
-      gui_context.refresh_few = false;
-    }
-
-    // Refresh File Opened Window
-    if ((gui_context.refresh_ofw == true || files[current_file_index].io_file.status == NONE) &&
-        gui_context.ofw_height != 0) {
-      printOpenedFile(&gui_context, files, file_count, current_file_index);
-      wrefresh(gui_context.ofw);
-      gui_context.refresh_ofw = false;
-    }
-
-    // Refresh Editor Windows
-    if (gui_context.refresh_edw == true) {
+    // Refresh Editor Windows vars
+    if (gui_context.edw_context.refresh_edw == true) {
       whd_reset(&highlight_descriptor);
 
       // calculate tree_sitter Highlight
-      TS_highlightCurrentFile(ts_data, gui_context.ftw, *screen_x, *screen_y, *cursor, &highlight_descriptor);
+      TS_highlightCurrentFile(ts_data, gui_context.edw_context.ftw, *screen_x, *screen_y, *cursor,
+                              &highlight_descriptor);
 
       // add lsp highlights
       LSP_highlightCurrentFile(lsp_data, *cursor, &highlight_descriptor);
-
-      printEditor(&gui_context, *cursor, *select_cursor, *screen_x, *screen_y, &highlight_descriptor);
-
-      wrefresh(gui_context.lnw);
-      wrefresh(gui_context.ftw);
     }
+
+    repaintGUI(&gui_context, &highlight_descriptor, &pwd, files, file_count, current_file_index);
 
 
     assert(checkFileIntegrity(*root) == true);
@@ -278,7 +268,7 @@ int main(int file_count, char** args) {
     switch (hash) {
         // ---------------------- NCURSES THINGS ----------------------
       case ONLY_REPAINT_INPUT:
-        gui_context.refresh_edw = true;
+        updateEDW(&gui_context);
         break;
 
       case ERR:
@@ -288,11 +278,12 @@ int main(int file_count, char** args) {
       case MOUSE_IN_OUT:
       case H_KEY_RESIZE:
         // Was there but idk why... => Avoid biggest size only used on time before automated resize.
-        assert((getmaxx(gui_context.lnw) + gui_context.few_width >= COLS) == false);
+        // assert((getmaxx(gui_context.lnw) + gui_context.few_width >= COLS) == false);
         // Resize Opened File Window
-        resizeOpenedFileWindow(&gui_context);
-        resizeEditorWindows(&gui_context, getmaxx(gui_context.lnw));
-        gui_context.refresh_ofw = gui_context.refresh_edw = gui_context.refresh_few = true;
+        resizeOFW(&gui_context);
+        resizeEDW(&gui_context, -1);
+
+        updateGUI(&gui_context);
         break;
 
         // ---------------------- MOUSE ----------------------
@@ -305,76 +296,10 @@ int main(int file_count, char** args) {
           // break;
         }
 
-      mouse_read:;
-
-        detectComplexMouseEvents(&m_event);
-
-        // Avoid refreshing when it's just mouse movement with no change.
-        if (m_event.bstate == NO_EVENT_MOUSE /*No event state*/ && mouse_drag == false) {
+        if (!handleClick(&gui_context, &files, &file_count, &current_file_index, &pwd, cursor, select_cursor,
+                         desired_column, screen_x, screen_y, &refresh_local_vars, &m_event, &peek_c, &mouse_drag,
+                         &last_time_mouse_drag, &t_date, &t_clock, &c))
           goto read_input;
-        }
-
-        // Avoid too much refresh, to avoid input buffer full.
-        if (m_event.bstate == NO_EVENT_MOUSE && mouse_drag == true) {
-          time_val current_time = timeInMilliseconds();
-          if (diff2Time(last_time_mouse_drag, current_time) < SKIP_MOUSE_EVENT_DELAY) {
-            peek_c = getch();
-            if (peek_c != ERR && peek_c == KEY_MOUSE) {
-              MEVENT tmp_event;
-              if (getmouse(&tmp_event) == OK) {
-                // skip current event.
-                c = peek_c;
-                peek_c = -1;
-                m_event = tmp_event;
-                t_date = timeInMilliseconds();
-                t_clock = clock();
-                goto mouse_read;
-              }
-              else {
-                goto read_input;
-              }
-            }
-          }
-          last_time_mouse_drag = current_time;
-        }
-
-
-        // If pressed enable drag
-        if (m_event.bstate & BUTTON1_PRESSED && mouse_drag == false) {
-          mouse_drag = true;
-        }
-
-        if ((m_event.x < getbegx(gui_context.lnw) && gui_context.focus_w == NULL) ||
-            (gui_context.few != NULL && gui_context.focus_w == gui_context.few)) {
-          // Click in File Explorer Window
-          if (m_event.bstate & BUTTON1_PRESSED) {
-            gui_context.focus_w = gui_context.few;
-          }
-          handleFileExplorerClick(&gui_context, &files, &file_count, &current_file_index, &pwd, m_event,
-                                  &refresh_local_vars);
-        }
-        else if ((m_event.y - gui_context.ofw_height < 0 && gui_context.focus_w == NULL) ||
-                 (gui_context.ofw != NULL && gui_context.focus_w == gui_context.ofw)) {
-          // Click on opened file window
-          if (m_event.bstate & BUTTON1_PRESSED) {
-            gui_context.focus_w = gui_context.ofw;
-          }
-          handleOpenedFileClick(&gui_context, files, &file_count, &current_file_index, m_event, &refresh_local_vars,
-                                mouse_drag);
-        }
-        else {
-          // Click on editor windows
-          if (m_event.bstate & BUTTON1_PRESSED) {
-            gui_context.focus_w = gui_context.ftw;
-          }
-          handleEditorClick(&gui_context, cursor, select_cursor, desired_column, screen_x, screen_y, &m_event,
-                            mouse_drag);
-        }
-
-        if (m_event.bstate & BUTTON1_RELEASED || m_event.bstate & BUTTON1_CLICKED) {
-          gui_context.focus_w = NULL;
-          mouse_drag = false;
-        }
 
         break;
 
@@ -451,7 +376,7 @@ int main(int file_count, char** args) {
           current_file_index--;
         refresh_local_vars = true;
         // TODO check if the file selected is showing in ofw. If not move it in.
-        gui_context.refresh_ofw = true;
+        updateOFW(&gui_context);
         break;
       case H_KEY_CTRL_MAJ_UP:
         // Do something with this.
@@ -459,7 +384,7 @@ int main(int file_count, char** args) {
           current_file_index++;
         refresh_local_vars = true;
         // TODO check if the file selected is showing in ofw. If not move it in.
-        gui_context.refresh_ofw = true;
+        updateOFW(&gui_context);
         break;
       case H_KEY_BEGIN:
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
@@ -532,8 +457,9 @@ int main(int file_count, char** args) {
           }
         goto end;
       case CTRL('w'):
-        closeFile(&files, &file_count, &current_file_index, &gui_context.refresh_ofw, &gui_context.refresh_edw,
-                  &refresh_local_vars);
+        closeFile(&files, &file_count, &current_file_index, &refresh_local_vars);
+        updateOFW(&gui_context);
+        updateEDW(&gui_context);
         break;
       case CTRL('s'):
         if (io_file->status == NONE) {
@@ -613,19 +539,10 @@ int main(int file_count, char** args) {
 
 
       case CTRL('e'): // File Explorer Window Switch
-        switchShowFew(&gui_context);
+        switchFEW(&gui_context);
         break;
       case CTRL('l'): // Opened File Window Switch
-        if (gui_context.ofw_height == OPENED_FILE_WINDOW_HEIGHT) {
-          gui_context.ofw_height = 0;
-        }
-        else {
-          gui_context.ofw_height = OPENED_FILE_WINDOW_HEIGHT;
-        }
-        resizeOpenedFileWindow(&gui_context);
-        resizeEditorWindows(&gui_context, getmaxx(gui_context.lnw));
-        gui_context.refresh_ofw = true;
-        gui_context.refresh_edw = true;
+        switchOFW(&gui_context);
         break;
       case CTRL(' '): // LSP_completion
 
@@ -659,8 +576,9 @@ end:
 
   if (loaded_settings.is_used == true) {
     WorkspaceSettings new_settings;
-    getWorkspaceSettingsForCurrentDir(&new_settings, files, file_count, current_file_index, gui_context.ofw_height != 0,
-                                      gui_context.few_width != 0, FILE_EXPLORER_WIDTH);
+    getWorkspaceSettingsForCurrentDir(&new_settings, files, file_count, current_file_index,
+                                      gui_context.ofw_context.ofw_height != 0, gui_context.few_context.few_width != 0,
+                                      FILE_EXPLORER_WIDTH);
     saveWorkspaceSettings(loaded_settings.dir_path, &new_settings);
     destroyWorkspaceSettings(&new_settings);
   }

@@ -17,7 +17,7 @@ void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file) {
   }
   lsp_data->is_enable = lsp_server != NULL;
   lsp_data->computed = NULL;
-  strncpy(lsp_data->path_abs, io_file.path_abs, PATH_MAX-1);
+  strncpy(lsp_data->path_abs, io_file.path_abs, PATH_MAX - 1);
 
   if (lsp_data->is_enable) {
     lsp_data->computed = malloc(sizeof(LSP_ComputedData));

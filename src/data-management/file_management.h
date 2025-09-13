@@ -35,8 +35,7 @@ void destroyFileContainer(FileContainer* container);
 void openNewFile(char* file_path, FileContainer** files, int* file_count, int* current_file, bool* refresh_ofw,
                  bool* refresh_local_vars);
 
-void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_ofw, bool* refresh_edw,
-               bool* refresh_local_vars);
+void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_local_vars);
 
 Cursor createRoot(IO_FileID file);
 

@@ -175,10 +175,10 @@ void setupWorkspace(WorkspaceSettings* loaded_settings, int* file_count, char***
 
         // File Opened Window state.
         if (loaded_settings->showing_opened_file_window == true) {
-          gui_context->ofw_height = OPENED_FILE_WINDOW_HEIGHT;
+          gui_context->ofw_context.ofw_height = OPENED_FILE_WINDOW_HEIGHT;
         }
         else {
-          gui_context->ofw_height = 0;
+          gui_context->ofw_context.ofw_height = 0;
         }
 
         // File Explorer Window state.
