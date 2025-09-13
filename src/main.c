@@ -298,7 +298,7 @@ int main(int file_count, char** args) {
 
         if (!handleClick(&gui_context, &files, &file_count, &current_file_index, &pwd, cursor, select_cursor,
                          desired_column, screen_x, screen_y, &refresh_local_vars, &m_event, &peek_c, &mouse_drag,
-                         &last_time_mouse_drag, &t_date, &t_clock, &c))
+                         &last_time_mouse_drag, &t_date, &t_clock, &c, &highlight_descriptor))
           goto read_input;
 
         break;

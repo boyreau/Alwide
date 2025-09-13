@@ -20,6 +20,8 @@ typedef enum {
   GIT_EDIT = 7,
 } LineMarker;
 
+typedef enum { ADDITIONNAL_NONE, ADDITIONNAL_DIAGNOSTIC } AdditionnalDataType;
+
 typedef struct {
   int abs_row;
   int abs_column;
@@ -44,6 +46,8 @@ typedef struct {
 
   // Additional data
   LineMarker line_marker;
+  // TODO for now only Diagnostic are handled may be implement a generic method.
+  void* diagnostic;
 
   // Part
   FilePosition begin;
@@ -70,7 +74,8 @@ bool tphd_isCursorAfter(TextPartHighlightDescriptor* self, Cursor cursor);
 void whd_init(WindowHighlightDescriptor* self);
 
 void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor end, NCURSES_PAIRS_T color,
-                          attr_t attributes, uint16_t priority, bool override_attributes, LineMarker marker);
+                          attr_t attributes, uint16_t priority, bool override_attributes, LineMarker marker,
+                          void* diagnostic);
 
 void whd_print(WindowHighlightDescriptor* self);
 

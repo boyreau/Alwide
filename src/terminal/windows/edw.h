@@ -1,6 +1,6 @@
 #ifndef WISHWIM_FTW_H
 #define WISHWIM_FTW_H
-#include "../../data-management/file_management.h"
+
 #include "../highlight.h"
 #include "gui_entities.h"
 
@@ -12,5 +12,9 @@ void repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor, in
                 WindowHighlightDescriptor* highlight_descriptor);
 
 int getEDW_LengthLineNumber(GUIContext* gui_context);
+
+bool showPopup(GUIContext* gui_context, int y, int x, int height, int width);
+
+void closePopup(GUIContext* gui_context);
 
 #endif // WISHWIM_FTW_H

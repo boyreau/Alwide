@@ -84,8 +84,12 @@ void printChar_U8ToNcurses(WINDOW* w, Char_U8 ch) {
 }
 
 
-LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset) {
+LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
+                                   Diagnostic** diagnostic) {
   LineMarker marker = LINE_MARKER_NONE;
+  if (diagnostic != NULL) {
+    *diagnostic = NULL;
+  }
 
   while (whd_offset < highlight_descriptor->size &&
          highlight_descriptor->descriptors[whd_offset].begin.abs_row <= row) {
@@ -94,6 +98,9 @@ LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight
       if (highlight_descriptor->descriptors[whd_offset].line_marker != 0) {
         if (highlight_descriptor->descriptors[whd_offset].line_marker < marker || marker == 0) {
           marker = highlight_descriptor->descriptors[whd_offset].line_marker;
+          if (diagnostic != NULL) {
+            *diagnostic = highlight_descriptor->descriptors[whd_offset].diagnostic;
+          }
         }
       }
     }

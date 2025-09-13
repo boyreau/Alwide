@@ -33,11 +33,16 @@ typedef struct {
   // NCurses items
   WINDOW* ftw; // File Text Window
   WINDOW* lnw; // Line Number Window
+  WINDOW* pow; // Popup Window
 
   // Local data
   bool refresh_edw; // Need to reprint editor window
 
+  // lnw vars
   int length_line_number;
+
+  // Popup vars
+  bool show_pow;
 } EDW_GUIContext;
 
 

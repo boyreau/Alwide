@@ -9,22 +9,20 @@
 #include "../utils/constants.h"
 #include "../utils/key_management.h"
 #include "term_handler.h"
+#include "windows/edw.h"
 #include "windows/few.h"
 
 
 bool handleClick(GUIContext* gui_context, FileContainer** files, int* file_count, int* current_file_index,
                  ExplorerFolder* pwd, Cursor* cursor, Cursor* select_cursor, int* desired_column, int* screen_x,
                  int* screen_y, bool* refresh_local_vars, MEVENT* m_event, int* peek_c, bool* mouse_drag,
-                 time_val* last_time_mouse_drag, time_val* t_date, clock_t* t_clock, int* c) {
+                 time_val* last_time_mouse_drag, time_val* t_date, clock_t* t_clock, int* c,
+                 WindowHighlightDescriptor* highlight_descriptor) {
 mouse_read:;
   assert(mouse_drag != NULL);
 
   detectComplexMouseEvents(m_event);
 
-  // Avoid refreshing when it's just mouse movement with no change.
-  if (m_event->bstate == NO_EVENT_MOUSE /*No event state*/ && *mouse_drag == false) {
-    return false;
-  }
 
   // Avoid too much refresh, to avoid input buffer full.
   if (m_event->bstate == NO_EVENT_MOUSE && *mouse_drag == true) {
@@ -50,7 +48,7 @@ mouse_read:;
     *last_time_mouse_drag = current_time;
   }
 
-
+  bool force_repaint = false;
   // If pressed enable drag
   if (m_event->bstate & BUTTON1_PRESSED && *mouse_drag == false) {
     *mouse_drag = true;
@@ -78,12 +76,18 @@ mouse_read:;
     if (m_event->bstate & BUTTON1_PRESSED) {
       gui_context->focus_w = gui_context->edw_context.ftw;
     }
-    handleEditorClick(gui_context, cursor, select_cursor, desired_column, screen_x, screen_y, m_event, *mouse_drag);
+   force_repaint =  handleEditorClick(gui_context, cursor, select_cursor, desired_column, screen_x, screen_y, m_event, *mouse_drag,
+                      highlight_descriptor);
   }
 
   if (m_event->bstate & BUTTON1_RELEASED || m_event->bstate & BUTTON1_CLICKED) {
     gui_context->focus_w = NULL;
     *mouse_drag = false;
+  }
+
+  // Avoid refreshing when it's just mouse movement with no change.
+  if (m_event->bstate == NO_EVENT_MOUSE /*No event state*/ && *mouse_drag == false && force_repaint == false) {
+    return false;
   }
   return true;
 }
@@ -92,8 +96,9 @@ mouse_read:;
 ////// -------------- CLICK FUNCTIONS --------------
 
 
-void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_cursor, int* desired_column,
-                       int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag) {
+bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_cursor, int* desired_column,
+                       int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag,
+                       WindowHighlightDescriptor* highlight_descriptor) {
   int edws_offset_x = getbegx(gui_context->edw_context.ftw);
   int edws_offset_y = gui_context->ofw_context.ofw_height;
   if (m_event->y - edws_offset_y < 0) {
@@ -160,6 +165,48 @@ void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     // Move Right
     *screen_x += SCROLL_SPEED;
   }
+
+  if (getbegx(gui_context->edw_context.lnw) <= m_event->x && m_event->x <= getmaxx(gui_context->edw_context.lnw)) {
+    Diagnostic* diagnostic;
+    getMarkerForCurrentLine(*screen_y + m_event->y - getbegy(gui_context->edw_context.lnw), highlight_descriptor, 0,
+                            &diagnostic);
+    if (diagnostic != NULL) {
+      bool isOpened = showPopup(gui_context, m_event->y + 3, getmaxx(gui_context->edw_context.lnw) - 6, 3, 100);
+      if (isOpened) {
+        int color = 0;
+        switch (diagnostic->severity) {
+          case LSP_ERROR:
+            color = ERROR_COLOR_PAIR;
+            break;
+          case LSP_WARNING:
+            color = WARNING_COLOR_PAIR;
+            break;
+          case LSP_INFORMATION:
+            color = INFO_COLOR_PAIR;
+            break;
+          default:
+            color = 0;
+            break;
+        }
+
+        wattr_set(gui_context->edw_context.pow, A_NORMAL, color, NULL);
+
+        box(gui_context->edw_context.pow, 0, 0);
+
+        wmove(gui_context->edw_context.pow, 1, 1);
+        wprintw(gui_context->edw_context.pow, diagnostic->message);
+
+        return true;
+      }
+    }
+  }
+  else {
+    if (gui_context->edw_context.show_pow == true) {
+      return true;
+    }
+    closePopup(gui_context);
+  }
+  return false;
 }
 
 int handleOpenedFileSelectClick(GUIContext* gui_context, FileContainer* files, int* file_count, int* current_file,

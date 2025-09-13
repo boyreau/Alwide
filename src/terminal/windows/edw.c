@@ -1,5 +1,6 @@
 #include "edw.h"
 
+#include <assert.h>
 #include <string.h>
 
 #include "../../data-management/file_management.h"
@@ -10,9 +11,11 @@
 void initEDWContext(EDW_GUIContext* context) {
   context->ftw = NULL; // File Text Window
   context->lnw = NULL; // Line Number Window
+  context->pow = NULL; // Popup Window
 
   context->refresh_edw = true; // Need to reprint editor window
   context->length_line_number = 0;
+  context->show_pow = false;
 }
 
 
@@ -42,7 +45,7 @@ void printEditor_printLineNumber(EDW_GUIContext* context, Cursor cursor, int scr
   attr_t attr = A_BOLD | A_ITALIC;
 
 
-  LineMarker marker = getMarkerForCurrentLine(row, highlight_descriptor, whd_offset);
+  LineMarker marker = getMarkerForCurrentLine(row, highlight_descriptor, whd_offset, NULL);
   switch (marker) {
     case LSP_ERROR:
       color = ERROR_COLOR_PAIR;
@@ -258,7 +261,29 @@ void repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor, in
 
   wrefresh(context->lnw);
   wrefresh(context->ftw);
+
+  if (context->show_pow) {
+    assert(context->pow != NULL);
+    wrefresh(context->pow);
+  }
 }
 
-
 int getEDW_LengthLineNumber(GUIContext* gui_context) { return gui_context->edw_context.length_line_number; }
+
+bool showPopup(GUIContext* gui_context, int y, int x, int height, int width) {
+  delwin(gui_context->edw_context.pow);
+  gui_context->edw_context.pow =
+    newwin(height, width, y - height + 1 + getbegy(gui_context->edw_context.ftw),
+           x + getbegx(gui_context->edw_context.ftw) + 2);
+
+  gui_context->edw_context.show_pow = gui_context->edw_context.pow != NULL;
+
+  gui_context->edw_context.refresh_edw = true;
+
+  return gui_context->edw_context.show_pow;
+}
+
+void closePopup(GUIContext* gui_context) {
+  gui_context->edw_context.show_pow = false;
+  gui_context->edw_context.refresh_edw = true;
+}

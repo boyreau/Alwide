@@ -20,6 +20,7 @@ void LSP_highlightCurrentFile(LSP_Data* lsp_datas, Cursor cursor, WindowHighligh
     NCURSES_PAIRS_T color = COLOR_RED;
 
     whd_insertDescriptor(highlight_descriptor, begin_cursor, end_cursor, color, attr, 0, false,
-                         (LineMarker)lsp_datas->computed->diagnostics[i].severity);
+                         (LineMarker)lsp_datas->computed->diagnostics[i].severity,
+                         lsp_datas->computed->diagnostics + i);
   }
 }

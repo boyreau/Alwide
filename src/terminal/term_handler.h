@@ -30,7 +30,8 @@ void repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_de
 
 void printChar_U8ToNcurses(WINDOW* w, Char_U8 ch);
 
-LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset);
+LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
+                                   Diagnostic** diagnostic);
 
 void updateEDW(GUIContext* gui_context);
 
