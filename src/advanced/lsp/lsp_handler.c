@@ -37,7 +37,10 @@ void LSP_destroyPayload(LSP_ComputedData* lsp_payload) {
   }
 }
 
-void LSP_initPayload(LSP_ComputedData* payload) { payload->diagnostics = NULL; }
+void LSP_initPayload(LSP_ComputedData* payload) {
+  payload->diagnostics = NULL;
+  payload->diagnostics_size = 0;
+}
 
 void initLSPServerList(LSPServerLinkedList* list) { list->head = NULL; }
 

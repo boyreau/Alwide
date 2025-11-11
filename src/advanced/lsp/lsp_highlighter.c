@@ -1,5 +1,6 @@
 #include "lsp_highlighter.h"
 
+#include <assert.h>
 #include <ncurses.h>
 
 #include "../../terminal/highlight.h"
@@ -10,6 +11,7 @@ void LSP_highlightCurrentFile(LSP_Data* lsp_datas, Cursor cursor, WindowHighligh
   if (!lsp_datas->is_enable) {
     return;
   }
+  assert(lsp_datas->computed != NULL);
   for (int i = 0; i < lsp_datas->computed->diagnostics_size; i++) {
     Cursor begin_cursor = tryToReachAbsPosition(cursor, lsp_datas->computed->diagnostics[i].range.pos1.row + 1,
                                                 lsp_datas->computed->diagnostics[i].range.pos1.column + 1);

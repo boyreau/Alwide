@@ -146,8 +146,8 @@ int main(int file_count, char** args) {
   PayloadStateChange payload_state_change;
   bool mouse_drag = false;
   time_val last_time_mouse_drag = timeInMilliseconds();
-  time_val t_date;
-  clock_t t_clock;
+  time_val t_date = timeInMilliseconds();
+  clock_t t_clock = clock();
 
 
   while (true) {
@@ -216,7 +216,7 @@ int main(int file_count, char** args) {
     t_clock = clock() - t_clock;
     double time_taken = (double)t_clock / CLOCKS_PER_SEC * 1000;
 
-    fprintf(stderr, "Complete loop took about reel %5ld ms, took cpu %5.3lf ms.\n",
+    fprintf(stderr, "Complete loop took about reel %5lld ms, took cpu %5.3lf ms.\n",
             diff2Time(timeInMilliseconds(), t_date), time_taken);
 
   read_input:;
