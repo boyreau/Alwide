@@ -9,6 +9,8 @@
 int main(int argc, char **args){
 	bool TEST = true;
 
+	print
+
 	int test = 1;
 
 	if (TEST == false){

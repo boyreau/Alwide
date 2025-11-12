@@ -35,5 +35,5 @@ void onStateChangeLSP(Action action, LSP_Data* data, Cursor* cursor) {
   cJSON_AddItemToArray(array_of_changes, change);
 
   // Send the changes to the lsp server
-  LSP_notifyLspFileDidChange(*lsp_server, data->path_abs, array_of_changes, global_version++);
+  LSP_notifyLspFileDidChange(lsp_server, data->path_abs, array_of_changes, global_version++);
 }

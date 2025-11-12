@@ -11,6 +11,6 @@ typedef struct {
 } DispatcherPayload;
 
 
-void dispatcher(cJSON* packet, void* payload);
+void dispatcher(cJSON* packet, LSP_Server* lsp, void* payload);
 
 #endif // WISHWIM_LSP_DISPATCHER_H

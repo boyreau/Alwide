@@ -70,6 +70,7 @@ int main(int file_count, char** args) {
   }
 
   setlocale(LC_ALL, "");
+  setlocale(LC_NUMERIC, "C");
   // TODO Remove when lsp_logs.txt will be unused.
   system("echo > lsp_logs.txt");
   // system("echo "" > tree_logs.txt");
@@ -216,8 +217,8 @@ int main(int file_count, char** args) {
     t_clock = clock() - t_clock;
     double time_taken = (double)t_clock / CLOCKS_PER_SEC * 1000;
 
-    fprintf(stderr, "Complete loop took about reel %5lld ms, took cpu %5.3lf ms.\n",
-            diff2Time(timeInMilliseconds(), t_date), time_taken);
+    // fprintf(stderr, "Complete loop took about reel %5lld ms, took cpu %5.3lf ms.\n",
+            // diff2Time(timeInMilliseconds(), t_date), time_taken);
 
   read_input:;
     int c;
@@ -548,7 +549,10 @@ int main(int file_count, char** args) {
         gui_switchOFW(&gui_context);
         break;
       case CTRL(' '): // LSP_completion
-
+        if (lsp_data->is_enable) {
+          LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
+                                cursor->file_id.absolute_row - 1, cursor->line_id.absolute_column);
+        }
         break;
 
 

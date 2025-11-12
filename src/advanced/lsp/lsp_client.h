@@ -5,14 +5,28 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include <linux/limits.h>
 #include <stdbool.h>
 #include <sys/types.h>
 
 #include "../../../lib/cJSON/cJSON.h"
 
 #define MESSAGE_LENGTH 4092
+#define METHOD_MAX_LENGTH 200
 
 typedef enum { REQUEST, NOTIFICATION, RESPONSE } PACKET_TYPE;
+
+typedef unsigned long LSP_PacketID;
+
+struct _LSP_ResponseContext {
+  LSP_PacketID id;
+  char* method;
+  char file_name[PATH_MAX];
+  void* payload;
+  struct _LSP_ResponseContext* next;
+};
+
+typedef struct _LSP_ResponseContext LSP_ResponseContext;
 
 typedef struct {
   char name[100];
@@ -21,6 +35,8 @@ typedef struct {
   int inpipefd[2];
   int outpipefd[2];
   cJSON* init_result;
+  LSP_PacketID request_id;
+  LSP_ResponseContext* response_contexts;
 } LSP_Server;
 
 
@@ -43,7 +59,11 @@ int LSP_sendPacket(LSP_Server* server, char* method, char* params, PACKET_TYPE t
 
 int LSP_sendPacketWithJSON(LSP_Server* server, char* method, cJSON* content, PACKET_TYPE type);
 
-PACKET_TYPE LSP_getRequestType(cJSON* content);
+PACKET_TYPE LSP_getPacketType(cJSON* content);
+
+void LSP_addResponseContext(LSP_Server* server, LSP_PacketID id, char* method, char* file_name, void* payload);
+bool LSP_popResponseContext(LSP_Server* server, LSP_PacketID id, LSP_ResponseContext* context);
+void LSP_clearResponseContext(LSP_Server* server);
 
 //////// ----------------- Created Functions ---------------
 
@@ -53,9 +73,9 @@ void LSP_initializeServer(LSP_Server* lsp, char* client_name, char* client_versi
 
 cJSON* LSP_extractPacketResult(cJSON* response_obj);
 
-int LSP_getRequestID(cJSON* request_body);
+LSP_PacketID LSP_getPacketID(cJSON* request_body);
 
-char* LSP_getRequestMethod(cJSON* request_body);
+char* LSP_getPacketMethod(cJSON* request_body);
 
 cJSON* LSP_getNotificationParams(cJSON* notification_body);
 
@@ -179,12 +199,16 @@ void LSP_destroyDiagnostic(Diagnostic diagnostic);
 
 //// -------- Receive Functions --------
 
-bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, void* payload), void* payload);
+bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, LSP_Server* lsp, void* payload),
+                           void* payload);
 
 
 //// -------- Send Functions --------
 
-void LSP_notifyLspFileDidOpen(LSP_Server lsp, char* file_name, char* file_content);
-void LSP_notifyLspFileDidChange(LSP_Server lsp, char* file_name, cJSON* array_of_changes, int version);
+
+void LSP_notifyLspFileDidOpen(LSP_Server* lsp, char* file_name, char* file_content);
+void LSP_notifyLspFileDidChange(LSP_Server* lsp, char* file_name, cJSON* array_of_changes, int version);
+void LSP_requestCompletion(LSP_Server* lsp, char* file_name, int row, int column);
+
 
 #endif // CLIENT_H
