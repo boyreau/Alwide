@@ -7,6 +7,7 @@
 #include "../highlight.h"
 #include "../term_handler.h"
 #include "gui_entities.h"
+#include "pow.h"
 
 void gui_initEDWContext(EDW_GUIContext* context) {
   context->ftw = NULL; // File Text Window
@@ -15,8 +16,12 @@ void gui_initEDWContext(EDW_GUIContext* context) {
 
   context->refresh_edw = true; // Need to reprint editor window
   context->length_line_number = 0;
+
+  // popup init values
   context->show_pow = false;
   context->pow_owner = NO_OWNER;
+  context->completion_offset_y = 0;
+  context->completion_selected = 0;
 }
 
 
@@ -214,7 +219,7 @@ void printEditor_printCursor(EDW_GUIContext* context, Cursor cursor, int screen_
 
 
 void gui_repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor, int screen_x, int screen_y,
-                    WindowHighlightDescriptor* highlight_descriptor) {
+                    WindowHighlightDescriptor* highlight_descriptor, LSP_ComputedData* lsp_data) {
   if (!context->refresh_edw) {
     return;
   }
@@ -265,6 +270,7 @@ void gui_repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor
 
   if (context->show_pow) {
     assert(context->pow != NULL);
+    gui_printPopup(context, &cursor, lsp_data);
     wrefresh(context->pow);
     redrawwin(context->pow);
   }

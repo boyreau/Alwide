@@ -495,7 +495,7 @@ void setSelectCursorOff(Cursor* cursor, Cursor* select_cursor, SELECT_OFF_STYLE 
 
 
 void selectWord(Cursor* cursor, Cursor* select_cursor) {
-  if (cursor->line_id.absolute_column != 0 && isAWordLetter(getCharForLineIdentifier(cursor->line_id)) == true) {
+  if (getAbsCol(cursor) != 0 && isAWordLetter(getCharForLineIdentifier(cursor->line_id)) == true) {
     *cursor = moveToPreviousWord(*cursor);
   }
   setSelectCursorOn(*cursor, select_cursor);
@@ -504,8 +504,8 @@ void selectWord(Cursor* cursor, Cursor* select_cursor) {
 
 void selectLine(Cursor* cursor, Cursor* select_cursor) {
   Cursor tmp = cursorOf(cursor->file_id, moduloLineIdentifierR(getLineForFileIdentifier(cursor->file_id), 0));
-  select_cursor->file_id = tryToReachAbsRow(cursor->file_id, cursor->file_id.absolute_row + 1);
-  if (select_cursor->file_id.absolute_row == cursor->file_id.absolute_row) {
+  select_cursor->file_id = tryToReachAbsRow(cursor->file_id, getAbsRow(cursor) + 1);
+  if (getAbsRow(select_cursor)== getAbsRow(cursor)) {
     tmp = moveLeft(tmp);
     select_cursor->line_id = getLastLineNode(getLineForFileIdentifier(cursor->file_id));
   }

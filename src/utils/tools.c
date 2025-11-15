@@ -2,6 +2,7 @@
 
 #include <asm-generic/errno-base.h>
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
 #include <limits.h>
@@ -338,4 +339,11 @@ void countStringFrame(char* ch, int length, int* current_row, int* current_colum
   if (screen_max_width != NULL) {
     *screen_max_width = max_line;
   }
+}
+
+char *trim(char *ch) {
+  while (*ch != '\0' && isblank(*ch)) {
+    ch++;
+  }
+  return ch;
 }

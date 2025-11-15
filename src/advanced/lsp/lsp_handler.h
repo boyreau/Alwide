@@ -10,9 +10,10 @@
 typedef struct {
   Diagnostic* diagnostics;
   int diagnostics_size;
+  CompletionList completions;
 } LSP_ComputedData;
 
-void LSP_initPayload(LSP_ComputedData* payload);
+void LSP_initComputedData(LSP_ComputedData* payload);
 
 
 typedef struct {
@@ -39,7 +40,7 @@ void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file);
 
 void destroyLspDatas(LSP_Data* lsp_datas);
 
-void LSP_destroyPayload(LSP_ComputedData* lsp_payload);
+void LSP_destroyComputedData(LSP_ComputedData* lsp_payload);
 
 
 //// ------------ UTILS ------------

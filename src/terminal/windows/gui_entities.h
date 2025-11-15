@@ -29,7 +29,7 @@ typedef struct {
 } FEW_GUIContext;
 
 
-typedef enum { DIAGNOSTICS, AUTOCOMPLETE, NO_OWNER } PopupOwner;
+typedef enum { DIAGNOSTICS, COMPLETION, NO_OWNER } PopupOwner;
 
 typedef struct {
   // NCurses items
@@ -46,6 +46,8 @@ typedef struct {
   // Popup vars
   bool show_pow;
   PopupOwner pow_owner;
+  int completion_selected;
+  int completion_offset_y;
 } EDW_GUIContext;
 
 

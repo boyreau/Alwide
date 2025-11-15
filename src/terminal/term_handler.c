@@ -6,6 +6,7 @@
 #include "../data-management/file_management.h"
 #include "term_handler.h"
 
+#include <limits.h>
 #include <math.h>
 
 #include "../utils/constants.h"
@@ -72,7 +73,7 @@ void resetFocus(GUIContext* gui_context) { gui_context->focus_w = NULL; }
 void repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_descriptor, ExplorerFolder* explorer,
                 FileContainer* files, int file_count, int current_file) {
   gui_repaintEDW(&gui_context->edw_context, files[current_file].cursor, files[current_file].select_cursor,
-                 files[current_file].screen_x, files[current_file].screen_y, highlight_descriptor);
+                 files[current_file].screen_x, files[current_file].screen_y, highlight_descriptor, files[current_file].lsp_datas.computed);
   gui_repaintFEW(&gui_context->few_context, explorer);
   gui_repaintOFW(&gui_context->ofw_context, files, file_count, current_file);
 }
@@ -224,7 +225,13 @@ LineIdentifier getLineIdForScreenX(LineIdentifier line_id, int screen_x, int x_c
 void setDesiredColumn(Cursor cursor, int* desired_column) { *desired_column = cursor.line_id.absolute_column; }
 
 
-void printToWindow(WINDOW* w, char* ch, int length, int offset_x, int offset_y, int line_length) {
+void printToWindow(WINDOW* w, char* ch, int length, int offset_x, int offset_y, int line_length, int max_line_number) {
+  if (length == -1) {
+    length = strlen(ch);
+  }
+  if (max_line_number == 0) {
+    max_line_number = INT_MAX;
+  }
   const Char_U8 space = readChar_U8FromCharArray(" ");
 
   wmove(w, offset_y, offset_x);
@@ -232,7 +239,7 @@ void printToWindow(WINDOW* w, char* ch, int length, int offset_x, int offset_y, 
   int current_row = 0;
   int current_ch_index = 0;
   int current_line_length = 0;
-  while (current_ch_index < length) {
+  while (current_ch_index < length && current_row < max_line_number) {
 
     if (ch[current_ch_index] == '\n') {
       current_line_length = 0;
@@ -247,6 +254,9 @@ void printToWindow(WINDOW* w, char* ch, int length, int offset_x, int offset_y, 
         current_line_length = 0;
         current_row++;
         wmove(w, offset_y + current_row, offset_x);
+        if (current_row >= max_line_number) {
+          break;
+        }
       }
 
       current_line_length += charPrintSize(tmp_ch);

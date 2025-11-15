@@ -77,6 +77,8 @@ LSP_PacketID LSP_getPacketID(cJSON* request_body);
 
 char* LSP_getPacketMethod(cJSON* request_body);
 
+cJSON* LSP_getPacketResult(cJSON* request_body);
+
 cJSON* LSP_getNotificationParams(cJSON* notification_body);
 
 //// -------- JSON conversion --------
@@ -196,6 +198,75 @@ Diagnostic LSP_getDiagnosticOf(char* file_name, int cur1_row, int cur1_column, i
 cJSON* LSP_getJSONDiagnostic(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
 Diagnostic LSP_getDiagnosticFromJSON(cJSON* json);
 void LSP_destroyDiagnostic(Diagnostic diagnostic);
+
+
+typedef enum {
+  dt_PLAIN_TEXT,
+  dt_MARKDOWN,
+} DocumentationType;
+
+typedef enum {
+  ct_Text = 1,
+  ct_Method = 2,
+  ct_Function = 3,
+  ct_Constructor = 4,
+  ct_Field = 5,
+  ct_Variable = 6,
+  ct_Class = 7,
+  ct_Interface = 8,
+  ct_Module = 9,
+  ct_Property = 10,
+  ct_Unit = 11,
+  ct_Value = 12,
+  ct_Enum = 13,
+  ct_Keyword = 14,
+  ct_Snippet = 15,
+  ct_Color = 16,
+  ct_File = 17,
+  ct_Reference = 18,
+  ct_Folder = 19,
+  ct_EnumMember = 20,
+  ct_Constant = 21,
+  ct_Struct = 22,
+  ct_Event = 23,
+  ct_Operator = 24,
+  ct_TypeParameter = 25,
+} CompletionType;
+
+typedef enum { citf_PlainText = 1, citf_Snippet = 2 } CompletionInsertTextFormat;
+
+
+struct _CompletionItem {
+  char label[METHOD_MAX_LENGTH];
+  char detail[METHOD_MAX_LENGTH];
+  char description[MESSAGE_LENGTH];
+  CompletionType kind;
+  char documentation[MESSAGE_LENGTH];
+  DocumentationType documentationType;
+  char sortText[METHOD_MAX_LENGTH];
+  char filterText[METHOD_MAX_LENGTH];
+  char insertText[METHOD_MAX_LENGTH];
+  TextEdit text_edit;
+  bool is_text_edit;
+};
+
+typedef struct _CompletionItem CompletionItem;
+
+typedef struct {
+  int size;
+  CompletionItem* items;
+} CompletionArray;
+
+typedef struct {
+  bool isIncomplete;
+  CompletionArray completions;
+} CompletionList;
+
+void LSP_getCompletionListFromJSON(cJSON* json, CompletionList* list);
+void LSP_getCompletionArrayFromJSON(cJSON* json, CompletionArray* array);
+void LSP_getCompletionItemFromJSON(cJSON* json, CompletionItem* item);
+void LSP_destroyCompletionList(CompletionList* completion_list);
+
 
 //// -------- Receive Functions --------
 

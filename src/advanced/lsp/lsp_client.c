@@ -38,7 +38,7 @@ bool LSP_openLSPServer(char* name, char* command_args, char* language, LSP_Serve
 
   free(path);
 
-  strncpy(server->language, language, 100);
+  strlcpy(server->language, language, 100);
 
   server->request_id = 0;
   server->response_contexts = NULL;
@@ -272,7 +272,7 @@ void LSP_addResponseContext(LSP_Server* server, LSP_PacketID id, char* method, c
   new_context->next = server->response_contexts;
   new_context->id = id;
   new_context->method = method;
-  strncpy(new_context->file_name, file_name, PATH_MAX - 1);
+  strlcpy(new_context->file_name, file_name, PATH_MAX);
   new_context->payload = payload;
 
   server->response_contexts = new_context;
@@ -380,6 +380,13 @@ char* LSP_getPacketMethod(cJSON* request_body) {
   assert(method_obj != NULL);
   char* method_name = cJSON_GetStringValue(method_obj);
   return method_name;
+}
+
+cJSON* LSP_getPacketResult(cJSON* request_body) {
+  assert(LSP_getPacketType(request_body) == REQUEST || LSP_getPacketType(request_body) == RESPONSE);
+  cJSON* result = cJSON_GetObjectItem(request_body, "result");
+  assert(result != NULL);
+  return result;
 }
 
 
@@ -622,7 +629,7 @@ Diagnostic LSP_getDiagnosticFromJSON(cJSON* json) {
   cJSON* code = cJSON_GetObjectItem(json, "code");
   if (code) {
     if (cJSON_GetStringValue(code)) {
-      strncpy(diagnostic.code, cJSON_GetStringValue(code), MESSAGE_LENGTH - 1);
+      strlcpy(diagnostic.code, cJSON_GetStringValue(code), MESSAGE_LENGTH);
     }
   }
 
@@ -634,20 +641,145 @@ Diagnostic LSP_getDiagnosticFromJSON(cJSON* json) {
   cJSON* message = cJSON_GetObjectItem(json, "message");
   if (message) {
     if (cJSON_GetStringValue(message)) {
-      strncpy(diagnostic.message, cJSON_GetStringValue(message), MESSAGE_LENGTH - 1);
+      strlcpy(diagnostic.message, cJSON_GetStringValue(message), MESSAGE_LENGTH);
     }
   }
 
   cJSON* codeDescription = cJSON_GetObjectItem(json, "codeDescription");
   if (codeDescription) {
     if (cJSON_GetStringValue(codeDescription)) {
-      strncpy(diagnostic.codeDescription, cJSON_GetStringValue(codeDescription), MESSAGE_LENGTH - 1);
+      strlcpy(diagnostic.codeDescription, cJSON_GetStringValue(codeDescription), MESSAGE_LENGTH);
     }
   }
 
   return diagnostic;
 }
 void LSP_destroyDiagnostic(Diagnostic diagnostic) {}
+
+
+void LSP_getCompletionListFromJSON(cJSON* json, CompletionList* list) {
+  assert(json != NULL);
+
+  // isIncomplete
+  cJSON* isIncompleteItem = cJSON_GetObjectItem(json, "isIncomplete");
+  list->isIncomplete = !(isIncompleteItem == NULL || cJSON_IsFalse(isIncompleteItem));
+
+  LSP_getCompletionArrayFromJSON(cJSON_GetObjectItem(json, "items"), &list->completions);
+}
+
+
+void LSP_getCompletionArrayFromJSON(cJSON* json, CompletionArray* array) {
+  array->items = NULL;
+  array->size = 0;
+
+  if (json == NULL) {
+    return;
+  }
+
+  array->size = cJSON_GetArraySize(json);
+  array->items = malloc(array->size * sizeof(CompletionItem));
+  for (int i = 0; i < array->size; i++) {
+    LSP_getCompletionItemFromJSON(cJSON_GetArrayItem(json, i), array->items + i);
+  }
+}
+
+
+void LSP_getCompletionItemFromJSON(cJSON* json, CompletionItem* item) {
+  assert(item != NULL);
+
+  // defaults
+  item->detail[0] = '\0';
+  item->description[0] = '\0';
+  item->kind = ct_Text;
+  item->documentation[0] = '\0';
+  item->documentationType = dt_PLAIN_TEXT;
+  item->is_text_edit = false;
+
+  // copy the label
+  assert(cJSON_GetObjectItem(json, "label") != NULL);
+  strlcpy(item->label, cJSON_GetStringValue(cJSON_GetObjectItem(json, "label")), METHOD_MAX_LENGTH);
+
+  // fill if present labelDetails
+  cJSON* tmp_item;
+  if ((tmp_item = cJSON_GetObjectItem(json, "labelDetails")) != NULL) {
+    cJSON* tmp_item_2;
+    if ((tmp_item_2 = cJSON_GetObjectItem(tmp_item, "detail")) != NULL) {
+      strlcpy(item->detail, cJSON_GetStringValue(tmp_item_2), METHOD_MAX_LENGTH);
+    }
+    if ((tmp_item_2 = cJSON_GetObjectItem(tmp_item, "description")) != NULL) {
+      strlcpy(item->description, cJSON_GetStringValue(tmp_item_2), METHOD_MAX_LENGTH);
+    }
+  }
+
+  // fill if present detail
+  if ((tmp_item = cJSON_GetObjectItem(tmp_item, "detail")) != NULL) {
+    strlcpy(item->detail, cJSON_GetStringValue(tmp_item), METHOD_MAX_LENGTH);
+  }
+
+  // fill if present kind
+  if ((tmp_item = cJSON_GetObjectItem(json, "kind")) != NULL) {
+    item->kind = cJSON_GetNumberValue(tmp_item);
+  }
+
+  // fill if present the documentation
+  if ((tmp_item = cJSON_GetObjectItem(json, "documentation"))) {
+    if (cJSON_IsString(tmp_item)) {
+      strlcpy(item->documentation, cJSON_GetStringValue(tmp_item), MESSAGE_LENGTH);
+    }
+    else {
+      item->documentationType = cJSON_GetNumberValue(cJSON_GetObjectItem(tmp_item, "kind"));
+      strlcpy(item->documentation, cJSON_GetStringValue(cJSON_GetObjectItem(tmp_item, "value")), MESSAGE_LENGTH);
+    }
+  }
+
+  // fill if present sortText
+  if ((tmp_item = cJSON_GetObjectItem(json, "sortText"))) {
+    strlcpy(item->sortText, cJSON_GetStringValue(tmp_item), METHOD_MAX_LENGTH);
+  }
+  else {
+    strncpy(item->sortText, item->label, METHOD_MAX_LENGTH);
+  }
+
+  // fill if present filterText
+  if ((tmp_item = cJSON_GetObjectItem(json, "filterText"))) {
+    strlcpy(item->filterText, cJSON_GetStringValue(tmp_item), METHOD_MAX_LENGTH);
+  }
+  else {
+    strncpy(item->filterText, item->label, METHOD_MAX_LENGTH);
+  }
+
+  // fill if present insertText
+  if ((tmp_item = cJSON_GetObjectItem(json, "insertText"))) {
+    strlcpy(item->insertText, cJSON_GetStringValue(tmp_item), METHOD_MAX_LENGTH);
+  }
+  else {
+    strncpy(item->insertText, item->label, METHOD_MAX_LENGTH);
+  }
+
+  // fill if present textEdit
+  if ((tmp_item = cJSON_GetObjectItem(json, "textEdit"))) {
+    item->text_edit = LSP_getTextEditFromJSON(tmp_item);
+    char* tmp_char = item->text_edit.new_text;
+    int size = strlen(item->text_edit.new_text);
+    item->text_edit.new_text = malloc(sizeof(char) * (size + 1));
+    strlcpy(item->text_edit.new_text, tmp_char, size);
+    item->is_text_edit = true;
+  }
+}
+
+void LSP_destroyCompletionList(CompletionList* completion_list) {
+  for (int i = 0; i < completion_list->completions.size; i++) {
+    if (completion_list->completions.items[i].is_text_edit) {
+      free(completion_list->completions.items[i].text_edit.new_text);
+    }
+  }
+  free(completion_list->completions.items);
+
+  // defaults
+  completion_list->isIncomplete = false;
+  completion_list->completions.items = NULL;
+  completion_list->completions.size = 0;
+}
 
 
 //// -------- Receive Functions --------

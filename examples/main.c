@@ -1,26 +1,15 @@
-#include <stdio.h>
-#include <stdbool.h>
 
 
-// test !
-
-// TODO ok !
-
-int main(int argc, char **args){
-	bool TEST = true;
-
-	print
-
-	int test = 1;
-
-	if (TEST == false){
-		
-		test = false;
-		test = true;
-
-		printf("Ceci est un test !");
-	}
-	
-	return 0;
+int sum(int a, int b) {
+	return a + b;
 }
 
+
+int main(int argc, char **args) {
+
+	for (int i = 0 ; i < argc ; i++) {
+		int total = sum(i, i);
+	}
+
+	return 0;
+}

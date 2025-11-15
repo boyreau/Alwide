@@ -28,6 +28,7 @@
 #include "terminal/windows/edw.h"
 #include "terminal/windows/few.h"
 #include "terminal/windows/ofw.h"
+#include "terminal/windows/pow.h"
 #include "utils/clipboard_manager.h"
 #include "utils/constants.h"
 #include "utils/global-variables.h"
@@ -52,6 +53,20 @@ cJSON* config;
 ParserList parsers;
 LSPServerLinkedList lsp_servers;
 WorkspaceSettings loaded_settings;
+
+
+void askCompletion(GUIContext* gui_context, Cursor* cursor, int* screen_x, int* screen_y, LSP_Data* lsp_data,
+                   bool reset) {
+  if (lsp_data->is_enable) {
+    if (reset) {
+      LSP_destroyCompletionList(&lsp_data->computed->completions);
+    }
+    LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
+                          getAbsRow(cursor), getAbsCol(cursor));
+    gui_showCompletion(gui_context, getAbsRow(cursor) - *screen_y, getScreenXForCursor(*cursor, *screen_x) - *screen_x + 2);
+
+  }
+}
 
 
 int main(int file_count, char** args) {
@@ -453,8 +468,8 @@ int main(int file_count, char** args) {
             }
             saveFile(files[i].root, &files[i].io_file);
             assert(io_file->status == EXIST);
-            setlastFilePosition(files[i].io_file.path_abs, files[i].cursor.file_id.absolute_row,
-                                files[i].cursor.line_id.absolute_column, files[i].screen_x, files[i].screen_y);
+            setlastFilePosition(files[i].io_file.path_abs, getAbsRow(&files[i].cursor), getAbsCol(&files[i].cursor),
+                                files[i].screen_x, files[i].screen_y);
             saveCurrentStateControl(*files[i].history_root, files[i].history_frame, files[i].io_file.path_abs);
           }
         goto end;
@@ -470,8 +485,7 @@ int main(int file_count, char** args) {
         }
         saveFile(*root, io_file);
         assert(io_file->status == EXIST);
-        setlastFilePosition(io_file->path_abs, cursor->file_id.absolute_row, cursor->line_id.absolute_column, *screen_x,
-                            *screen_y);
+        setlastFilePosition(io_file->path_abs, getAbsRow(cursor), getAbsCol(cursor), *screen_x, *screen_y);
         saveCurrentStateControl(**history_root, *history_frame, io_file->path_abs);
         break;
 
@@ -485,6 +499,7 @@ int main(int file_count, char** args) {
         *cursor = moveToPreviousWord(*cursor);
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
         break;
       case '\n':
       case KEY_ENTER:
@@ -501,6 +516,7 @@ int main(int file_count, char** args) {
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
         break;
       case H_KEY_SUPPR:
         if (isCursorDisabled(*select_cursor)) {
@@ -508,12 +524,14 @@ int main(int file_count, char** args) {
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
         break;
       case H_KEY_CTRL_SUPPR:
         setSelectCursorOn(*cursor, select_cursor);
         *cursor = moveToNextWord(*cursor);
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
         break;
       case KEY_TAB:
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
@@ -549,10 +567,7 @@ int main(int file_count, char** args) {
         gui_switchOFW(&gui_context);
         break;
       case CTRL(' '): // LSP_completion
-        if (lsp_data->is_enable) {
-          LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
-                                cursor->file_id.absolute_row - 1, cursor->line_id.absolute_column);
-        }
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, true);
         break;
       case H_KEY_ESCAPE:
       case CTRL('['):
@@ -574,6 +589,7 @@ int main(int file_count, char** args) {
           if (gui_context.edw_context.pow_owner == DIAGNOSTICS) {
             gui_closePopup(&gui_context);
           }
+          askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
         }
         break;
     }

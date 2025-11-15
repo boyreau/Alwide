@@ -2399,7 +2399,11 @@ int readNBytesAtPosition(Cursor* cursor_p, int row_raw, int column_raw, char* de
 
 CursorDescriptor cursorToDescriptor(Cursor* cursor) {
   CursorDescriptor descriptor;
-  descriptor.row = cursor->file_id.absolute_row;
-  descriptor.column = cursor->line_id.absolute_column;
+  descriptor.row = getAbsRow(cursor);
+  descriptor.column = getAbsCol(cursor);
   return descriptor;
 }
+
+
+int getAbsRow(Cursor* cursor) { return cursor->file_id.absolute_row; }
+int getAbsCol(Cursor* cursor) { return cursor->line_id.absolute_column; }

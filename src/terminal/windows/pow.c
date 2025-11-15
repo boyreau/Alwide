@@ -6,6 +6,22 @@
 #include "edw.h"
 
 
+void gui_showCompletion(GUIContext* gui_context, int y, int x) {
+  int height = min(getmaxy(gui_context->edw_context.ftw) - y, 7);
+  int width = min(getmaxx(gui_context->edw_context.ftw) - x, 50);
+
+  bool isOpened = gui_showPopup(gui_context, y + height, x - 2, height, width, COMPLETION);
+  // couldn't show popup
+  if (!isOpened) {
+    return;
+  }
+
+  gui_context->edw_context.completion_offset_y = 0;
+  gui_context->edw_context.completion_selected = 0;
+
+  wbkgd(gui_context->edw_context.pow, COLOR_PAIR(INFO_COLOR_PAIR));
+}
+
 void gui_showDiagnostic(GUIContext* gui_context, int y, int x, Diagnostic* diagnostic) {
   if (diagnostic == NULL) {
     return;
@@ -45,5 +61,33 @@ void gui_showDiagnostic(GUIContext* gui_context, int y, int x, Diagnostic* diagn
 
   box(gui_context->edw_context.pow, 0, 0);
 
-  printToWindow(gui_context->edw_context.pow, diagnostic->message, ch_length, 1, 1, max_width);
+  printToWindow(gui_context->edw_context.pow, diagnostic->message, ch_length, 1, 1, max_width, 0);
+}
+
+void gui_printCompletionPopup(EDW_GUIContext* context, Cursor* cursor, LSP_ComputedData* lsp_data) {
+  int width = getmaxx(context->pow), height = getmaxy(context->pow);
+  fprintf(stderr, "Printing completion popup completion count : %d\n", lsp_data->completions.completions.size);
+  werase(context->pow);
+
+  // for the height lines.
+  for (int i = 0; i < height; i++) {
+    int index = context->completion_offset_y + i;
+    if (index >= lsp_data->completions.completions.size) {
+      break; // reach the end of the completions.
+    }
+
+    printToWindow(context->pow, trim(lsp_data->completions.completions.items[index].label), -1, 0, i, width, 1);
+  }
+}
+
+
+void gui_printPopup(EDW_GUIContext* context, Cursor* cursor, LSP_ComputedData* lsp_data) {
+  switch (context->pow_owner) {
+    case NO_OWNER:
+    case DIAGNOSTICS:
+      break;
+    case COMPLETION:
+      gui_printCompletionPopup(context, cursor, lsp_data);
+      break;
+  }
 }

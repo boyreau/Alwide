@@ -338,4 +338,8 @@ int readNBytesAtPosition(Cursor* cursor, int row_raw, int column_raw, char* dest
 
 CursorDescriptor cursorToDescriptor(Cursor* cursor);
 
+
+int getAbsRow(Cursor *cursor);
+int getAbsCol(Cursor *cursor);
+
 #endif

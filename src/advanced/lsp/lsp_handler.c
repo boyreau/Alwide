@@ -22,24 +22,39 @@ void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file) {
   if (lsp_data->is_enable) {
     lsp_data->computed = malloc(sizeof(LSP_ComputedData));
     assert(lsp_data->computed != NULL);
-    LSP_initPayload(lsp_data->computed);
+    LSP_initComputedData(lsp_data->computed);
   }
 }
 
 void destroyLspDatas(LSP_Data* lsp_datas) {
-  LSP_destroyPayload(lsp_datas->computed);
+  LSP_destroyComputedData(lsp_datas->computed);
   free(lsp_datas->computed);
 }
 
-void LSP_destroyPayload(LSP_ComputedData* lsp_payload) {
-  if (lsp_payload) {
-    free(lsp_payload->diagnostics);
+void LSP_destroyComputedData(LSP_ComputedData* lsp_payload) {
+  if (!lsp_payload) {
+    return;
   }
+
+  // free diagnostics
+  for (int i = 0; i < lsp_payload->diagnostics_size; i++) {
+    LSP_destroyDiagnostic(lsp_payload->diagnostics[i]);
+  }
+  free(lsp_payload->diagnostics);
+
+  // free completionList
+  LSP_destroyCompletionList(&lsp_payload->completions);
 }
 
-void LSP_initPayload(LSP_ComputedData* payload) {
+void LSP_initComputedData(LSP_ComputedData* payload) {
+  // init diagnostics
   payload->diagnostics = NULL;
   payload->diagnostics_size = 0;
+
+  // init completions
+  payload->completions.completions.items = NULL;
+  payload->completions.completions.size = 0;
+  payload->completions.isIncomplete = false;
 }
 
 void initLSPServerList(LSPServerLinkedList* list) { list->head = NULL; }
