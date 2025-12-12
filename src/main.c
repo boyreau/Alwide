@@ -4,6 +4,7 @@
 #include <locale.h>
 #include <ncurses.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/ttydefaults.h>
 #include <time.h>
@@ -63,8 +64,8 @@ void askCompletion(GUIContext* gui_context, Cursor* cursor, int* screen_x, int* 
     }
     LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
                           getAbsRow(cursor), getAbsCol(cursor));
-    gui_showCompletion(gui_context, getAbsRow(cursor) - *screen_y, getScreenXForCursor(*cursor, *screen_x) - *screen_x + 2);
-
+    gui_showCompletion(gui_context, getAbsRow(cursor) - *screen_y,
+                       getScreenXForCursor(*cursor, *screen_x) - *screen_x + 2);
   }
 }
 
@@ -281,14 +282,21 @@ int main(int file_count, char** args) {
       cell = cell->next;
     }
 
+    if (hash == ERR) {
+      goto read_input;
+    }
+
+    bool has_popup_handle_input = gui_handlePopupInput(&gui_context.edw_context, cursor, hash, c, lsp_data->computed);
+    if (has_popup_handle_input) {
+      c = ONLY_REPAINT_INPUT;
+      hash = ONLY_REPAINT_INPUT;
+    }
+
     switch (hash) {
         // ---------------------- NCURSES THINGS ----------------------
       case ONLY_REPAINT_INPUT:
         updateEDW(&gui_context);
         break;
-
-      case ERR:
-        goto read_input;
 
       case BEGIN_MOUSE_LISTEN:
       case MOUSE_IN_OUT:

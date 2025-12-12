@@ -271,8 +271,10 @@ void gui_repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor
   if (context->show_pow) {
     assert(context->pow != NULL);
     gui_printPopup(context, &cursor, lsp_data);
-    wrefresh(context->pow);
-    redrawwin(context->pow);
+    if (context->pow_owner != COMPLETION || lsp_data->completions.completions.size != 0) {
+      wrefresh(context->pow);
+      redrawwin(context->pow);
+    }
   }
 }
 
