@@ -12,7 +12,7 @@
 
 #include "advanced/lsp/lsp_client.h"
 #include "advanced/lsp/lsp_dispatcher.h"
-#include "advanced/lsp/lsp_highlighter.h"
+#include "advanced/lsp/lsp_features/lsp_highlighter.h"
 #include "advanced/tree-sitter/tree_manager.h"
 #include "advanced/tree-sitter/tree_sitter_highlighter.h"
 #include "config/config.h"
@@ -286,7 +286,8 @@ int main(int file_count, char** args) {
       goto read_input;
     }
 
-    bool has_popup_handle_input = gui_handlePopupInput(&gui_context.edw_context, cursor, hash, c, lsp_data->computed);
+    bool has_popup_handle_input = gui_handlePopupInput(&gui_context, cursor, hash, c, lsp_data->computed,
+                                                       history_frame, payload_state_change);
     if (has_popup_handle_input) {
       c = ONLY_REPAINT_INPUT;
       hash = ONLY_REPAINT_INPUT;

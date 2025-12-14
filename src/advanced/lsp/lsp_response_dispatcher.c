@@ -24,8 +24,9 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data)
   }
 
   if (cJSON_GetObjectItem(packet, "error")) {
-    fprintf(stderr, "LSP : ERROR RECEIVED from %s !\n    => Method issue : %s.\n    => Error message : %s\n", lsp->language,
-            context.method, cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(packet, "error"), "message")));
+    fprintf(stderr, "LSP : ERROR RECEIVED from %s !\n    => Method issue : %s.\n    => Error message : %s\n",
+            lsp->language, context.method,
+            cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(packet, "error"), "message")));
     return;
   }
 

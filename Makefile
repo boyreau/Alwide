@@ -33,7 +33,8 @@ MODULES= \
 	src/advanced/lsp/lsp_handler.o \
 	src/advanced/lsp/lsp_notification_dispatcher.o \
 	src/advanced/lsp/lsp_response_dispatcher.o \
-	src/advanced/lsp/lsp_highlighter.o \
+	src/advanced/lsp/lsp_features/lsp_highlighter.o \
+	src/advanced/lsp/lsp_features/lsp_completion.o \
 	src/advanced/lsp/lsp_dispatcher.o \
 	src/advanced/lsp/lsp_emitter.o \
 

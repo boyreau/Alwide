@@ -387,6 +387,15 @@ Cursor insertCharArrayAtCursor(Cursor cursor, char* chs) {
   return cursor;
 }
 
+Cursor insertCharArrayAtCursorWithHist(History** history_p, Cursor cursor, char* chs,
+                                       PayloadStateChange payload_state_change) {
+  Cursor tmp = cursor;
+  cursor = insertCharArrayAtCursor(cursor, chs);
+  saveAction(history_p, createInsertAction(tmp, cursorToDescriptor(&cursor)), globalOnStageChange, &cursor,
+             &payload_state_change);
+
+  return cursor;
+}
 
 Cursor byteCursorToCursor(Cursor cursor, int row, int byte_column) {
   row += 1;
@@ -505,7 +514,7 @@ void selectWord(Cursor* cursor, Cursor* select_cursor) {
 void selectLine(Cursor* cursor, Cursor* select_cursor) {
   Cursor tmp = cursorOf(cursor->file_id, moduloLineIdentifierR(getLineForFileIdentifier(cursor->file_id), 0));
   select_cursor->file_id = tryToReachAbsRow(cursor->file_id, getAbsRow(cursor) + 1);
-  if (getAbsRow(select_cursor)== getAbsRow(cursor)) {
+  if (getAbsRow(select_cursor) == getAbsRow(cursor)) {
     tmp = moveLeft(tmp);
     select_cursor->line_id = getLastLineNode(getLineForFileIdentifier(cursor->file_id));
   }

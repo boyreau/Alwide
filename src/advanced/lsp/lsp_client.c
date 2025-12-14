@@ -694,6 +694,8 @@ void LSP_getCompletionItemFromJSON(cJSON* json, CompletionItem* item) {
   item->documentation[0] = '\0';
   item->documentationType = dt_PLAIN_TEXT;
   item->is_text_edit = false;
+  item->additionalTextEdits = NULL;
+  item->additionalTextEditsSize = 0;
 
   // copy the label
   assert(cJSON_GetObjectItem(json, "label") != NULL);
@@ -762,8 +764,20 @@ void LSP_getCompletionItemFromJSON(cJSON* json, CompletionItem* item) {
     char* tmp_char = item->text_edit.new_text;
     int size = strlen(item->text_edit.new_text);
     item->text_edit.new_text = malloc(sizeof(char) * (size + 1));
-    strlcpy(item->text_edit.new_text, tmp_char, size);
+    strlcpy(item->text_edit.new_text, tmp_char, size + 1);
     item->is_text_edit = true;
+  }
+
+  if ((tmp_item = cJSON_GetObjectItem(json, "additionalTextEdits"))) {
+    item->additionalTextEditsSize = cJSON_GetArraySize(tmp_item);
+    item->additionalTextEdits = malloc(item->additionalTextEditsSize * sizeof(TextEdit));
+    for (int i = 0; i < item->additionalTextEditsSize; i++) {
+      item->additionalTextEdits[i] = LSP_getTextEditFromJSON(cJSON_GetArrayItem(tmp_item, i));
+      char* tmp_char = item->additionalTextEdits[i].new_text;
+      int size = strlen(item->additionalTextEdits[i].new_text);
+      item->additionalTextEdits[i].new_text = malloc(sizeof(char) * (size + 1));
+      strlcpy(item->additionalTextEdits[i].new_text, tmp_char, size + 1);
+    }
   }
 }
 
@@ -772,6 +786,11 @@ void LSP_destroyCompletionList(CompletionList* completion_list) {
     if (completion_list->completions.items[i].is_text_edit) {
       free(completion_list->completions.items[i].text_edit.new_text);
     }
+    for (int j = 0; j < completion_list->completions.items[i].additionalTextEditsSize; j++) {
+      free(completion_list->completions.items[i].additionalTextEdits[j].new_text);
+    }
+    free(completion_list->completions.items[i].additionalTextEdits);
+    completion_list->completions.items[i].additionalTextEdits = NULL;
   }
   free(completion_list->completions.items);
 

@@ -236,6 +236,7 @@ typedef enum {
 typedef enum { citf_PlainText = 1, citf_Snippet = 2 } CompletionInsertTextFormat;
 
 
+
 struct _CompletionItem {
   char label[METHOD_MAX_LENGTH];
   char detail[METHOD_MAX_LENGTH];
@@ -248,6 +249,8 @@ struct _CompletionItem {
   char insertText[METHOD_MAX_LENGTH];
   TextEdit text_edit;
   bool is_text_edit;
+  TextEdit *additionalTextEdits;
+  int additionalTextEditsSize;
 };
 
 typedef struct _CompletionItem CompletionItem;

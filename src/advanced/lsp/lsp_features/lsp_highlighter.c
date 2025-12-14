@@ -3,8 +3,8 @@
 #include <assert.h>
 #include <ncurses.h>
 
-#include "../../terminal/highlight.h"
-#include "lsp_handler.h"
+#include "../../../terminal/highlight.h"
+#include "../lsp_handler.h"
 
 
 void LSP_highlightCurrentFile(LSP_Data* lsp_datas, Cursor cursor, WindowHighlightDescriptor* highlight_descriptor) {

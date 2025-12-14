@@ -10,6 +10,7 @@ void gui_showDiagnostic(GUIContext* gui_context, int y, int x, Diagnostic* diagn
 
 void gui_printPopup(EDW_GUIContext* context, Cursor* cursor, LSP_ComputedData* lsp_data);
 
-bool gui_handlePopupInput(EDW_GUIContext* context, Cursor* cursor, int c_hash, int c_raw, LSP_ComputedData* lsp_data);
+bool gui_handlePopupInput(GUIContext* context, Cursor* cursor, int c_hash, int c_raw, LSP_ComputedData* lsp_data,
+                          History** history_p, PayloadStateChange payload_state_change);
 
 #endif // WISHWIM_POW_H

@@ -70,6 +70,8 @@ Cursor moveToNextWord(Cursor cursor);
 Cursor moveToPreviousWord(Cursor cursor);
 
 Cursor insertCharArrayAtCursor(Cursor cursor, char* chs);
+Cursor insertCharArrayAtCursorWithHist(History** history_p, Cursor cursor, char* chs,
+                                       PayloadStateChange payload_state_change);
 
 Cursor byteCursorToCursor(Cursor cursor, int row, int byte_column);
 

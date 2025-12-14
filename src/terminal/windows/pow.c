@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "../../advanced/lsp/lsp_features/lsp_completion.h"
 #include "../../utils/key_management.h"
 #include "../term_handler.h"
 #include "edw.h"
@@ -99,33 +100,38 @@ void gui_printPopup(EDW_GUIContext* context, Cursor* cursor, LSP_ComputedData* l
   }
 }
 
-bool gui_handleCompletionInput(EDW_GUIContext* context, Cursor* cursor, int c_hash, int c_raw,
-                               LSP_ComputedData* lsp_data) {
-  int height = getmaxy(context->pow);
+
+bool gui_handleCompletionInput(GUIContext* context, Cursor* cursor, int c_hash, int c_raw, LSP_ComputedData* lsp_data,
+                               History** history_p, PayloadStateChange payload_state_change) {
+  int height = getmaxy(context->edw_context.pow);
   switch (c_hash) {
     case H_KEY_UP:
-      if (context->completion_selected > 0) {
-        context->completion_selected--;
+      if (context->edw_context.completion_selected > 0) {
+        context->edw_context.completion_selected--;
       }
-      if (context->completion_selected < context->completion_offset_y) {
-        context->completion_offset_y = context->completion_selected;
+      if (context->edw_context.completion_selected < context->edw_context.completion_offset_y) {
+        context->edw_context.completion_offset_y = context->edw_context.completion_selected;
       }
       return true;
     case H_KEY_DOWN:
-      context->completion_selected++;
-      if (context->completion_selected >= lsp_data->completions.completions.size) {
-        context->completion_selected = lsp_data->completions.completions.size - 1;
+      context->edw_context.completion_selected++;
+      if (context->edw_context.completion_selected >= lsp_data->completions.completions.size) {
+        context->edw_context.completion_selected = lsp_data->completions.completions.size - 1;
       }
-      if (context->completion_selected >= context->completion_offset_y + height) {
-        context->completion_offset_y++;
+      if (context->edw_context.completion_selected >= context->edw_context.completion_offset_y + height) {
+        context->edw_context.completion_offset_y++;
       }
       return true;
     case '\n':
     case KEY_ENTER:
-      // TODO implement
+      LSP_executeCompletion(cursor, lsp_data->completions.completions.items + context->edw_context.completion_selected,
+                            history_p, payload_state_change);
+      gui_closePopup(context);
       return true;
     case KEY_TAB:
-      // TODO implement
+      LSP_executeCompletion(cursor, lsp_data->completions.completions.items + context->edw_context.completion_selected,
+                            history_p, payload_state_change);
+      gui_closePopup(context);
       return true;
     default:
       break;
@@ -134,10 +140,11 @@ bool gui_handleCompletionInput(EDW_GUIContext* context, Cursor* cursor, int c_ha
   return false;
 }
 
-bool gui_handlePopupInput(EDW_GUIContext* context, Cursor* cursor, int c_hash, int c_raw, LSP_ComputedData* lsp_data) {
-  switch (context->pow_owner) {
+bool gui_handlePopupInput(GUIContext* context, Cursor* cursor, int c_hash, int c_raw, LSP_ComputedData* lsp_data,
+                          History** history_p, PayloadStateChange payload_state_change) {
+  switch (context->edw_context.pow_owner) {
     case COMPLETION:
-      return gui_handleCompletionInput(context, cursor, c_hash, c_raw, lsp_data);
+      return gui_handleCompletionInput(context, cursor, c_hash, c_raw, lsp_data, history_p, payload_state_change);
     default:
       break;
   }
