@@ -104,4 +104,6 @@ void deleteSelectionWithState(History** history_p, Cursor* cursor, Cursor* selec
 char* dumpSelection(Cursor cur1, Cursor cur2);
 
 
+bool isAfterAWord(Cursor* cursor);
+
 #endif // FILE_MANAGEMENT_H

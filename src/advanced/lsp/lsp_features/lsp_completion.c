@@ -1,9 +1,7 @@
 #include "lsp_completion.h"
 
-#include <assert.h>
-
-#include "../../../data-management/file_management.h"
-#include "../../../data-management/state_control.h"
+#include "../../../terminal/windows/pow.h"
+#include "../../../utils/global-variables.h"
 
 
 void applyTextEdit(Cursor* cursor, TextEdit* text_edit, History** history_p, PayloadStateChange payload_state_change) {
@@ -68,5 +66,23 @@ void LSP_executeCompletion(Cursor* cursor, CompletionItem* item, History** histo
   }
   else if (position_after_insert.row != -1) {
     *cursor = tryToReachAbsPosition(*cursor, position_after_insert.row, position_after_insert.column);
+  }
+}
+
+
+void askCompletion(GUIContext* gui_context, Cursor* cursor, int* screen_x, int* screen_y, LSP_Data* lsp_data,
+                   bool reset, bool force) {
+  if (lsp_data->is_enable) {
+    if (!force && !isAfterAWord(cursor)) {
+      LSP_destroyCompletionList(&lsp_data->computed->completions);
+      return;
+    }
+    if (reset) {
+      LSP_destroyCompletionList(&lsp_data->computed->completions);
+    }
+    LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
+                          getAbsRow(cursor), getAbsCol(cursor));
+    gui_showCompletion(gui_context, getAbsRow(cursor) - *screen_y,
+                       getScreenXForCursor(*cursor, *screen_x));
   }
 }

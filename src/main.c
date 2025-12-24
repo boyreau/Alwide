@@ -3,7 +3,6 @@
 #include <limits.h>
 #include <locale.h>
 #include <ncurses.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/ttydefaults.h>
@@ -12,6 +11,7 @@
 
 #include "advanced/lsp/lsp_client.h"
 #include "advanced/lsp/lsp_dispatcher.h"
+#include "advanced/lsp/lsp_features/lsp_completion.h"
 #include "advanced/lsp/lsp_features/lsp_highlighter.h"
 #include "advanced/tree-sitter/tree_manager.h"
 #include "advanced/tree-sitter/tree_sitter_highlighter.h"
@@ -54,21 +54,6 @@ cJSON* config;
 ParserList parsers;
 LSPServerLinkedList lsp_servers;
 WorkspaceSettings loaded_settings;
-
-
-void askCompletion(GUIContext* gui_context, Cursor* cursor, int* screen_x, int* screen_y, LSP_Data* lsp_data,
-                   bool reset) {
-  if (lsp_data->is_enable) {
-    if (reset) {
-      LSP_destroyCompletionList(&lsp_data->computed->completions);
-    }
-    LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
-                          getAbsRow(cursor), getAbsCol(cursor));
-    gui_showCompletion(gui_context, getAbsRow(cursor) - *screen_y,
-                       getScreenXForCursor(*cursor, *screen_x) - *screen_x + 2);
-  }
-}
-
 
 int main(int file_count, char** args) {
   // manage logs
@@ -286,8 +271,8 @@ int main(int file_count, char** args) {
       goto read_input;
     }
 
-    bool has_popup_handle_input = gui_handlePopupInput(&gui_context, cursor, hash, c, lsp_data->computed,
-                                                       history_frame, payload_state_change);
+    bool has_popup_handle_input =
+      gui_handlePopupInput(&gui_context, cursor, hash, c, lsp_data->computed, history_frame, payload_state_change);
     if (has_popup_handle_input) {
       c = ONLY_REPAINT_INPUT;
       hash = ONLY_REPAINT_INPUT;
@@ -508,7 +493,7 @@ int main(int file_count, char** args) {
         *cursor = moveToPreviousWord(*cursor);
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
-        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case '\n':
       case KEY_ENTER:
@@ -525,7 +510,7 @@ int main(int file_count, char** args) {
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
-        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_SUPPR:
         if (isCursorDisabled(*select_cursor)) {
@@ -533,14 +518,14 @@ int main(int file_count, char** args) {
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
-        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_CTRL_SUPPR:
         setSelectCursorOn(*cursor, select_cursor);
         *cursor = moveToNextWord(*cursor);
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
-        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case KEY_TAB:
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
@@ -563,6 +548,7 @@ int main(int file_count, char** args) {
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
+        gui_closePopup(&gui_context);
         break;
 
 
@@ -576,7 +562,7 @@ int main(int file_count, char** args) {
         gui_switchOFW(&gui_context);
         break;
       case CTRL(' '): // LSP_completion
-        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, true);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, true, true);
         break;
       case H_KEY_ESCAPE:
       case CTRL('['):
@@ -598,7 +584,7 @@ int main(int file_count, char** args) {
           if (gui_context.edw_context.pow_owner == DIAGNOSTICS) {
             gui_closePopup(&gui_context);
           }
-          askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false);
+          askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         }
         break;
     }

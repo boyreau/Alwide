@@ -596,3 +596,15 @@ char* dumpSelection(Cursor cur1, Cursor cur2) {
 
   return dump;
 }
+
+
+bool isAfterAWord(Cursor* cursor) {
+  if (!hasElementBeforeLine(cursor->line_id)) {
+    return false;
+  }
+  Char_U8 u8 = getCharAtCursor(*cursor);
+  if (isAWordLetter(u8)) {
+    return true;
+  }
+  return false;
+}
