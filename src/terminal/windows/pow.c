@@ -79,10 +79,10 @@ void gui_printCompletionPopup(EDW_GUIContext* context, Cursor* cursor, LSP_Compu
 
     // setup color for current line.
     if (context->completion_selected == index) {
-      wattr_set(context->pow, A_NORMAL, WARNING_COLOR_HOVER_PAIR, NULL);
+      wattr_set(context->pow, A_NORMAL | A_ITALIC, WARNING_COLOR_HOVER_PAIR, NULL);
     }
     else {
-      wattr_set(context->pow, A_NORMAL, INFO_COLOR_PAIR, NULL);
+      wattr_set(context->pow, A_NORMAL | A_ITALIC, INFO_COLOR_PAIR, NULL);
     }
 
     printToWindow(context->pow, trim(lsp_data->completions.completions.items[index].label), -1, 0, i, width, 1);

@@ -9,9 +9,9 @@ typedef struct {
 
 typedef struct {
   Color color;
-  short color_n;
+  int color_n;
   Color color_hover;
-  short color_hover_n;
+  int color_hover_n;
   char attr[10];
   char group[256];
 } HighlightTheme;

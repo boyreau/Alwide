@@ -34,12 +34,13 @@ void gui_resizeFEW(GUIContext* gui_context, int few_new_width) {
   }
   else {
     gui_context->few_context.few = newwin(0, gui_context->few_context.few_width, 0, 0);
+    wbkgd(gui_context->few_context.few, COLOR_PAIR(DEFAULT_COLOR_PAIR));
   }
 
   // Resize Opened File Window
   gui_resizeOFW(gui_context);
   // Resize Editor Window
-  gui_resizeEDW(gui_context, getmaxx(gui_context->edw_context.lnw));
+  gui_resizeEDW(gui_context, -1);
   gui_context->few_context.refresh_few = true;
 }
 
@@ -49,6 +50,7 @@ void switchFEW(GUIContext* gui_context) {
     gui_context->few_context.few_width = gui_context->few_context.saved_few_width;
     gui_context->few_context.few = newwin(0, gui_context->few_context.few_width, 0, 0);
     gui_context->few_context.refresh_few = true;
+    wbkgd(gui_context->few_context.few, COLOR_PAIR(DEFAULT_COLOR_PAIR));
   }
   else {
     // Close File Explorer Window

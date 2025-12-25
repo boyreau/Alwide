@@ -1,5 +1,5 @@
 CC=clang-18
-CFLAGS=-g -O3 # -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
+CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -O3  # -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
 #CFLAGS=-g -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
 
 executable= al # lsp_test #test_line.o test_file.o  test_line test_file  # utils/debug.o
@@ -67,6 +67,9 @@ LIBS_MODULES= \
 
 ALL_MODULES= $(MODULES) $(LIBS_MODULES)
 
+SHARED_LIBS = -lncursesw -ltinfo
+
+
 all: $(MODULES) $(executable)
 
 
@@ -83,16 +86,16 @@ lib/tree-sitter-markdown/tree-sitter-markdown-inline/libtree-sitter-markdown-inl
 	$(CC) $(CFLAGS) -c $< -o $@
 
 test_line: src/test_line.c $(ALL_MODULES)
-	$(CC) $(CFLAGS) $^ -o $@ -lncursesw
+	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
 
 test_file: src/test_file.c $(ALL_MODULES)
-	$(CC) $(CFLAGS) $^ -o $@ -lncursesw
+	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
 
 al: src/main.c $(ALL_MODULES)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@ -lncursesw #utils/debug.o
+	$(CC) $(CFLAGS) $(LIBS) $^ -o $@ $(SHARED_LIBS) #utils/debug.o
 
 lsp_test: src/lsp_test.c $(ALL_MODULES)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@ -lncursesw
+	$(CC) $(CFLAGS) $(LIBS) $^ -o $@ $(SHARED_LIBS)
 
 clean:
 	rm -rf *.o | rm -rf $(executable) $(MODULES)

@@ -38,6 +38,8 @@ void gui_resizeEDW(GUIContext* gui_context, int length_line_number) {
            gui_context->edw_context.length_line_number + 1 + gui_context->few_context.few_width);
   gui_context->edw_context.lnw = newwin(0, gui_context->edw_context.length_line_number + 1,
                                         gui_context->ofw_context.ofw_height, gui_context->few_context.few_width);
+
+  wbkgd(gui_context->edw_context.ftw, COLOR_PAIR(DEFAULT_COLOR_PAIR));
 }
 
 

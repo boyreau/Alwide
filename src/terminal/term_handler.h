@@ -9,9 +9,6 @@
 #include "highlight.h"
 #include "windows/gui_entities.h"
 
-/* Unix call, use 'man wcwidth' to see explication. */
-int wcwidth(const wint_t wc);
-
 
 ////// -------------- WINDOWS MANAGEMENTS --------------
 

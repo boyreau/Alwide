@@ -49,7 +49,7 @@
 
 // Global vars.
 int color_pair = 5;
-int color_index = 100;
+int color_index = 20;
 cJSON* config;
 ParserList parsers;
 LSPServerLinkedList lsp_servers;

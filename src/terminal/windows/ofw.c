@@ -20,6 +20,7 @@ void gui_initOFWContext(OFW_GUIContext* context) {
 void gui_resizeOFW(GUIContext* gui_context) {
   delwin(gui_context->ofw_context.ofw);
   gui_context->ofw_context.ofw = newwin(gui_context->ofw_context.ofw_height, 0, 0, gui_context->few_context.few_width);
+  wbkgd(gui_context->ofw_context.ofw, COLOR_PAIR(DEFAULT_COLOR_PAIR));
   gui_context->ofw_context.refresh_ofw = true;
 }
 

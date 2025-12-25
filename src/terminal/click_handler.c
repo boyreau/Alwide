@@ -297,6 +297,7 @@ void handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int
     few_context->few_y_offset -= SCROLL_SPEED;
     if (few_context->few_y_offset < 0)
       few_context->few_y_offset = 0;
+    updateFEW(gui_context);
   }
   else if (m_event.bstate & BUTTON4_PRESSED && m_event.bstate & BUTTON_SHIFT) {
     // Move Left
@@ -306,6 +307,7 @@ void handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int
   if (m_event.bstate & BUTTON5_PRESSED && !(m_event.bstate & BUTTON_SHIFT)) {
     // Move Down
     few_context->few_y_offset += SCROLL_SPEED;
+    updateFEW(gui_context);
   }
   else if (m_event.bstate & BUTTON5_PRESSED && m_event.bstate & BUTTON_SHIFT) {
     // Move Right
@@ -316,7 +318,7 @@ void handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int
 
   if (m_event.bstate & BUTTON1_PRESSED) {
     few_context->few_selected_line = few_context->few_y_offset + m_event.y + 1;
-    few_context->refresh_few = true;
+    updateFEW(gui_context);
   }
 
   if (!(m_event.bstate & BUTTON1_DOUBLE_CLICKED))
@@ -343,7 +345,7 @@ void handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int
                 &gui_context->ofw_context.refresh_ofw, refresh_local_vars);
   }
 
-  few_context->refresh_few = true;
+  updateFEW(gui_context);
 }
 
 
