@@ -124,13 +124,19 @@ bool gui_handleCompletionInput(GUIContext* context, Cursor* cursor, int c_hash, 
       return true;
     case '\n':
     case KEY_ENTER:
-      LSP_executeCompletion(cursor, lsp_data->completions.completions.items + context->edw_context.completion_selected,
-                            history_p, payload_state_change);
+      if (context->edw_context.completion_selected < lsp_data->completions.completions.size) {
+        LSP_executeCompletion(cursor,
+                              lsp_data->completions.completions.items + context->edw_context.completion_selected,
+                              history_p, payload_state_change);
+      }
       gui_closePopup(context);
       return true;
     case KEY_TAB:
-      LSP_executeCompletion(cursor, lsp_data->completions.completions.items + context->edw_context.completion_selected,
-                            history_p, payload_state_change);
+      if (context->edw_context.completion_selected < lsp_data->completions.completions.size) {
+        LSP_executeCompletion(cursor,
+                              lsp_data->completions.completions.items + context->edw_context.completion_selected,
+                              history_p, payload_state_change);
+      }
       gui_closePopup(context);
       return true;
     default:
@@ -142,6 +148,9 @@ bool gui_handleCompletionInput(GUIContext* context, Cursor* cursor, int c_hash, 
 
 bool gui_handlePopupInput(GUIContext* context, Cursor* cursor, int c_hash, int c_raw, LSP_ComputedData* lsp_data,
                           History** history_p, PayloadStateChange payload_state_change) {
+  if (context->edw_context.show_pow == false || context->edw_context.pow == NULL) {
+    return false;
+  }
   switch (context->edw_context.pow_owner) {
     case COMPLETION:
       return gui_handleCompletionInput(context, cursor, c_hash, c_raw, lsp_data, history_p, payload_state_change);

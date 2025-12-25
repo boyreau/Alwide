@@ -4,10 +4,12 @@
 #include "../../../lib/cJSON/cJSON.h"
 
 #include "../../data-management/file_management.h"
+#include "../../terminal/windows/gui_entities.h"
 
 typedef struct {
   FileContainer* files;
   int size;
+  GUIContext *gui;
 } DispatcherPayload;
 
 

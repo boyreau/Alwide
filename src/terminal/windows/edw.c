@@ -273,10 +273,8 @@ void gui_repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor
   if (context->show_pow) {
     assert(context->pow != NULL);
     gui_printPopup(context, &cursor, lsp_data);
-    if (context->pow_owner != COMPLETION || lsp_data->completions.completions.size != 0) {
-      wrefresh(context->pow);
-      redrawwin(context->pow);
-    }
+    wrefresh(context->pow);
+    // redrawwin(context->pow);
   }
 }
 
@@ -292,6 +290,44 @@ bool gui_showPopup(GUIContext* gui_context, int y, int x, int height, int width,
     gui_context->edw_context.pow_owner = owner;
   }
   gui_context->edw_context.refresh_edw = true;
+
+  return gui_context->edw_context.show_pow;
+}
+
+bool gui_adaptPopup(GUIContext* gui_context, int slice_x, int slice_y) {
+  if (gui_context->edw_context.pow == NULL) {
+    return false;
+  }
+
+  switch (gui_context->edw_context.pow_owner) {
+    case NO_OWNER:
+      // TO change with the value that you don't want to follow with scroll.
+      return false;
+    case DIAGNOSTICS:
+      slice_x = 0;
+    default:
+      break;
+  }
+
+  if (slice_x == 0 && slice_y == 0) {
+    return true;
+  }
+
+  const int x = getbegx(gui_context->edw_context.pow) - slice_x;
+  const int y = getbegy(gui_context->edw_context.pow) - slice_y;
+  const int width = getmaxx(gui_context->edw_context.pow);
+  const int height = getmaxy(gui_context->edw_context.pow);
+
+  delwin(gui_context->edw_context.pow);
+  gui_context->edw_context.pow = newwin(height, width, y, x);
+
+  gui_context->edw_context.show_pow = gui_context->edw_context.pow != NULL;
+  if (gui_context->edw_context.pow) {
+    updateEDW(gui_context);
+  }
+  else {
+    gui_context->edw_context.pow_owner = NO_OWNER;
+  }
 
   return gui_context->edw_context.show_pow;
 }

@@ -1,5 +1,6 @@
 #include "lsp_completion.h"
 
+#include "../../../terminal/windows/edw.h"
 #include "../../../terminal/windows/pow.h"
 #include "../../../utils/global-variables.h"
 
@@ -75,6 +76,7 @@ void askCompletion(GUIContext* gui_context, Cursor* cursor, int* screen_x, int* 
   if (lsp_data->is_enable) {
     if (!force && !isAfterAWord(cursor)) {
       LSP_destroyCompletionList(&lsp_data->computed->completions);
+      gui_closePopup(gui_context);
       return;
     }
     if (reset) {

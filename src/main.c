@@ -172,18 +172,22 @@ int main(int file_count, char** args) {
 
     // flag screen_x change
     if (*old_screen_x != *screen_x) {
+      gui_adaptPopup(&gui_context, *screen_x - *old_screen_x, 0);
+
       *old_screen_x = *screen_x;
-      // UNUSED
     }
 
     // flag screen_y change
     if (*old_screen_y != *screen_y) {
-      *old_screen_y = *screen_y;
+      gui_adaptPopup(&gui_context, 0, *screen_y - *old_screen_y);
+
       // resize lnw_w to match with line_number_length
       int new_lnw_width = numberOfDigitOfNumber(*screen_y + getmaxy(gui_context.edw_context.ftw));
       if (new_lnw_width != getEDW_LengthLineNumber(&gui_context)) {
         gui_resizeEDW(&gui_context, new_lnw_width);
       }
+
+      *old_screen_y = *screen_y;
     }
 
     // If it needed to reparse the current file for tree. Looking for state changes.
@@ -255,6 +259,7 @@ int main(int file_count, char** args) {
     DispatcherPayload payload;
     payload.files = files;
     payload.size = file_count;
+    payload.gui = &gui_context;
 
     LSPServerLinkedList_Cell* cell = lsp_servers.head;
     while (cell != NULL) {
