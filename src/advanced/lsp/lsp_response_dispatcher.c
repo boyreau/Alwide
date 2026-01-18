@@ -30,6 +30,11 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data)
   }
 
   if (cJSON_GetObjectItem(packet, "error")) {
+    if (strcmp(context.method, "textDocument/completion") == 0) {
+      if (data->gui->edw_context.pow_owner == COMPLETION) {
+        gui_closePopup(data->gui);
+      }
+    }
     fprintf(stderr, "LSP : ERROR RECEIVED from %s !\n    => Method issue : %s.\n    => Error message : %s\n",
             lsp->language, context.method,
             cJSON_GetStringValue(cJSON_GetObjectItem(cJSON_GetObjectItem(packet, "error"), "message")));

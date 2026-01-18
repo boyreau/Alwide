@@ -606,5 +606,8 @@ bool isAfterAWord(Cursor* cursor) {
   if (isAWordLetter(u8)) {
     return true;
   }
+  if (u8.t[0] == '.') {
+    return true;
+  }
   return false;
 }
