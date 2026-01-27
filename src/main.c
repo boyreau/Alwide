@@ -53,7 +53,7 @@ int color_index = 20;
 cJSON* config;
 ParserList parsers;
 LSPServerLinkedList lsp_servers;
-WorkspaceSettings loaded_settings;
+WorkspaceSettings workspace_settings;
 
 int main(int file_count, char** args) {
   // manage logs
@@ -101,7 +101,7 @@ int main(int file_count, char** args) {
   FileContainer* files;
   int current_file_index = 0; // The current showed file.
   // Detect workspace settings
-  setupWorkspace(&loaded_settings, &file_count, &file_names, &gui_context, &current_file_index);
+  setupWorkspace(&workspace_settings, &file_count, &file_names, &gui_context, &current_file_index);
   // Opening files and setup vars
   setupOpenedFiles(&file_count, file_names, &files);
 
@@ -111,7 +111,7 @@ int main(int file_count, char** args) {
   char* dir_path = getenv("PWD");
   if (dir_path == NULL)
     dir_path = getenv("HOME");
-  initFolder(loaded_settings.is_used == true ? loaded_settings.dir_path : dir_path, &pwd);
+  initFolder(workspace_settings.is_used == true ? workspace_settings.dir_path : dir_path, &pwd);
   pwd.open = true;
 
 
@@ -602,12 +602,12 @@ end:
 
   whd_free(&highlight_descriptor);
 
-  if (loaded_settings.is_used == true) {
+  if (workspace_settings.is_used == true) {
     WorkspaceSettings new_settings;
     getWorkspaceSettingsForCurrentDir(&new_settings, files, file_count, current_file_index,
                                       gui_context.ofw_context.ofw_height != 0, gui_context.few_context.few_width != 0,
                                       FILE_EXPLORER_WIDTH);
-    saveWorkspaceSettings(loaded_settings.dir_path, &new_settings);
+    saveWorkspaceSettings(workspace_settings.dir_path, &new_settings);
     destroyWorkspaceSettings(&new_settings);
   }
 

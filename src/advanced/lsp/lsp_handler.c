@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
+
 
 #include "../../utils/global-variables.h"
 #include "../../utils/tools.h"
@@ -140,6 +142,12 @@ LSP_Server* getLSPServerForLanguage(LSPServerLinkedList* list, char* language) {
   return &cell->lsp_server;
 }
 
+void* sendInit(void* args) {
+  LSP_Server* container = args;
+  LSP_initializeServer(container, "al", "0.5",
+                       workspace_settings.is_used ? workspace_settings.dir_path : getenv("PWD"));
+  return 0;
+}
 
 bool loadNewLSPServer(LSP_Server* container, char* language) {
   char prog_name[1000];
@@ -151,7 +159,10 @@ bool loadNewLSPServer(LSP_Server* container, char* language) {
 
   bool opening_result = LSP_openLSPServer(prog_name, args, language, container);
 
-  LSP_initializeServer(container, "al", "0.5", loaded_settings.is_used ? loaded_settings.dir_path : getenv("PWD"));
+
+  // execute the init in another thread to avoid blocking on the opening of a new thread.
+  pthread_t t;
+  pthread_create(&t, NULL, sendInit, container);
 
   return opening_result;
 }

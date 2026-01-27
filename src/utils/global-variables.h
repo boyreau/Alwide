@@ -9,7 +9,7 @@
 extern cJSON* config;
 extern ParserList parsers;
 extern LSPServerLinkedList lsp_servers;
-extern WorkspaceSettings loaded_settings;
+extern WorkspaceSettings workspace_settings;
 
 
 #endif // WISHWIM_GLOBALS_H
