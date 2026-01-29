@@ -1,5 +1,6 @@
 #include "lsp_completion.h"
 
+#include "../../../io_management/viewport_history.h"
 #include "../../../terminal/windows/edw.h"
 #include "../../../terminal/windows/pow.h"
 #include "../../../utils/global-variables.h"
@@ -84,7 +85,12 @@ void askCompletion(GUIContext* gui_context, Cursor* cursor, int* screen_x, int* 
     }
     LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
                           getAbsRow(cursor), getAbsCol(cursor));
-    gui_showCompletion(gui_context, getAbsRow(cursor) - *screen_y,
-                       getScreenXForCursor(*cursor, *screen_x));
+    if (gui_context->edw_context.pow_owner != COMPLETION) {
+      gui_setLastTextAnchor(gui_context, cursorToDescriptor(cursor));
+    }
+    else {
+      ViewPort view_port = getViewPort(gui_context, screen_x, screen_y);
+      gui_showCompletionTextAnchor(&view_port, cursor);
+    }
   }
 }

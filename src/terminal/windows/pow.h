@@ -2,9 +2,16 @@
 #define WISHWIM_POW_H
 #include "gui_entities.h"
 
-#include "../../advanced/lsp/lsp_dispatcher.h"
+#include "../../io_management/viewport_history.h"
+
+
+bool gui_resumeCompletionTextAnchor(ViewPort* view_port, Cursor* cursor);
+
+void gui_showCompletionTextAnchor(ViewPort* view_port, Cursor* cursor);
 
 void gui_showCompletion(GUIContext* gui_context, int y, int x);
+
+void gui_setLastTextAnchor(GUIContext* gui_context, CursorDescriptor descriptor);
 
 void gui_showDiagnostic(GUIContext* gui_context, int y, int x, Diagnostic* diagnostic);
 

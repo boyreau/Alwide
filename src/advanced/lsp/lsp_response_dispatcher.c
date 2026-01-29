@@ -5,13 +5,16 @@
 #include "../../terminal/windows/edw.h"
 #include "../../terminal/windows/pow.h"
 
-void receiveCompletionData(cJSON* packet, FileContainer* file, GUIContext* gui) {
+void receiveCompletionData(cJSON* packet, FileContainer* file, ViewPort* view_port, Cursor* cursor) {
   LSP_destroyCompletionList(&file->lsp_datas.computed->completions);
   LSP_getCompletionListFromJSON(LSP_getPacketResult(packet), &file->lsp_datas.computed->completions);
   if (file->lsp_datas.computed->completions.completions.size == 0) {
-    if (gui->edw_context.pow_owner == COMPLETION) {
-      gui_closePopup(gui);
+    if (view_port->gui->edw_context.pow_owner == COMPLETION) {
+      gui_closePopup(view_port->gui);
     }
+  }
+  else {
+    gui_resumeCompletionTextAnchor(view_port, cursor);
   }
 }
 
@@ -31,8 +34,8 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data)
 
   if (cJSON_GetObjectItem(packet, "error")) {
     if (strcmp(context.method, "textDocument/completion") == 0) {
-      if (data->gui->edw_context.pow_owner == COMPLETION) {
-        gui_closePopup(data->gui);
+      if (data->view_port.gui->edw_context.pow_owner == COMPLETION) {
+        gui_closePopup(data->view_port.gui);
       }
     }
     fprintf(stderr, "LSP : ERROR RECEIVED from %s !\n    => Method issue : %s.\n    => Error message : %s\n",
@@ -44,7 +47,7 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data)
   if (strcmp(context.method, "textDocument/completion") == 0) {
     // TODO implement the handle of the completion receive !
     fprintf(stderr, "RECEIVE completion !\n");
-    receiveCompletionData(packet, data->files + index, data->gui);
+    receiveCompletionData(packet, data->files + index, &data->view_port, data->cursor);
   }
   else {
     fprintf(stderr, "Response method NOT SUPPORTED !\n      => %s\n", context.method);

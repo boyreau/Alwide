@@ -257,7 +257,9 @@ int main(int file_count, char** args) {
     DispatcherPayload payload;
     payload.files = files;
     payload.size = file_count;
-    payload.gui = &gui_context;
+    payload.view_port = getViewPort(&gui_context, screen_x, screen_y);
+    payload.cursor = cursor;
+
 
     LSPServerLinkedList_Cell* cell = lsp_servers.head;
     while (cell != NULL) {

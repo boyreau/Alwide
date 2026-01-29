@@ -22,6 +22,8 @@ void gui_initEDWContext(EDW_GUIContext* context) {
   context->pow_owner = NO_OWNER;
   context->completion_offset_y = 0;
   context->completion_selected = 0;
+  context->lastTextAnchor.row = 0;
+  context->lastTextAnchor.column = 0;
 }
 
 

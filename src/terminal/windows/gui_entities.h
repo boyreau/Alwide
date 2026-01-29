@@ -2,6 +2,8 @@
 #define WISHWIM_GUI_ENTITIES_H
 #include <ncurses.h>
 
+#include "../../data-management/file_structure.h"
+
 typedef struct {
   // NCurses items
   WINDOW* ofw; // Opened Files Window
@@ -48,6 +50,7 @@ typedef struct {
   PopupOwner pow_owner;
   int completion_selected;
   int completion_offset_y;
+  CursorDescriptor lastTextAnchor;
 } EDW_GUIContext;
 
 

@@ -3,10 +3,28 @@
 #include <string.h>
 
 #include "../../advanced/lsp/lsp_features/lsp_completion.h"
+#include "../../io_management/viewport_history.h"
 #include "../../utils/key_management.h"
 #include "../term_handler.h"
 #include "edw.h"
 
+
+bool gui_resumeCompletionTextAnchor(ViewPort* view_port, Cursor* cursor) {
+  if (cursor->file_id.absolute_row == view_port->gui->edw_context.lastTextAnchor.row &&
+      cursor->line_id.absolute_column == view_port->gui->edw_context.lastTextAnchor.column &&
+      view_port->gui->edw_context.pow_owner == NO_OWNER || view_port->gui->edw_context.pow_owner == COMPLETION) {
+    fprintf(stderr, "Resume !\n");
+    gui_showCompletionTextAnchor(view_port, cursor);
+    return true;
+  }
+  fprintf(stderr, "Didn't resume !\n");
+  return false;
+}
+
+void gui_showCompletionTextAnchor(ViewPort* view_port, Cursor* cursor) {
+  return gui_showCompletion(view_port->gui, getAbsRow(cursor) - *view_port->screen_y,
+                            getScreenXForCursor(*cursor, *view_port->screen_x));
+}
 
 void gui_showCompletion(GUIContext* gui_context, int y, int x) {
   int height = min(getmaxy(gui_context->edw_context.ftw) - y, 7);
@@ -22,6 +40,10 @@ void gui_showCompletion(GUIContext* gui_context, int y, int x) {
   gui_context->edw_context.completion_selected = 0;
 
   wbkgd(gui_context->edw_context.pow, COLOR_PAIR(INFO_COLOR_PAIR));
+}
+
+void gui_setLastTextAnchor(GUIContext* gui_context, CursorDescriptor descriptor) {
+  gui_context->edw_context.lastTextAnchor = descriptor;
 }
 
 void gui_showDiagnostic(GUIContext* gui_context, int y, int x, Diagnostic* diagnostic) {
