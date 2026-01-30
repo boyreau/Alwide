@@ -122,6 +122,7 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
       *cursor = cursorOf(new_file_id, new_line_id);
     }
     setDesiredColumn(*cursor, desired_column);
+    gui_closePopup(gui_context);
   }
 
   if (m_event->bstate & BUTTON1_PRESSED) {
@@ -131,10 +132,12 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
                                                      *screen_x, m_event->x - edws_offset_x);
     *cursor = cursorOf(new_file_id, new_line_id);
     setDesiredColumn(*cursor, desired_column);
+    gui_closePopup(gui_context);
   }
 
   if (m_event->bstate & BUTTON1_DOUBLE_CLICKED) {
     selectWord(cursor, select_cursor);
+    gui_closePopup(gui_context);
   }
 
 
