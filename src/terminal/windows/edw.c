@@ -269,6 +269,8 @@ void gui_repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor
   printEditor_printCursor(context, cursor, screen_x, screen_y, highlight_descriptor, line_count, column_count);
   // box(ofw, 0, 0);
 
+  wrefresh(context->lnw);
+  wrefresh(context->ftw);
   wnoutrefresh(context->lnw);
   wnoutrefresh(context->ftw);
 
