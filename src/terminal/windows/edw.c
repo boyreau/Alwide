@@ -42,6 +42,7 @@ void gui_resizeEDW(GUIContext* gui_context, int length_line_number) {
                                         gui_context->ofw_context.ofw_height, gui_context->few_context.few_width);
 
   wbkgd(gui_context->edw_context.ftw, COLOR_PAIR(DEFAULT_COLOR_PAIR));
+  gui_context->edw_context.refresh_edw = true;
 }
 
 
@@ -269,8 +270,6 @@ void gui_repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor
   printEditor_printCursor(context, cursor, screen_x, screen_y, highlight_descriptor, line_count, column_count);
   // box(ofw, 0, 0);
 
-  wrefresh(context->lnw);
-  wrefresh(context->ftw);
   wnoutrefresh(context->lnw);
   wnoutrefresh(context->ftw);
 

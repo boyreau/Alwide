@@ -1,6 +1,7 @@
 #include "few.h"
 
 #include <libgen.h>
+#include <ncurses.h>
 
 #include "../../utils/constants.h"
 #include "../../utils/tools.h"
@@ -152,7 +153,7 @@ void gui_repaintFEW(FEW_GUIContext* context, ExplorerFolder* pwd) {
   if (!(context->refresh_few == true && context->few_width != 0 && context->few != NULL)) {
     return;
   }
-
+  werase(context->few);
   wmove(context->few, 0, 0);
 
   // the internal fct need edit this var to lake them.
@@ -162,9 +163,7 @@ void gui_repaintFEW(FEW_GUIContext* context, ExplorerFolder* pwd) {
   int tmp_few_selected_line = context->few_selected_line;
   internalPrintExplorerRec(pwd, context->few, &tmp_few_x_offset, &tmp_few_y_offset, 0, &tmp_few_selected_line);
   // Clear end of window
-  for (int i = getcury(context->few) + 1; i < getmaxy(context->few); i++) {
-    wprintw(context->few, "\n");
-  }
+  
   for (int i = getbegy(context->few); i < getmaxy(context->few); i++) {
     mvwprintw(context->few, i, getmaxx(context->few) - 1, "│");
   }
