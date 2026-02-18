@@ -267,7 +267,7 @@ void gui_repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor
   }
 
   // ===============  Print Cursor  ===============
-  printEditor_printCursor(context, cursor, screen_x, screen_y, highlight_descriptor, line_count, column_count);
+  // printEditor_printCursor(context, cursor, screen_x, screen_y, highlight_descriptor, line_count, column_count);
   // box(ofw, 0, 0);
 
   wnoutrefresh(context->lnw);
@@ -278,6 +278,20 @@ void gui_repaintEDW(EDW_GUIContext* context, Cursor cursor, Cursor select_cursor
     gui_printPopup(context, &cursor, lsp_data);
     wnoutrefresh(context->pow);
   }
+
+  // TODO improve for utf8 char and more of that... not a clean version.
+  if (cursor.file_id.absolute_row >= screen_y && cursor.file_id.absolute_row < screen_y + line_count &&
+      cursor.line_id.absolute_column >= screen_x - 1 && cursor.line_id.absolute_column <= screen_x + column_count - 3) {
+    curs_set(1);
+    int y = cursor.file_id.absolute_row - screen_y + getbegy(context->ftw);
+    int x = cursor.line_id.absolute_column - screen_x + getbegx(context->ftw) + 1;
+    move(y, x);
+  }
+  else {
+    curs_set(0);
+  }
+
+  context->refresh_edw = false;
 }
 
 int getEDW_LengthLineNumber(GUIContext* gui_context) { return gui_context->edw_context.length_line_number; }

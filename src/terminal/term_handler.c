@@ -43,7 +43,7 @@ void initNCurses(GUIContext* gui_context) {
   mouseinterval(0);
   mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
   timeout(100);
-  printf("\033[?1003h"); // enable mouse tracking
+  printf("\033[?1003h\033[5 q"); // enable mouse tracking and beam cursor
   fflush(stdout);
   // Color setup
   start_color();
@@ -82,6 +82,7 @@ void repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_de
   gui_repaintFEW(&gui_context->few_context, explorer);
   gui_repaintOFW(&gui_context->ofw_context, files, file_count, current_file);
   doupdate();
+  refresh();
 }
 
 

@@ -151,6 +151,7 @@ int main(int file_count, char** args) {
   time_val t_date = timeInMilliseconds();
   clock_t t_clock = clock();
 
+  Cursor old_selected_cursor;
 
   while (true) {
     //// --------------- Post Processing -----------------
@@ -162,16 +163,26 @@ int main(int file_count, char** args) {
       refresh_local_vars = false;
       old_history_frame = *history_frame;
       payload_state_change = getPayloadStateChange(ts_data, lsp_data);
+      old_selected_cursor = *select_cursor;
+      updateEDW(&gui_context);
     }
 
     // flag cursor change
     if (!areCursorEqual(*cursor, *old_cur)) {
       *old_cur = *cursor;
       moveScreenToMatchCursor(&gui_context, *cursor, screen_x, screen_y);
+      updateEDW(&gui_context);
+    }
+
+    // flag selection change
+    if (!areCursorEqual(*select_cursor, old_selected_cursor)) {
+      old_selected_cursor = *select_cursor;
+      updateEDW(&gui_context);
     }
 
     // flag screen_x change
     if (*old_screen_x != *screen_x) {
+      updateEDW(&gui_context);
       gui_adaptPopup(&gui_context, *screen_x - *old_screen_x, 0);
 
       *old_screen_x = *screen_x;
@@ -179,6 +190,7 @@ int main(int file_count, char** args) {
 
     // flag screen_y change
     if (*old_screen_y != *screen_y) {
+      updateEDW(&gui_context);
       gui_adaptPopup(&gui_context, 0, *screen_y - *old_screen_y);
 
       // resize lnw_w to match with line_number_length
@@ -431,12 +443,14 @@ int main(int file_count, char** args) {
         *cursor = undo(history_frame, *cursor, globalOnStageChange, (long*)&payload_state_change);
         old_history_frame = NULL;
         setDesiredColumn(*cursor, desired_column);
+        updateEDW(&gui_context);
         break;
       case CTRL('y'):
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
         *cursor = redo(history_frame, *cursor, globalOnStageChange, (long*)&payload_state_change);
         old_history_frame = NULL;
         setDesiredColumn(*cursor, desired_column);
+        updateEDW(&gui_context);
         break;
       case CTRL('c'):
         saveToClipBoard(*cursor, *select_cursor);
@@ -449,6 +463,7 @@ int main(int file_count, char** args) {
         saveToClipBoard(*cursor, *select_cursor);
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
+        updateEDW(&gui_context);
         break;
       case CTRL('v'):
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
@@ -524,6 +539,7 @@ int main(int file_count, char** args) {
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
+        updateEDW(&gui_context);
         break;
       case H_KEY_CTRL_SUPPR:
         setSelectCursorOn(*cursor, select_cursor);
@@ -531,6 +547,7 @@ int main(int file_count, char** args) {
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
+        updateEDW(&gui_context);
         break;
       case KEY_TAB:
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
@@ -554,6 +571,7 @@ int main(int file_count, char** args) {
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         gui_closePopup(&gui_context);
+        updateEDW(&gui_context);
         break;
 
 
@@ -599,7 +617,7 @@ int main(int file_count, char** args) {
 
 end:
 
-  printf("\033[?1003l\n"); // Disable mouse movement events, as l = low
+  printf("\033[?1003l\033[0 q\n"); // Disable mouse movement events, as l = low
   fflush(stdout);
 
   whd_free(&highlight_descriptor);
