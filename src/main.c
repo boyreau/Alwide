@@ -178,6 +178,9 @@ int main(int file_count, char** args) {
     if (!areCursorEqual(*select_cursor, old_selected_cursor)) {
       old_selected_cursor = *select_cursor;
       updateEDW(&gui_context);
+      if (!isCursorDisabled(*select_cursor)) {
+        gui_closePopup(&gui_context);
+      }
     }
 
     // flag screen_x change
@@ -251,11 +254,11 @@ int main(int file_count, char** args) {
 
     // When available use keyname instead of key_code which is not portable.
     if (c != KEY_MOUSE && c != -1) {
-      fprintf(stderr, "Code %d, Key : '%s' hash into %d.\n", c, keyname(c), hashString((unsigned char *)keyname(c)));
+      fprintf(stderr, "Code %d, Key : '%s' hash into %d.\n", c, keyname(c), hashString((unsigned char*)keyname(c)));
       const char* key_str = keyname(c);
       if (key_str != NULL && key_str[0] != '\0') {
         if (key_str[0] != '^') {
-          hash = hashString((unsigned char *)key_str);
+          hash = hashString((unsigned char*)key_str);
         }
       }
       else {
@@ -338,20 +341,24 @@ int main(int file_count, char** args) {
           *cursor = moveRight(*cursor);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
         setDesiredColumn(*cursor, desired_column);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_LEFT:
         if (isCursorDisabled(*select_cursor))
           *cursor = moveLeft(*cursor);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
         setDesiredColumn(*cursor, desired_column);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_UP:
         *cursor = moveUp(*cursor, *desired_column);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_DOWN:
         *cursor = moveDown(*cursor, *desired_column);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_MAJ_RIGHT:
         setSelectCursorOn(*cursor, select_cursor);
@@ -375,11 +382,13 @@ int main(int file_count, char** args) {
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
         *cursor = moveToNextWord(*cursor);
         setDesiredColumn(*cursor, desired_column);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, true, false);
         break;
       case H_KEY_CTRL_LEFT:
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
         *cursor = moveToPreviousWord(*cursor);
         setDesiredColumn(*cursor, desired_column);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, true, false);
         break;
       case H_KEY_CTRL_DOWN:
         selectWord(cursor, select_cursor);
@@ -444,6 +453,7 @@ int main(int file_count, char** args) {
         old_history_frame = NULL;
         setDesiredColumn(*cursor, desired_column);
         updateEDW(&gui_context);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, true, false);
         break;
       case CTRL('y'):
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
@@ -451,6 +461,7 @@ int main(int file_count, char** args) {
         old_history_frame = NULL;
         setDesiredColumn(*cursor, desired_column);
         updateEDW(&gui_context);
+        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, true, false);
         break;
       case CTRL('c'):
         saveToClipBoard(*cursor, *select_cursor);

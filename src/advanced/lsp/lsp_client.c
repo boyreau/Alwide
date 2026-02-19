@@ -29,6 +29,7 @@ void printToStdioJSON(cJSON* json) {
 bool LSP_openLSPServer(char* name, char* command_args, char* language, LSP_Server* server) {
   char* path = whereis(name);
   if (path == NULL) {
+    fprintf(stderr, "LSP server : '%s' wasn't found ! LSP abort for language %s\n", name, language);
     return false;
   }
   char pathMemSafe[PATH_MAX];

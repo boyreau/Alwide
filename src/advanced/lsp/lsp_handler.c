@@ -1,9 +1,9 @@
 #include "lsp_handler.h"
 
 #include <assert.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 
 
 #include "../../utils/global-variables.h"
@@ -160,9 +160,11 @@ bool loadNewLSPServer(LSP_Server* container, char* language) {
   bool opening_result = LSP_openLSPServer(prog_name, args, language, container);
 
 
-  // execute the init in another thread to avoid blocking on the opening of a new thread.
-  pthread_t t;
-  pthread_create(&t, NULL, sendInit, container);
+  if (opening_result) {
+    // execute the init in another thread to avoid blocking on the opening of a new thread.
+    pthread_t t;
+    pthread_create(&t, NULL, sendInit, container);
+  }
 
   return opening_result;
 }
