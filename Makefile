@@ -1,59 +1,77 @@
 CC=clang-18
-CFLAGS=-g -O3 # -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
+CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -O3  # -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
 #CFLAGS=-g -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
 
+BUILD_DIR=build
 executable= al # lsp_test #test_line.o test_file.o  test_line test_file  # utils/debug.o
 
-MODULES= \
-	src/data-management/utf_8_extractor.o \
-	src/data-management/file_structure.o \
-	src/data-management/file_management.o \
-	src/utils/tools.o \
-	src/io_management/io_manager.o \
-	src/utils/key_management.o \
-	src/utils/clipboard_manager.o \
-	src/io_management/viewport_history.o \
-	src/data-management/state_control.o \
-	src/terminal/term_handler.o \
-	src/io_management/io_explorer.o \
-	src/advanced/lsp/lsp_client.o \
-	src/advanced/tree-sitter/tree_manager.o \
-	src/advanced/tree-sitter/tree_query.o \
-	src/advanced/tree-sitter/tree_sitter_highlighter.o \
-	src/advanced/theme.o \
-	src/terminal/highlight.o \
-	src/terminal/click_handler.o \
-	src/config/config.o \
-	src/io_management/workspace_settings.o \
-	src/advanced/lsp/lsp_handler.o
+# C sources files
+SRC_MODULES= \
+	src/data-management/utf_8_extractor.c \
+	src/advanced/shared.c \
+	src/data-management/file_structure.c \
+	src/data-management/file_management.c \
+	src/utils/tools.c \
+	src/io_management/io_manager.c \
+	src/utils/key_management.c \
+	src/utils/clipboard_manager.c \
+	src/io_management/viewport_history.c \
+	src/data-management/state_control.c \
+	src/terminal/term_handler.c \
+	src/io_management/io_explorer.c \
+	src/advanced/lsp/lsp_client.c \
+	src/advanced/tree-sitter/tree_manager.c \
+	src/advanced/tree-sitter/tree_query.c \
+	src/advanced/tree-sitter/tree_sitter_highlighter.c \
+	src/advanced/theme.c \
+	src/terminal/highlight.c \
+	src/terminal/click_handler.c \
+	src/terminal/windows/few.c \
+	src/terminal/windows/edw.c \
+	src/terminal/windows/ofw.c \
+	src/terminal/windows/pow.c \
+	src/config/config.c \
+	src/io_management/workspace_settings.c \
+	src/advanced/lsp/lsp_handler.c \
+	src/advanced/lsp/lsp_notification_dispatcher.c \
+	src/advanced/lsp/lsp_response_dispatcher.c \
+	src/advanced/lsp/lsp_features/lsp_highlighter.c \
+	src/advanced/lsp/lsp_features/lsp_completion.c \
+	src/advanced/lsp/lsp_dispatcher.c \
+	src/advanced/lsp/lsp_emitter.c
 
-LIBS_MODULES= \
-	lib/cJSON/cJSON.o \
-	\
-	lib/tree-sitter/lib/src/lib.o \
-	lib/tree-sitter-c/target/debug/libtree_sitter_c.rlib \
-	lib/tree-sitter-python/target/debug/libtree_sitter_python.rlib \
-	lib/tree-sitter-java/target/debug/libtree_sitter_java.rlib \
-	lib/tree-sitter-cpp/target/debug/libtree_sitter_cpp.rlib \
-	lib/tree-sitter-c-sharp/target/debug/libtree_sitter_c_sharp.rlib \
-	lib/tree-sitter-make/target/debug/libtree_sitter_make.rlib \
-	lib/tree-sitter-css/target/debug/libtree_sitter_css.rlib \
-	lib/tree-sitter-dart/target/debug/libtree_sitter_dart.rlib \
-	lib/tree-sitter-go/target/debug/libtree_sitter_go.rlib \
-	lib/tree-sitter-javascript/target/debug/libtree_sitter_javascript.rlib \
-	lib/tree-sitter-json/target/debug/libtree_sitter_json.rlib \
-	lib/tree-sitter-bash/target/debug/libtree_sitter_bash.rlib \
-	lib/tree-sitter-markdown/target/debug/libtree_sitter_md.rlib \
-	lib/tree-sitter-query/target/debug/libtree_sitter_query.rlib \
-	lib/tree-sitter-vhdl/target/debug/libtree_sitter_vhdl.rlib \
-	lib/tree-sitter-lua/target/debug/libtree_sitter_lua.rlib \
-	lib/tree-sitter-asm/target/debug/libtree_sitter_asm.rlib \
-	lib/tree-sitter-html/target/debug/libtree_sitter_html.rlib
+# C Library sources
+LIB_C_MODULES= \
+	lib/cJSON/cJSON.c \
+	lib/tree-sitter/lib/src/lib.c
 
-ALL_MODULES= $(MODULES) $(LIBS_MODULES)
+# Rust Libraries (keep as .rlib)
+RUST_MODULES= \
+	lib/tree-sitter-c/target/release/libtree_sitter_c.rlib \
+	lib/tree-sitter-python/target/release/libtree_sitter_python.rlib \
+	lib/tree-sitter-java/target/release/libtree_sitter_java.rlib \
+	lib/tree-sitter-cpp/target/release/libtree_sitter_cpp.rlib \
+	lib/tree-sitter-c-sharp/target/release/libtree_sitter_c_sharp.rlib \
+	lib/tree-sitter-make/target/release/libtree_sitter_make.rlib \
+	lib/tree-sitter-css/target/release/libtree_sitter_css.rlib \
+	lib/tree-sitter-dart/target/release/libtree_sitter_dart.rlib \
+	lib/tree-sitter-go/target/release/libtree_sitter_go.rlib \
+	lib/tree-sitter-javascript/target/release/libtree_sitter_javascript.rlib \
+	lib/tree-sitter-json/target/release/libtree_sitter_json.rlib \
+	lib/tree-sitter-bash/target/release/libtree_sitter_bash.rlib \
+	lib/tree-sitter-markdown/target/release/libtree_sitter_md.rlib \
+	lib/tree-sitter-query/target/release/libtree_sitter_query.rlib \
+	lib/tree-sitter-vhdl/target/release/libtree_sitter_vhdl.rlib \
+	lib/tree-sitter-lua/target/release/libtree_sitter_lua.rlib \
+	lib/tree-sitter-asm/target/release/libtree_sitter_asm.rlib \
+	lib/tree-sitter-html/target/release/libtree_sitter_html.rlib
 
-all: $(MODULES) $(executable)
+# Map sources to objects in BUILD_DIR
+OBJECTS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRC_MODULES) $(LIB_C_MODULES))
 
+SHARED_LIBS = -lncursesw -ltinfo
+
+all: $(OBJECTS) $(RUST_MODULES) $(executable)
 
 lib/tree-sitter-markdown/tree-sitter-markdown/libtree-sitter-markdown.a:
 	cd lib/tree-sitter-markdown/tree-sitter-markdown/ && tree-sitter generate && $(MAKE)
@@ -62,28 +80,30 @@ lib/tree-sitter-markdown/tree-sitter-markdown-inline/libtree-sitter-markdown-inl
 	cd lib/tree-sitter-markdown/tree-sitter-markdown-inline/ && tree-sitter generate && $(MAKE)
 
 %.rlib:
-	cd  $(shell echo $@ | cut -d/ -f1-2) && cargo build
+	cd  $(shell echo $@ | cut -d/ -f1-2) && cargo build --release
 
-%.o : %.c %.h
+# Compilation rule for objects
+$(BUILD_DIR)/%.o: %.c
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-test_line: src/test_line.c $(ALL_MODULES)
-	$(CC) $(CFLAGS) $^ -o $@ -lncursesw
+test_line: src/test_line.c $(OBJECTS) $(RUST_MODULES)
+	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
 
-test_file: src/test_file.c $(ALL_MODULES)
-	$(CC) $(CFLAGS) $^ -o $@ -lncursesw
+test_file: src/test_file.c $(OBJECTS) $(RUST_MODULES)
+	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
 
-al: src/main.c $(ALL_MODULES)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@ -lncursesw #utils/debug.o
+al: src/main.c $(OBJECTS) $(RUST_MODULES)
+	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS) #utils/debug.o
 
-lsp_test: src/lsp_test.c $(ALL_MODULES)
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@ -lncursesw
+lsp_test: src/lsp_test.c $(OBJECTS) $(RUST_MODULES)
+	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
 
 clean:
-	rm -rf *.o | rm -rf $(executable) $(MODULES)
+	rm -rf $(BUILD_DIR) $(executable) lsp_test test_line test_file *.o
 
-clean_all:
-	rm -rf *.o && rm -rf $(executable) $(ALL_MODULES) && find . -type d -name "target" -exec rm -rf {} +
+clean_all: clean
+	find . -type d -name "target" -exec rm -rf {} +
 
 
 # !! DO NOT EXECUTE AS SUDO !!. To generate config you have to be as user. sudo will be asked to cp to

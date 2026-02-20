@@ -8,6 +8,20 @@
 
 ////// ---------------- HIGHLIGHTS DESCRIPTOR ---------------
 
+
+typedef enum {
+  LINE_MARKER_NONE = 0,
+  LSP_ERROR = 1,
+  LSP_WARNING = 2,
+  LSP_INFORMATION = 3,
+  LSP_HINT = 4,
+  GIT_DELETE = 5,
+  GIT_ADD = 6,
+  GIT_EDIT = 7,
+} LineMarker;
+
+typedef enum { ADDITIONNAL_NONE, ADDITIONNAL_DIAGNOSTIC } AdditionnalDataType;
+
 typedef struct {
   int abs_row;
   int abs_column;
@@ -29,6 +43,11 @@ typedef struct {
   uint16_t a_blink_priority;
   uint16_t a_protect_priority;
   uint16_t a_invis_priority;
+
+  // Additional data
+  LineMarker line_marker;
+  // TODO for now only Diagnostic are handled may be implement a generic method.
+  void* diagnostic;
 
   // Part
   FilePosition begin;
@@ -55,7 +74,8 @@ bool tphd_isCursorAfter(TextPartHighlightDescriptor* self, Cursor cursor);
 void whd_init(WindowHighlightDescriptor* self);
 
 void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor end, NCURSES_PAIRS_T color,
-                          attr_t attributes, uint16_t priority, bool override_attributes);
+                          attr_t attributes, uint16_t priority, bool override_attributes, LineMarker marker,
+                          void* diagnostic);
 
 void whd_print(WindowHighlightDescriptor* self);
 

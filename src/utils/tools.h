@@ -1,11 +1,7 @@
-//
-// Created by arnaud on 31/03/24.
-//
-
 #ifndef TOOLS_H
 #define TOOLS_H
 #include <ncurses.h>
-#include <stdlib.h>
+#include <sys/types.h>
 
 #include "../io_management/io_manager.h"
 
@@ -46,5 +42,9 @@ int hashString(unsigned char* str);
 char* loadFullFile(const char* path, long* length);
 
 int mkdir_p(const char* path, mode_t mode);
+
+void countStringFrame(char* ch, int length, int* current_row, int* current_column, int* screen_max_width);
+
+char *trim(char *ch);
 
 #endif // TOOLS_H

@@ -24,6 +24,7 @@ void destroyFileContainer(FileContainer* container) {
   destroyEndOfHistory(container->history_root);
   free(container->history_root);
   ts_tree_delete(container->highlight_data.tree);
+  destroyLspDatas(&container->lsp_datas);
 }
 
 void openNewFile(char* file_path, FileContainer** files, int* file_count, int* current_file, bool* refresh_ofw,
@@ -54,7 +55,7 @@ void openNewFile(char* file_path, FileContainer** files, int* file_count, int* c
   if ((*files)[*file_count - 1].lsp_datas.is_enable) {
     char* dump = dumpSelection(tryToReachAbsPosition((*files)[*file_count - 1].cursor, 1, 0),
                                tryToReachAbsPosition((*files)[*file_count - 1].cursor, INT_MAX, INT_MAX));
-    LSP_notifyLspFileDidOpen(*getLSPServerForLanguage(&lsp_servers, (*files)[*file_count - 1].lsp_datas.lang_id),
+    LSP_notifyLspFileDidOpen(getLSPServerForLanguage(&lsp_servers, (*files)[*file_count - 1].lsp_datas.lang_id),
                              (*files)[*file_count - 1].io_file.path_args, dump);
     free(dump);
   }
@@ -62,8 +63,7 @@ void openNewFile(char* file_path, FileContainer** files, int* file_count, int* c
   *current_file = *file_count - 1;
 }
 
-void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_ofw, bool* refresh_edw,
-               bool* refresh_local_vars) {
+void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_local_vars) {
   if (*file_count == 1) // Always need to keep one file.
   {
     return;
@@ -80,8 +80,6 @@ void closeFile(FileContainer** files, int* file_count, int* current_file, bool* 
 
   // realloc files to avoid excess of mem.
   *files = realloc(*files, *file_count * sizeof(FileContainer));
-  *refresh_ofw = true;
-  *refresh_edw = true;
   *refresh_local_vars = true;
 }
 
@@ -119,7 +117,7 @@ void setupFileContainer(char* path, FileContainer* container) {
 void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file, FileNode*** root, Cursor** cursor,
                     Cursor** select_cursor, Cursor** old_cur, int** desired_column, int** screen_x, int** screen_y,
                     int** old_screen_x, int** old_screen_y, History*** history_root, History*** history_frame,
-                    FileHighlightDatas** highlight_data) {
+                    TS_Data** highlight_data, LSP_Data** lsp_datas) {
   *io_file = &files[current_file].io_file;               // Describe the IO file on OS
   *root = &files[current_file].root;                     // The root of the File object
   *cursor = &files[current_file].cursor;                 // The current cursor for the root File
@@ -134,6 +132,7 @@ void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file,
   *history_frame = &files[current_file].history_frame; // Current node of the History. Before -> Undo, After -> Redo.
   *highlight_data = &files[current_file].highlight_data;
   **old_screen_y = -1;
+  *lsp_datas = &files[current_file].lsp_datas;
 }
 
 
@@ -157,7 +156,7 @@ void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files)
     if ((*files)[i].lsp_datas.is_enable) {
       char* dump = dumpSelection(tryToReachAbsPosition((*files)[i].cursor, 1, 0),
                                  tryToReachAbsPosition((*files)[i].cursor, INT_MAX, INT_MAX));
-      LSP_notifyLspFileDidOpen(*getLSPServerForLanguage(&lsp_servers, (*files)[i].lsp_datas.lang_id),
+      LSP_notifyLspFileDidOpen(getLSPServerForLanguage(&lsp_servers, (*files)[i].lsp_datas.lang_id),
                                (*files)[i].io_file.path_args, dump);
       free(dump);
     }
@@ -167,7 +166,7 @@ void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files)
     *file_count = 1;
     setupFileContainer("", *files);
     if ((*files)[0].lsp_datas.is_enable) {
-      LSP_notifyLspFileDidOpen(*getLSPServerForLanguage(&lsp_servers, (*files)[0].lsp_datas.lang_id),
+      LSP_notifyLspFileDidOpen(getLSPServerForLanguage(&lsp_servers, (*files)[0].lsp_datas.lang_id),
                                (*files)[0].io_file.path_args, "");
     }
   }
@@ -388,6 +387,15 @@ Cursor insertCharArrayAtCursor(Cursor cursor, char* chs) {
   return cursor;
 }
 
+Cursor insertCharArrayAtCursorWithHist(History** history_p, Cursor cursor, char* chs,
+                                       PayloadStateChange payload_state_change) {
+  Cursor tmp = cursor;
+  cursor = insertCharArrayAtCursor(cursor, chs);
+  saveAction(history_p, createInsertAction(tmp, cursorToDescriptor(&cursor)), globalOnStageChange, &cursor,
+             &payload_state_change);
+
+  return cursor;
+}
 
 Cursor byteCursorToCursor(Cursor cursor, int row, int byte_column) {
   row += 1;
@@ -420,6 +428,7 @@ Cursor goToBegin(Cursor cursor) {
 
 
 bool isCursorDisabled(Cursor cursor) { return cursor.file_id.absolute_row == -1; }
+bool isCursorDescriptorDisabled(CursorDescriptor cursor) { return cursor.row == -1; }
 
 int utf8CharBetween2Cursor(Cursor cur1, Cursor cur2) {
   if (isCursorPreviousThanOther(cur2, cur1)) {
@@ -495,7 +504,7 @@ void setSelectCursorOff(Cursor* cursor, Cursor* select_cursor, SELECT_OFF_STYLE 
 
 
 void selectWord(Cursor* cursor, Cursor* select_cursor) {
-  if (cursor->line_id.absolute_column != 0 && isAWordLetter(getCharForLineIdentifier(cursor->line_id)) == true) {
+  if (getAbsCol(cursor) != 0 && isAWordLetter(getCharForLineIdentifier(cursor->line_id)) == true) {
     *cursor = moveToPreviousWord(*cursor);
   }
   setSelectCursorOn(*cursor, select_cursor);
@@ -504,8 +513,8 @@ void selectWord(Cursor* cursor, Cursor* select_cursor) {
 
 void selectLine(Cursor* cursor, Cursor* select_cursor) {
   Cursor tmp = cursorOf(cursor->file_id, moduloLineIdentifierR(getLineForFileIdentifier(cursor->file_id), 0));
-  select_cursor->file_id = tryToReachAbsRow(cursor->file_id, cursor->file_id.absolute_row + 1);
-  if (select_cursor->file_id.absolute_row == cursor->file_id.absolute_row) {
+  select_cursor->file_id = tryToReachAbsRow(cursor->file_id, getAbsRow(cursor) + 1);
+  if (getAbsRow(select_cursor) == getAbsRow(cursor)) {
     tmp = moveLeft(tmp);
     select_cursor->line_id = getLastLineNode(getLineForFileIdentifier(cursor->file_id));
   }
@@ -536,7 +545,8 @@ void deleteSelection(Cursor* cursor, Cursor* select_cursor) {
 
 void deleteSelectionWithState(History** history_p, Cursor* cursor, Cursor* select_cursor,
                               PayloadStateChange payload_state_change) {
-  saveAction(history_p, createDeleteAction(*cursor, *select_cursor), onStateChangeTS, (long*)&payload_state_change);
+  saveAction(history_p, createDeleteAction(*cursor, cursorToDescriptor(select_cursor)), globalOnStageChange, cursor,
+             (void*)&payload_state_change);
   deleteSelection(cursor, select_cursor);
 }
 
@@ -585,4 +595,19 @@ char* dumpSelection(Cursor cur1, Cursor cur2) {
   dump[index] = '\0';
 
   return dump;
+}
+
+
+bool isAfterAWord(Cursor* cursor) {
+  if (!hasElementBeforeLine(cursor->line_id)) {
+    return false;
+  }
+  Char_U8 u8 = getCharAtCursor(*cursor);
+  if (isAWordLetter(u8)) {
+    return true;
+  }
+  if (u8.t[0] == '.') {
+    return true;
+  }
+  return false;
 }

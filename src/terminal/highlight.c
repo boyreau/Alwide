@@ -23,6 +23,9 @@ void tphd_init(TextPartHighlightDescriptor* self, FilePosition begin, FilePositi
   self->a_blink_priority = self->a_bold_priority = self->a_dim_priority = self->a_invis_priority =
     self->a_italic_priority = self->a_protect_priority = self->a_reverse_priority = self->a_standout_priority =
       self->a_underline_priority = 0;
+
+  self->line_marker = LINE_MARKER_NONE;
+  self->diagnostic = NULL;
 }
 
 bool tphd_isCursorIn(TextPartHighlightDescriptor* self, Cursor cursor) {
@@ -90,8 +93,15 @@ FilePosition minPosition(FilePosition pos1, FilePosition pos2) {
   return pos2;
 }
 
+FilePosition maxPosition(FilePosition pos1, FilePosition pos2) {
+  if (isPositionBeforePosition(pos1, pos2)) {
+    return pos2;
+  }
+  return pos1;
+}
+
 void tphd_mergeAttributes(TextPartHighlightDescriptor* self, NCURSES_PAIRS_T color, attr_t attributes,
-                          uint16_t priority, bool override_attributes) {
+                          uint16_t priority, bool override_attributes, LineMarker marker, void* diagnostic) {
   if (self->color_priority <= priority) {
     self->color = color;
     self->color_priority = priority;
@@ -100,89 +110,106 @@ void tphd_mergeAttributes(TextPartHighlightDescriptor* self, NCURSES_PAIRS_T col
   if (self->a_italic_priority <= priority) {
     if (attributes & A_ITALIC) {
       self->attributes |= A_ITALIC;
+      self->a_italic_priority = priority;
     }
     else if (override_attributes) {
       self->attributes &= ~A_ITALIC;
+      self->a_italic_priority = priority;
     }
-    self->a_italic_priority = priority;
   }
   if (self->a_bold_priority <= priority) {
     if (attributes & A_BOLD) {
       self->attributes |= A_BOLD;
+      self->a_bold_priority = priority;
     }
     else if (override_attributes) {
       self->attributes &= ~A_BOLD;
+      self->a_bold_priority = priority;
     }
-    self->a_bold_priority = priority;
   }
   if (self->a_underline_priority <= priority) {
     if (attributes & A_UNDERLINE) {
       self->attributes |= A_UNDERLINE;
+      self->a_underline_priority = priority;
     }
     else if (override_attributes) {
       self->attributes &= ~A_UNDERLINE;
+      self->a_underline_priority = priority;
     }
-    self->a_underline_priority = priority;
   }
   if (self->a_reverse_priority <= priority) {
     if (attributes & A_REVERSE) {
       self->attributes |= A_REVERSE;
+      self->a_reverse_priority = priority;
     }
     else if (override_attributes) {
       self->attributes &= ~A_REVERSE;
+      self->a_reverse_priority = priority;
     }
-    self->a_reverse_priority = priority;
   }
   if (self->a_dim_priority <= priority) {
     if (attributes & A_DIM) {
       self->attributes |= A_DIM;
+      self->a_dim_priority = priority;
     }
     else if (override_attributes) {
       self->attributes &= ~A_DIM;
+      self->a_dim_priority = priority;
     }
-    self->a_dim_priority = priority;
   }
   if (self->a_standout_priority <= priority) {
     if (attributes & A_STANDOUT) {
       self->attributes |= A_STANDOUT;
+      self->a_standout_priority = priority;
     }
     else if (override_attributes) {
       self->attributes &= ~A_STANDOUT;
+      self->a_standout_priority = priority;
     }
-    self->a_standout_priority = priority;
   }
   if (self->a_blink_priority <= priority) {
     if (attributes & A_BLINK) {
       self->attributes |= A_BLINK;
+      self->a_blink_priority = priority;
     }
     else if (override_attributes) {
       self->attributes &= ~A_BLINK;
+      self->a_blink_priority = priority;
     }
-    self->a_blink_priority = priority;
   }
   if (self->a_protect_priority <= priority) {
     if (attributes & A_PROTECT) {
       self->attributes |= A_PROTECT;
+      self->a_protect_priority = priority;
     }
     else if (override_attributes) {
       self->attributes &= ~A_PROTECT;
+      self->a_protect_priority = priority;
     }
-    self->a_protect_priority = priority;
   }
   if (self->a_invis_priority <= priority) {
     if (attributes & A_INVIS) {
       self->attributes |= A_INVIS;
+      self->a_invis_priority = priority;
     }
     else if (override_attributes) {
       self->attributes &= ~A_INVIS;
+      self->a_invis_priority = priority;
     }
-    self->a_invis_priority = priority;
+  }
+
+  if (marker != 0) {
+    if (self->line_marker == 0 || self->line_marker > marker) {
+      self->line_marker = marker;
+      self->diagnostic = diagnostic;
+    }
   }
 }
 
 
 void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor end, NCURSES_PAIRS_T color,
-                          attr_t attributes, uint16_t priority, bool override_attributes) {
+                          attr_t attributes, uint16_t priority, bool override_attributes, LineMarker marker,
+                          void* diagnostic) {
   FilePosition current_pos = {begin.file_id.absolute_row, begin.line_id.absolute_column};
   FilePosition end_pos = {end.file_id.absolute_row, end.line_id.absolute_column};
   // fprintf(stderr, "insert (%d, %d) -> (%d, %d)\n", current_pos.abs_row, current_pos.abs_column, end_pos.abs_row,
@@ -210,8 +237,10 @@ void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor 
     }
     else if (isPositionBeforePosition(current_pos, self->descriptors[i].begin)) {
       // start in the middle of an empty space
-      Cursor prev = moveLeft(tryToReachAbsPosition(begin, current_pos.abs_row, current_pos.abs_column));
-      new_field_end = minPosition((FilePosition){prev.file_id.absolute_row, prev.line_id.absolute_column}, end_pos);
+      Cursor prev = moveLeft(
+        tryToReachAbsPosition(begin, self->descriptors[i].begin.abs_row, self->descriptors[i].begin.abs_column));
+      new_field_end = maxPosition(
+        minPosition((FilePosition){prev.file_id.absolute_row, prev.line_id.absolute_column}, end_pos), current_pos);
     }
     else {
       // so the current_pos is in a field.
@@ -237,7 +266,7 @@ void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor 
       }
 
       tphd_init(self->descriptors + i, current_pos, new_field_end);
-      tphd_mergeAttributes(self->descriptors + i, color, attributes, priority, override_attributes);
+      tphd_mergeAttributes(self->descriptors + i, color, attributes, priority, override_attributes, marker, diagnostic);
 
       i++;
     }
@@ -281,7 +310,8 @@ void whd_insertDescriptor(WindowHighlightDescriptor* self, Cursor begin, Cursor 
       self->descriptors[i + middle_offset].begin = current_pos;
       self->descriptors[i + middle_offset].end = new_field_end;
 
-      tphd_mergeAttributes(self->descriptors + i + middle_offset, color, attributes, priority, override_attributes);
+      tphd_mergeAttributes(self->descriptors + i + middle_offset, color, attributes, priority, override_attributes,
+                           marker, diagnostic);
 
       if (after_offset) {
         // should happen max once !
@@ -386,14 +416,14 @@ TextPartHighlightDescriptor* whd_tphd_forCursorWithOffsetIndex(WindowHighlightDe
 void initColorsForTheme(HighlightThemeList theme_list, int* color_index, int* color_pair) {
   // Setup color theme.
   for (int i = 0; i < theme_list.size; i++) {
-    init_color((*color_index)++, theme_list.groups[i].color.r, theme_list.groups[i].color.g,
-               theme_list.groups[i].color.b);
-    init_pair(*color_pair, *color_index - 1, COLOR_BLACK);
+    init_extended_color((*color_index)++, theme_list.groups[i].color.r, theme_list.groups[i].color.g,
+                        theme_list.groups[i].color.b);
+    init_extended_pair(*color_pair, *color_index - 1, BG_COLOR_DEFAULT);
     theme_list.groups[i].color_n = *color_pair;
 
-    init_color((*color_index)++, theme_list.groups[i].color_hover.r, theme_list.groups[i].color_hover.g,
-               theme_list.groups[i].color_hover.b);
-    init_pair(*color_pair + 1000, *color_index - 1, COLOR_HOVER);
+    init_extended_color((*color_index)++, theme_list.groups[i].color_hover.r, theme_list.groups[i].color_hover.g,
+                        theme_list.groups[i].color_hover.b);
+    init_extended_pair(*color_pair + 1000, *color_index - 1, BG_COLOR_HOVER);
     theme_list.groups[i].color_hover_n = *color_pair + 1000;
     (*color_pair)++;
   }

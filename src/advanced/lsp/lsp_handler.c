@@ -1,22 +1,63 @@
 #include "lsp_handler.h"
 
+#include <assert.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+
 
 #include "../../utils/global-variables.h"
 #include "../../utils/tools.h"
 
 
-void setLspDatas(LSP_Datas* lsp_datas, IO_FileID io_file) {
-  bool did_lang_was_found = getLanguageStringIDForFile(lsp_datas->lang_id, io_file);
+void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file) {
+  bool did_lang_was_found = getLanguageStringIDForFile(lsp_data->lang_id, io_file);
 
   LSP_Server* lsp_server = NULL;
   if (did_lang_was_found == true) {
-    lsp_server = getLSPServerForLanguage(&lsp_servers, lsp_datas->lang_id);
+    lsp_server = getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id);
   }
-  lsp_datas->is_enable = lsp_server != NULL;
+  lsp_data->is_enable = lsp_server != NULL;
+  lsp_data->computed = NULL;
+  strncpy(lsp_data->path_abs, io_file.path_abs, PATH_MAX - 1);
+
+  if (lsp_data->is_enable) {
+    lsp_data->computed = malloc(sizeof(LSP_ComputedData));
+    assert(lsp_data->computed != NULL);
+    LSP_initComputedData(lsp_data->computed);
+  }
 }
 
+void destroyLspDatas(LSP_Data* lsp_datas) {
+  LSP_destroyComputedData(lsp_datas->computed);
+  free(lsp_datas->computed);
+}
+
+void LSP_destroyComputedData(LSP_ComputedData* lsp_payload) {
+  if (!lsp_payload) {
+    return;
+  }
+
+  // free diagnostics
+  for (int i = 0; i < lsp_payload->diagnostics_size; i++) {
+    LSP_destroyDiagnostic(lsp_payload->diagnostics[i]);
+  }
+  free(lsp_payload->diagnostics);
+
+  // free completionList
+  LSP_destroyCompletionList(&lsp_payload->completions);
+}
+
+void LSP_initComputedData(LSP_ComputedData* payload) {
+  // init diagnostics
+  payload->diagnostics = NULL;
+  payload->diagnostics_size = 0;
+
+  // init completions
+  payload->completions.completions.items = NULL;
+  payload->completions.completions.size = 0;
+  payload->completions.isIncomplete = false;
+}
 
 void initLSPServerList(LSPServerLinkedList* list) { list->head = NULL; }
 
@@ -48,7 +89,7 @@ void addLSPServerCellToLSPServerList(LSPServerLinkedList* list, LSPServerLinkedL
 
 bool getProgName(char* language, char* prog_name, char* args) {
   // LSP_TOGGLE
-  return false;
+  // return false;
 
   if (strcmp(language, "bash") == 0) {
     strcpy(prog_name, "bash-language-server");
@@ -101,6 +142,12 @@ LSP_Server* getLSPServerForLanguage(LSPServerLinkedList* list, char* language) {
   return &cell->lsp_server;
 }
 
+void* sendInit(void* args) {
+  LSP_Server* container = args;
+  LSP_initializeServer(container, "al", "0.5",
+                       workspace_settings.is_used ? workspace_settings.dir_path : getenv("PWD"));
+  return 0;
+}
 
 bool loadNewLSPServer(LSP_Server* container, char* language) {
   char prog_name[1000];
@@ -112,7 +159,12 @@ bool loadNewLSPServer(LSP_Server* container, char* language) {
 
   bool opening_result = LSP_openLSPServer(prog_name, args, language, container);
 
-  LSP_initializeServer(container, "al", "0.5", loaded_settings.is_used ? loaded_settings.dir_path : getenv("PWD"));
+
+  if (opening_result) {
+    // execute the init in another thread to avoid blocking on the opening of a new thread.
+    pthread_t t;
+    pthread_create(&t, NULL, sendInit, container);
+  }
 
   return opening_result;
 }

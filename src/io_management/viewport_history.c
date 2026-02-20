@@ -71,3 +71,7 @@ void fetchSavedCursorPosition(IO_FileID file, Cursor* cursor, int* screen_x, int
     // TODO may check for screen_x and screen_y to be not too far from code.
   }
 }
+
+ViewPort getViewPort(GUIContext* context, int* screen_x, int* screen_y) {
+  return (ViewPort){.gui = context, .screen_x = screen_x, .screen_y = screen_y};
+}

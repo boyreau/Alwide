@@ -7,9 +7,6 @@
 
 #include "../utils/constants.h"
 
-/* Unix call, use 'man wcwidth' to see explication. */
-int wcwidth(const wint_t wc);
-
 /**
  * Print the Char_U8 to the file.
  */

@@ -2395,3 +2395,15 @@ int readNBytesAtPosition(Cursor* cursor_p, int row_raw, int column_raw, char* de
   *cursor_p = cursorOf(file_id, line_id);
   return readNBytesCharAtCursor(cursor_p, dest, length);
 }
+
+
+CursorDescriptor cursorToDescriptor(Cursor* cursor) {
+  CursorDescriptor descriptor;
+  descriptor.row = getAbsRow(cursor);
+  descriptor.column = getAbsCol(cursor);
+  return descriptor;
+}
+
+
+int getAbsRow(Cursor* cursor) { return cursor->file_id.absolute_row; }
+int getAbsCol(Cursor* cursor) { return cursor->line_id.absolute_column; }
