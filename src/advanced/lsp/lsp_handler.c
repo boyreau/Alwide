@@ -46,6 +46,9 @@ void LSP_destroyComputedData(LSP_ComputedData* lsp_payload) {
 
   // free completionList
   LSP_destroyCompletionList(&lsp_payload->completions);
+
+  // free hoverlist
+  LSP_destroyHover(&lsp_payload->hover);
 }
 
 void LSP_initComputedData(LSP_ComputedData* payload) {
@@ -57,6 +60,11 @@ void LSP_initComputedData(LSP_ComputedData* payload) {
   payload->completions.completions.items = NULL;
   payload->completions.completions.size = 0;
   payload->completions.isIncomplete = false;
+
+  // init hoverlist
+  payload->hover.size = 0;
+  payload->hover.contents = NULL;
+  payload->hover.is_range = false;
 }
 
 void initLSPServerList(LSPServerLinkedList* list) { list->head = NULL; }

@@ -11,6 +11,7 @@ typedef struct {
   Diagnostic* diagnostics;
   int diagnostics_size;
   CompletionList completions;
+  Hover hover;
 } LSP_ComputedData;
 
 void LSP_initComputedData(LSP_ComputedData* payload);
