@@ -236,7 +236,6 @@ typedef enum {
 typedef enum { citf_PlainText = 1, citf_Snippet = 2 } CompletionInsertTextFormat;
 
 
-
 struct _CompletionItem {
   char label[METHOD_MAX_LENGTH];
   char detail[METHOD_MAX_LENGTH];
@@ -249,7 +248,7 @@ struct _CompletionItem {
   char insertText[METHOD_MAX_LENGTH];
   TextEdit text_edit;
   bool is_text_edit;
-  TextEdit *additionalTextEdits;
+  TextEdit* additionalTextEdits;
   int additionalTextEditsSize;
 };
 
@@ -271,6 +270,24 @@ void LSP_getCompletionItemFromJSON(cJSON* json, CompletionItem* item);
 void LSP_destroyCompletionList(CompletionList* completion_list);
 
 
+typedef struct MarkedString {
+  char value[MESSAGE_LENGTH];
+  DocumentationType documentationType;
+} MarkedString;
+
+typedef struct Hover {
+  MarkedString *contents;
+  int size;
+  bool is_range;
+  Range range;
+} Hover;
+
+
+void LSP_getHoverFromJsSON(cJSON* json, Hover* hover_list);
+void LSP_getMarkedStringFromJSON(cJSON* json, MarkedString* item);
+void LSP_destroyHover(Hover* hover_list);
+
+
 //// -------- Receive Functions --------
 
 bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, LSP_Server* lsp, void* payload),
@@ -283,6 +300,6 @@ bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, LS
 void LSP_notifyLspFileDidOpen(LSP_Server* lsp, char* file_name, char* file_content);
 void LSP_notifyLspFileDidChange(LSP_Server* lsp, char* file_name, cJSON* array_of_changes, int version);
 void LSP_requestCompletion(LSP_Server* lsp, char* file_name, int row, int column);
-
+void LSP_requestHover(LSP_Server* lsp, char* file_name, int row, int column);
 
 #endif // CLIENT_H

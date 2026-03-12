@@ -802,6 +802,81 @@ void LSP_destroyCompletionList(CompletionList* completion_list) {
 }
 
 
+void LSP_getHoverFromJSON(cJSON* json, Hover* hover_list) {
+  if (!json || cJSON_IsNull(json)) {
+    hover_list->size = 0;
+    hover_list->contents = NULL;
+    hover_list->is_range = false;
+    return;
+  }
+
+  cJSON* range = cJSON_GetObjectItem(json, "range");
+  if (range) {
+    hover_list->range = LSP_getRangeFromJSON(range);
+    hover_list->is_range = true;
+  }
+  else {
+    hover_list->is_range = false;
+  }
+
+  cJSON* contents = cJSON_GetObjectItem(json, "contents");
+  if (cJSON_IsArray(contents)) {
+    hover_list->size = cJSON_GetArraySize(contents);
+    hover_list->contents = malloc(sizeof(MarkedString) * hover_list->size);
+    for (int i = 0; i < hover_list->size; i++) {
+      LSP_getMarkedStringFromJSON(cJSON_GetArrayItem(contents, i), &hover_list->contents[i]);
+    }
+  }
+  else {
+    hover_list->size = 1;
+    hover_list->contents = malloc(sizeof(MarkedString));
+    LSP_getMarkedStringFromJSON(contents, &hover_list->contents[0]);
+  }
+}
+
+void LSP_getMarkedStringFromJSON(cJSON* json, MarkedString* item) {
+  if (cJSON_IsString(json)) {
+    strlcpy(item->value, cJSON_GetStringValue(json), MESSAGE_LENGTH);
+    item->documentationType = dt_PLAIN_TEXT;
+  }
+  else if (cJSON_IsObject(json)) {
+    cJSON* kind = cJSON_GetObjectItem(json, "kind");
+    cJSON* value = cJSON_GetObjectItem(json, "value");
+    if (kind && value) {
+      // MarkupContent
+      if (strcmp(cJSON_GetStringValue(kind), "markdown") == 0) {
+        item->documentationType = dt_MARKDOWN;
+      }
+      else {
+        item->documentationType = dt_PLAIN_TEXT;
+      }
+      strlcpy(item->value, cJSON_GetStringValue(value), MESSAGE_LENGTH);
+    }
+    else if (value) {
+      // MarkedString with { language, value }
+
+      /* TODO handle MarkedString as a markdown documentationType with
+       *  * The pair of a language and a value is an equivalent to markdown:
+       *  ```${language}
+       *  ${value}
+       *  ```
+       */
+      strlcpy(item->value, cJSON_GetStringValue(value), MESSAGE_LENGTH);
+      item->documentationType = dt_PLAIN_TEXT;
+    }
+  }
+}
+
+void LSP_destroyHover(Hover* hover_list) {
+  if (hover_list->contents) {
+    free(hover_list->contents);
+    hover_list->contents = NULL;
+  }
+  hover_list->size = 0;
+  hover_list->is_range = false;
+}
+
+
 //// -------- Receive Functions --------
 
 bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, LSP_Server* lsp, void* payload),
@@ -864,6 +939,27 @@ void LSP_requestCompletion(LSP_Server* lsp, char* file_name, int row, int column
   LSP_PacketID id = LSP_sendPacketWithJSON(lsp, "textDocument/completion", request_content, REQUEST);
 
   LSP_addResponseContext(lsp, id, "textDocument/completion", file_name, NULL);
+
+  cJSON_Delete(request_content);
+}
+
+
+void LSP_requestHover(LSP_Server* lsp, char* file_name, int row, int column) {
+  cJSON* request_content = cJSON_CreateObject();
+
+  cJSON* text_document = LSP_getJSONTextDocumentIdentifier(file_name);
+  cJSON_AddItemToObject(request_content, "textDocument", text_document);
+
+  cJSON* position_json = LSP_getJSONPosition(row, column);
+  cJSON_AddItemToObject(request_content, "position", position_json);
+
+  LSP_PacketID id = LSP_sendPacketWithJSON(lsp, "textDocument/hover", request_content, REQUEST);
+
+  Position* pos = malloc(sizeof(Position));
+  pos->row = row;
+  pos->column = column;
+
+  LSP_addResponseContext(lsp, id, "textDocument/hover", file_name, pos);
 
   cJSON_Delete(request_content);
 }
