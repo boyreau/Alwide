@@ -16,7 +16,7 @@ bool handleClick(GUIContext* gui_context, FileContainer** files, int* file_count
 ////// -------------- CLICK FUNCTIONS --------------
 
 bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_cursor, int* desired_column,
-                       int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag,
+                       int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag, FileContainer* file,
                        WindowHighlightDescriptor* highlight_descriptor);
 
 void handleOpenedFileClick(GUIContext* gui_context, FileContainer* files, int* file_count, int* current_file,

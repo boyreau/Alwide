@@ -1,21 +1,63 @@
 #include "lsp_response_dispatcher.h"
 
+#include <assert.h>
 #include <string.h>
 
+#include "../../terminal/term_handler.h"
 #include "../../terminal/windows/edw.h"
 #include "../../terminal/windows/pow.h"
 
 void receiveCompletionData(cJSON* packet, FileContainer* file, ViewPort* view_port, Cursor* cursor) {
   LSP_destroyCompletionList(&file->lsp_datas.computed->completions);
   LSP_getCompletionListFromJSON(LSP_getPacketResult(packet), &file->lsp_datas.computed->completions);
+
+  // if there is no hover data we close the popup
   if (file->lsp_datas.computed->completions.completions.size == 0) {
     if (view_port->gui->edw_context.pow_owner == COMPLETION) {
       gui_closePopup(view_port->gui);
     }
+    return;
   }
-  else {
-    gui_resumeCompletionTextAnchor(view_port, cursor);
+
+  gui_resumeCompletionTextAnchor(view_port, cursor);
+}
+
+void receiveHoverData(cJSON* packet, FileContainer* file, ViewPort* view_port, Cursor* cursor, void* payload) {
+  LSP_destroyHover(&file->lsp_datas.computed->hover);
+  LSP_getHoverFromJSON(LSP_getPacketResult(packet), &file->lsp_datas.computed->hover);
+  assert(payload != NULL);
+
+  // if there is no hover data we close the popup
+  if (file->lsp_datas.computed->hover.size == 0) {
+    if (view_port->gui->edw_context.pow_owner == HOVER_DIAGNOSTICS) {
+      gui_closePopup(view_port->gui);
+    }
+    return;
   }
+
+  // create range using cursor position when request if not present
+  if (file->lsp_datas.computed->hover.size > 0 && file->lsp_datas.computed->hover.is_range == false) {
+    Position* pos = (Position*)payload;
+
+    tryToReachAbsPosition(*cursor, pos->row, pos->column);
+    Cursor begin = *cursor;
+    Cursor end = *cursor;
+    selectWord(&begin, &end);
+
+    // set up the new range
+    file->lsp_datas.computed->hover.range.pos1 =
+      (Position){.row = begin.file_id.absolute_row - 1, .column = begin.line_id.absolute_column};
+    file->lsp_datas.computed->hover.range.pos2 =
+      (Position){.row = end.file_id.absolute_row - 1, .column = end.line_id.absolute_column};
+    file->lsp_datas.computed->hover.is_range = true;
+  }
+
+  // We assert that every data going outfrom there has a range.
+  assert(file->lsp_datas.computed->hover.is_range);
+  Range range = file->lsp_datas.computed->hover.range;
+  gui_resumeHoverInformation(cursor, view_port, &range);
+
+  free(payload);
 }
 
 
@@ -23,7 +65,8 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data)
   LSP_PacketID id = LSP_getPacketID(packet);
 
   LSP_ResponseContext context;
-  LSP_popResponseContext(lsp, id, &context);
+  bool pop_result = LSP_popResponseContext(lsp, id, &context);
+  assert(pop_result);
 
   int index = getIndexFileContainerForName(data, context.file_name);
   if (index == -1) {
@@ -45,9 +88,12 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data)
   }
 
   if (strcmp(context.method, "textDocument/completion") == 0) {
-    // TODO implement the handle of the completion receive !
     fprintf(stderr, "RECEIVE completion !\n");
     receiveCompletionData(packet, data->files + index, &data->view_port, data->cursor);
+  }
+  else if (strcmp(context.method, "textDocument/hover") == 0) {
+    fprintf(stderr, "RECEIVE hover\n");
+    receiveHoverData(packet, data->files + index, &data->view_port, data->cursor, context.payload);
   }
   else {
     fprintf(stderr, "Response method NOT SUPPORTED !\n      => %s\n", context.method);

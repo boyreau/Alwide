@@ -283,7 +283,7 @@ typedef struct Hover {
 } Hover;
 
 
-void LSP_getHoverFromJsSON(cJSON* json, Hover* hover_list);
+void LSP_getHoverFromJSON(cJSON* json, Hover* hover_list);
 void LSP_getMarkedStringFromJSON(cJSON* json, MarkedString* item);
 void LSP_destroyHover(Hover* hover_list);
 

@@ -25,4 +25,8 @@ void LSP_highlightCurrentFile(LSP_Data* lsp_datas, Cursor cursor, WindowHighligh
                          (LineMarker)lsp_datas->computed->diagnostics[i].severity,
                          lsp_datas->computed->diagnostics + i);
   }
+
+  // lsp_datas->computed->hover.
+
+  // TODO highlight with marker
 }

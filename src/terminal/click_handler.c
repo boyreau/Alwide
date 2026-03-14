@@ -7,11 +7,27 @@
 
 #include "../data-management/file_management.h"
 #include "../utils/constants.h"
+#include "../utils/global-variables.h"
 #include "../utils/key_management.h"
 #include "term_handler.h"
 #include "windows/edw.h"
 #include "windows/few.h"
 #include "windows/pow.h"
+
+
+bool isClickInsideWindow(WINDOW* w, MEVENT* m_event) {
+  return getbegx(w) <= m_event->x && m_event->x < getbegx(w) + getmaxx(w) && getbegy(w) <= m_event->y &&
+    m_event->y < getbegy(w) + getmaxy(w);
+}
+
+Cursor getCursorForEDWClick(Cursor* cursor, MEVENT* m_event, int screen_x, int screen_y, int edws_offset_x,
+                            int edws_offset_y) {
+  FileIdentifier new_file_id = tryToReachAbsRow(cursor->file_id, screen_y + m_event->y - edws_offset_y);
+  LineIdentifier new_line_id = getLineIdForScreenX(moduloLineIdentifierR(getLineForFileIdentifier(new_file_id), 0),
+                                                   screen_x, m_event->x - edws_offset_x);
+
+  return cursorOf(new_file_id, new_line_id);
+}
 
 
 bool handleClick(GUIContext* gui_context, FileContainer** files, int* file_count, int* current_file_index,
@@ -78,7 +94,7 @@ mouse_read:;
       gui_context->focus_w = gui_context->edw_context.ftw;
     }
     force_repaint = handleEditorClick(gui_context, cursor, select_cursor, desired_column, screen_x, screen_y, m_event,
-                                      *mouse_drag, highlight_descriptor);
+                                      *mouse_drag, *files + *current_file_index, highlight_descriptor);
   }
 
   if (m_event->bstate & BUTTON1_RELEASED || m_event->bstate & BUTTON1_CLICKED) {
@@ -98,10 +114,10 @@ mouse_read:;
 
 
 bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_cursor, int* desired_column,
-                       int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag,
+                       int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag, FileContainer* file,
                        WindowHighlightDescriptor* highlight_descriptor) {
   int edws_offset_x = getbegx(gui_context->edw_context.ftw);
-  int edws_offset_y = gui_context->ofw_context.ofw_height;
+  int edws_offset_y = getbegy(gui_context->edw_context.ftw);
   if (m_event->y - edws_offset_y < 0) {
     m_event->y = edws_offset_y;
   }
@@ -127,10 +143,7 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
 
   if (m_event->bstate & BUTTON1_PRESSED) {
     setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
-    FileIdentifier new_file_id = tryToReachAbsRow(cursor->file_id, *screen_y + m_event->y - edws_offset_y);
-    LineIdentifier new_line_id = getLineIdForScreenX(moduloLineIdentifierR(getLineForFileIdentifier(new_file_id), 0),
-                                                     *screen_x, m_event->x - edws_offset_x);
-    *cursor = cursorOf(new_file_id, new_line_id);
+    *cursor = getCursorForEDWClick(cursor, m_event, *screen_x, *screen_y, edws_offset_x, edws_offset_y);
     setDesiredColumn(*cursor, desired_column);
     gui_closePopup(gui_context);
   }
@@ -170,24 +183,36 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     *screen_x += SCROLL_SPEED;
   }
 
-  if (getbegx(gui_context->edw_context.lnw) <= m_event->x &&
-      m_event->x < getbegx(gui_context->edw_context.lnw) + getmaxx(gui_context->edw_context.lnw)) {
-
+  // line number marker.
+  if (isClickInsideWindow(gui_context->edw_context.lnw, m_event)) {
     Diagnostic* diagnostic;
-    getMarkerForCurrentLine(*screen_y + m_event->y - getbegy(gui_context->edw_context.lnw), highlight_descriptor, 0,
-                            &diagnostic);
+    LineMarker marker = getMarkerForCurrentLine(*screen_y + m_event->y - getbegy(gui_context->edw_context.lnw),
+                                                highlight_descriptor, 0, (void**)&diagnostic);
 
-    gui_showDiagnostic(gui_context, m_event->y - getbegy(gui_context->edw_context.lnw),
-                       getbegy(gui_context->edw_context.ftw), diagnostic);
-
-    if (diagnostic != NULL) {
+    if ((marker == LSP_ERROR || marker == LSP_HINT || marker == LSP_INFORMATION || marker == LSP_WARNING) &&
+        diagnostic != NULL) {
+      gui_showDiagnostic(gui_context, m_event->y - getbegy(gui_context->edw_context.lnw),
+                         getbegy(gui_context->edw_context.ftw), diagnostic);
       return true;
     }
   }
-  else if (gui_context->edw_context.show_pow == true && gui_context->edw_context.pow_owner == DIAGNOSTICS) {
+  else if (isClickInsideWindow(gui_context->edw_context.ftw, m_event)) {
+    if (file->lsp_datas.is_enable) {
+      // TODO improve hover, don't snap to close line. if cursor hover nothing detect it and don't ask for the closest
+      // word.
+      Cursor hover_cursor = getCursorForEDWClick(cursor, m_event, *screen_x, *screen_y, edws_offset_x, edws_offset_y);
+      gui_context->edw_context.lastMousePosition = cursorToDescriptor(&hover_cursor);
+      LSP_requestHover(getLSPServerForLanguage(&lsp_servers, file->lsp_datas.lang_id), file->io_file.path_abs,
+                       hover_cursor.file_id.absolute_row, hover_cursor.line_id.absolute_column);
+    }
+  }
+  else if (gui_context->edw_context.show_pow == true &&
+           (gui_context->edw_context.pow_owner == DIAGNOSTICS ||
+            gui_context->edw_context.pow_owner == HOVER_DIAGNOSTICS)) {
     gui_closePopup(gui_context);
     return true;
   }
+
 
   return false;
 }

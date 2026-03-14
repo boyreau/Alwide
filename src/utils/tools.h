@@ -1,12 +1,13 @@
 #ifndef TOOLS_H
 #define TOOLS_H
-#include <limits.h>
+
 #include <linux/limits.h>
 #include <ncurses.h>
 #include <stdint.h>
 #include <sys/types.h>
 
 #include "../io_management/io_manager.h"
+#include "../advanced/lsp/lsp_client.h"
 
 #define URI_MAX (PATH_MAX * 3 + 8)
 
@@ -55,5 +56,7 @@ char* trim(char* ch);
 void decodeURI(const char* src, char* dest, size_t dest_size);
 
 void encodeURI(const char* src, char* dest, size_t dest_size);
+
+CursorDescriptor positionToCursorDescriptor(Position position);
 
 #endif // TOOLS_H

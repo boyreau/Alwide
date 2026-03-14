@@ -2107,6 +2107,32 @@ bool isCursorStrictPreviousThanOther(Cursor cursor, Cursor other) {
   return cursor.line_id.absolute_column < other.line_id.absolute_column;
 }
 
+bool isCursorDescriptorPreviousThanOther(CursorDescriptor cur1, CursorDescriptor cur2) {
+  Cursor cursor1;
+  cursor1.file_id.absolute_row = cur1.row;
+  cursor1.line_id.absolute_column = cur1.column;
+  Cursor cursor2;
+  cursor2.file_id.absolute_row = cur2.row;
+  cursor2.line_id.absolute_column = cur2.column;
+
+  return isCursorPreviousThanOther(cursor1, cursor2);
+}
+
+bool is_inside_others(int row, int column, int row_start, int column_start, int row_end, int column_end) {
+  return (row_start < row || (row_start == row && column_start < column)) &&
+    (row < row_end || (row == row_end && column <= column_end));
+}
+
+bool isCursorDescriptorBetweenOthers(CursorDescriptor cursor, CursorDescriptor cur1, CursorDescriptor cur2) {
+  if (isCursorDescriptorPreviousThanOther(cur1, cur2) == false) {
+    CursorDescriptor tmp = cur1;
+    cur1 = cur2;
+    cur2 = tmp;
+  }
+
+  return is_inside_others(cursor.row, cursor.column, cur1.row, cur1.column, cur2.row, cur2.column);
+}
+
 bool isCursorBetweenOthers(Cursor cursor, Cursor cur1, Cursor cur2) {
   if (isCursorPreviousThanOther(cur1, cur2) == false) {
     Cursor tmp = cur1;
@@ -2124,8 +2150,7 @@ bool isCursorBetweenOthers(Cursor cursor, Cursor cur1, Cursor cur2) {
   int column_end = cur2.line_id.absolute_column;
 
 
-  return (row_start < row || (row_start == row && column_start < column)) &&
-    (row < row_end || (row == row_end && column <= column_end));
+  return is_inside_others(row, column, row_start, column_start, row_end, column_end);
 }
 
 

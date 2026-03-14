@@ -94,7 +94,7 @@ void printChar_U8ToNcurses(WINDOW* w, Char_U8 ch) {
 
 
 LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
-                                   Diagnostic** diagnostic) {
+                                   void** diagnostic) {
   LineMarker marker = LINE_MARKER_NONE;
   if (diagnostic != NULL) {
     *diagnostic = NULL;

@@ -150,7 +150,6 @@ int main(int file_count, char** args) {
   time_val last_time_mouse_drag = timeInMilliseconds();
   time_val t_date = timeInMilliseconds();
   clock_t t_clock = clock();
-
   Cursor old_selected_cursor;
 
   while (true) {
@@ -353,12 +352,10 @@ int main(int file_count, char** args) {
       case H_KEY_UP:
         *cursor = moveUp(*cursor, *desired_column);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
-        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_DOWN:
         *cursor = moveDown(*cursor, *desired_column);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
-        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_MAJ_RIGHT:
         setSelectCursorOn(*cursor, select_cursor);

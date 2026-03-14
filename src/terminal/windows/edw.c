@@ -24,6 +24,8 @@ void gui_initEDWContext(EDW_GUIContext* context) {
   context->completion_selected = 0;
   context->lastTextAnchor.row = 0;
   context->lastTextAnchor.column = 0;
+  context->lastMousePosition.row = 0;
+  context->lastMousePosition.column = 0;
 }
 
 

@@ -31,7 +31,7 @@ typedef struct {
 } FEW_GUIContext;
 
 
-typedef enum { DIAGNOSTICS, COMPLETION, NO_OWNER } PopupOwner;
+typedef enum { DIAGNOSTICS, COMPLETION, HOVER_DIAGNOSTICS, NO_OWNER } PopupOwner;
 
 typedef struct {
   // NCurses items
@@ -51,6 +51,7 @@ typedef struct {
   int completion_selected;
   int completion_offset_y;
   CursorDescriptor lastTextAnchor;
+  CursorDescriptor lastMousePosition;
 } EDW_GUIContext;
 
 

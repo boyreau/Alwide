@@ -314,6 +314,10 @@ Char_U8 getCharAtCursor(Cursor cursor);
 
 bool isCursorPreviousThanOther(Cursor cursor, Cursor other);
 
+bool isCursorDescriptorPreviousThanOther(CursorDescriptor cursor, CursorDescriptor other);
+
+bool isCursorDescriptorBetweenOthers(CursorDescriptor cursor, CursorDescriptor cur1, CursorDescriptor cur2);
+
 bool isCursorStrictPreviousThanOther(Cursor cursor, Cursor other);
 
 bool isCursorBetweenOthers(Cursor cursor, Cursor cur1, Cursor cur2);
@@ -339,7 +343,7 @@ int readNBytesAtPosition(Cursor* cursor, int row_raw, int column_raw, char* dest
 CursorDescriptor cursorToDescriptor(Cursor* cursor);
 
 
-int getAbsRow(Cursor *cursor);
-int getAbsCol(Cursor *cursor);
+int getAbsRow(Cursor* cursor);
+int getAbsCol(Cursor* cursor);
 
 #endif

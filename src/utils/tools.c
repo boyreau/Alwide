@@ -412,3 +412,8 @@ void decodeURI(const char* src, char* dest, size_t dest_size) {
   }
   *dest = '\0';
 }
+
+
+CursorDescriptor positionToCursorDescriptor(Position position) {
+  return (CursorDescriptor){.row = position.row + 1, .column = position.column};
+}
