@@ -156,6 +156,7 @@ int main(int file_count, char** args) {
     //// --------------- Post Processing -----------------
 
     if (refresh_local_vars == true) {
+      gui_closePopup(&gui_context);
       setupLocalVars(files, current_file_index, &io_file, &root, &cursor, &select_cursor, &old_cur, &desired_column,
                      &screen_x, &screen_y, &old_screen_x, &old_screen_y, &history_root, &history_frame, &ts_data,
                      &lsp_data);

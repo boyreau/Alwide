@@ -134,6 +134,10 @@ void gui_showDiagnostic(GUIContext* gui_context, int y, int x, Diagnostic* diagn
 }
 
 void gui_printCompletionPopup(EDW_GUIContext* context, Cursor* cursor, LSP_ComputedData* lsp_data) {
+  if (lsp_data == NULL) {
+    fprintf(stderr, "INTERNAL ERROR : Asked to print the popup on a non lsp file.\n");
+    return;
+  }
   int width = getmaxx(context->pow), height = getmaxy(context->pow);
   werase(context->pow);
 
