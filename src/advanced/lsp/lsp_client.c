@@ -825,12 +825,19 @@ void LSP_getHoverFromJSON(cJSON* json, Hover* hover_list) {
     hover_list->contents = malloc(sizeof(MarkedString) * hover_list->size);
     for (int i = 0; i < hover_list->size; i++) {
       LSP_getMarkedStringFromJSON(cJSON_GetArrayItem(contents, i), &hover_list->contents[i]);
+      if (hover_list->contents[i].value[0] == '\0') {
+        i--;
+        hover_list->size--;
+      }
     }
   }
   else {
     hover_list->size = 1;
     hover_list->contents = malloc(sizeof(MarkedString));
     LSP_getMarkedStringFromJSON(contents, &hover_list->contents[0]);
+    if (hover_list->contents[0].value[0] == '\0') {
+      hover_list->size = 0;
+    }
   }
 }
 
