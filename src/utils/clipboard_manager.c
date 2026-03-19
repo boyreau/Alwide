@@ -44,14 +44,14 @@ void updateWlPasteVars() {
 bool saveToClipBoard(Cursor begin, Cursor end) {
   createClipBoardTmpDir();
 
-  if (isCursorDisabled(begin) || isCursorDisabled(end)) {
+  if (cursor_is_disabled(begin) || cursor_is_disabled(end)) {
     return true;
   }
 
-  if (areCursorEqual(begin, end))
+  if (cursor_eq(begin, end))
     return true;
 
-  if (isCursorPreviousThanOther(end, begin)) {
+  if (cursor_le(end, begin)) {
     Cursor tmp = end;
     end = begin;
     begin = tmp;
@@ -66,7 +66,7 @@ bool saveToClipBoard(Cursor begin, Cursor end) {
     return false;
   }
 
-  while (isCursorPreviousThanOther(begin, end) && areCursorEqual(begin, end) == false) {
+  while (cursor_lt(begin, end)) {
     // may improve performance.
     begin = moveRight(begin);
     if (begin.line_id.absolute_column == 0) {

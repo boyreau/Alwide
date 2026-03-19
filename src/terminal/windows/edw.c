@@ -124,8 +124,7 @@ void printEditor_printFileContent(EDW_GUIContext* context, Cursor cursor, Cursor
 
     // determine if the char is selected or not.
     bool selected_style =
-      isCursorDisabled(select_cursor) == false && isCursorBetweenOthers(ch_cursor, select_cursor, cursor);
-
+        cursor_is_disabled(select_cursor) == false && cursor_is_inside(ch_cursor, select_cursor, cursor);
     // get current highlight.
     TextPartHighlightDescriptor* current_highlight =
       whd_tphd_forCursorWithOffsetIndex(highlight_descriptor, ch_cursor, whd_offset);
@@ -168,8 +167,9 @@ void printEditor_printFileContent(EDW_GUIContext* context, Cursor cursor, Cursor
   // show empty line selected.
   if (begin_screen_line_cur.absolute_column == end_screen_line_cur.absolute_column &&
       hasElementAfterLine(end_screen_line_cur) == false) {
-    if (isCursorDisabled(select_cursor) == false &&
-        isCursorBetweenOthers(cursorOf(file_cur, begin_screen_line_cur), select_cursor, cursor)) {
+    if (cursor_is_disabled(select_cursor) == false &&
+        cursor_is_inside(cursorOf(file_cur, begin_screen_line_cur), select_cursor, cursor)) {
+
       // if line selected
       wattr_set(context->ftw, A_NORMAL, DEFAULT_COLOR_HOVER_PAIR, 0);
       wprintw(context->ftw, " ");

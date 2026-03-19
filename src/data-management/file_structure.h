@@ -312,17 +312,45 @@ Cursor tryToReachAbsPosition(Cursor cursor, int row, int column);
 
 Char_U8 getCharAtCursor(Cursor cursor);
 
-bool isCursorPreviousThanOther(Cursor cursor, Cursor other);
+// --- Cursor Operations ---
+int cursor_cmp(Cursor c1, Cursor c2);
+bool cursor_eq(Cursor c1, Cursor c2);
+bool cursor_ne(Cursor c1, Cursor c2);
+bool cursor_lt(Cursor c1, Cursor c2);
+bool cursor_le(Cursor c1, Cursor c2);
+bool cursor_gt(Cursor c1, Cursor c2);
+bool cursor_ge(Cursor c1, Cursor c2);
+bool cursor_is_between(Cursor c, Cursor cur1, Cursor cur2); // min <= c <= max
+bool cursor_is_inside(Cursor c, Cursor start, Cursor end);  // start < c <= end
 
-bool isCursorDescriptorPreviousThanOther(CursorDescriptor cursor, CursorDescriptor other);
+// --- CursorDescriptor Operations ---
+int cursor_desc_cmp(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_eq(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_ne(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_lt(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_le(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_gt(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_ge(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_is_between(CursorDescriptor c, CursorDescriptor cur1, CursorDescriptor cur2); // min <= c <= max
 
-bool isCursorDescriptorBetweenOthers(CursorDescriptor cursor, CursorDescriptor cur1, CursorDescriptor cur2);
+// --- Status ---
+bool cursor_is_disabled(Cursor c);
+bool cursor_desc_is_disabled(CursorDescriptor cd);
+Cursor cursor_disable(Cursor c);
 
-bool isCursorStrictPreviousThanOther(Cursor cursor, Cursor other);
+int cursor_row(Cursor c);
+int cursor_col(Cursor c);
 
-bool isCursorBetweenOthers(Cursor cursor, Cursor cur1, Cursor cur2);
+// --- Utilities ---
+Cursor cursor_min(Cursor c1, Cursor c2);
+Cursor cursor_max(Cursor c1, Cursor c2);
+CursorDescriptor cursor_desc_min(CursorDescriptor c1, CursorDescriptor c2);
+CursorDescriptor cursor_desc_max(CursorDescriptor c1, CursorDescriptor c2);
 
-bool areCursorEqual(Cursor cur1, Cursor cur2);
+// --- Conversion ---
+CursorDescriptor cursor_to_desc(Cursor c);
+Cursor desc_to_cursor(Cursor base, CursorDescriptor descriptor);
+
 
 unsigned int getIndexForCursor(Cursor cursor);
 
@@ -339,11 +367,5 @@ int readNBytesCharAtCursor(Cursor* cursor, char* dest, int length);
 
 int readNBytesAtPosition(Cursor* cursor, int row_raw, int column_raw, char* dest, int length);
 
-
-CursorDescriptor cursorToDescriptor(Cursor* cursor);
-
-
-int getAbsRow(Cursor* cursor);
-int getAbsCol(Cursor* cursor);
 
 #endif

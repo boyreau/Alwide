@@ -191,7 +191,7 @@ int getScreenXForCursor(Cursor cursor, int screen_x) {
   cursor = moveLeft(cursor);
 
 
-  while (screen_x <= cursor.line_id.absolute_column && areCursorEqual(cursor, old_cursor) == false &&
+  while (screen_x <= cursor.line_id.absolute_column && cursor_eq(cursor, old_cursor) == false &&
          cursor.file_id.absolute_row == old_cursor.file_id.absolute_row) {
     assert(cursor.line_id.absolute_column != 0);
     Char_U8 current_ch = getCharForLineIdentifier(cursor.line_id);

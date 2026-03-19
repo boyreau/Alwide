@@ -168,17 +168,17 @@ int main(int file_count, char** args) {
     }
 
     // flag cursor change
-    if (!areCursorEqual(*cursor, *old_cur)) {
+    if (!cursor_eq(*cursor, *old_cur)) {
       *old_cur = *cursor;
       moveScreenToMatchCursor(&gui_context, *cursor, screen_x, screen_y);
       updateEDW(&gui_context);
     }
 
     // flag selection change
-    if (!areCursorEqual(*select_cursor, old_selected_cursor)) {
+    if (!cursor_eq(*select_cursor, old_selected_cursor)) {
       old_selected_cursor = *select_cursor;
       updateEDW(&gui_context);
-      if (!isCursorDisabled(*select_cursor)) {
+      if (!cursor_is_disabled(*select_cursor)) {
         gui_closePopup(&gui_context);
       }
     }
@@ -337,14 +337,14 @@ int main(int file_count, char** args) {
 
 
       case H_KEY_RIGHT:
-        if (isCursorDisabled(*select_cursor))
+        if (cursor_is_disabled(*select_cursor))
           *cursor = moveRight(*cursor);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
         setDesiredColumn(*cursor, desired_column);
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_LEFT:
-        if (isCursorDisabled(*select_cursor))
+        if (cursor_is_disabled(*select_cursor))
           *cursor = moveLeft(*cursor);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
         setDesiredColumn(*cursor, desired_column);
@@ -476,7 +476,7 @@ int main(int file_count, char** args) {
         break;
       case CTRL('v'):
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-        tmp = cursorToDescriptor(cursor);
+        tmp = cursor_to_desc(*cursor);
         *cursor = loadFromClipBoard(*cursor);
         saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
                    (long*)&payload_state_change);
@@ -491,7 +491,7 @@ int main(int file_count, char** args) {
             }
             saveFile(files[i].root, &files[i].io_file);
             assert(io_file->status == EXIST);
-            setlastFilePosition(files[i].io_file.path_abs, getAbsRow(&files[i].cursor), getAbsCol(&files[i].cursor),
+            setlastFilePosition(files[i].io_file.path_abs, cursor_row(*&files[i].cursor), cursor_col(*&files[i].cursor),
                                 files[i].screen_x, files[i].screen_y);
             saveCurrentStateControl(*files[i].history_root, files[i].history_frame, files[i].io_file.path_abs);
           }
@@ -508,7 +508,7 @@ int main(int file_count, char** args) {
         }
         saveFile(*root, io_file);
         assert(io_file->status == EXIST);
-        setlastFilePosition(io_file->path_abs, getAbsRow(cursor), getAbsCol(cursor), *screen_x, *screen_y);
+        setlastFilePosition(io_file->path_abs, cursor_row(*cursor), cursor_col(*cursor), *screen_x, *screen_y);
         saveCurrentStateControl(**history_root, *history_frame, io_file->path_abs);
         break;
 
@@ -527,14 +527,14 @@ int main(int file_count, char** args) {
       case '\n':
       case KEY_ENTER:
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-        tmp = cursorToDescriptor(cursor);
+        tmp = cursor_to_desc(*cursor);
         *cursor = insertNewLineInLineC(*cursor);
         saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
                    (long*)&payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         break;
       case H_KEY_DELETE:
-        if (isCursorDisabled(*select_cursor)) {
+        if (cursor_is_disabled(*select_cursor)) {
           *select_cursor = moveLeft(*cursor);
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
@@ -542,7 +542,7 @@ int main(int file_count, char** args) {
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_SUPPR:
-        if (isCursorDisabled(*select_cursor)) {
+        if (cursor_is_disabled(*select_cursor)) {
           *select_cursor = moveRight(*cursor);
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
@@ -560,7 +560,7 @@ int main(int file_count, char** args) {
         break;
       case KEY_TAB:
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-        tmp = cursorToDescriptor(cursor);
+        tmp = cursor_to_desc(*cursor);
         if (TAB_CHAR_USE) {
           *cursor = insertCharInLineC(*cursor, readChar_U8FromInput('\t'));
         }
@@ -574,7 +574,7 @@ int main(int file_count, char** args) {
         setDesiredColumn(*cursor, desired_column);
         break;
       case CTRL('d'):
-        if (isCursorDisabled(*select_cursor) == true) {
+        if (cursor_is_disabled(*select_cursor) == true) {
           selectLine(cursor, select_cursor);
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
@@ -608,7 +608,7 @@ int main(int file_count, char** args) {
         }
         else {
           deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-          tmp = cursorToDescriptor(cursor);
+          tmp = cursor_to_desc(*cursor);
           *cursor = insertCharInLineC(*cursor, readChar_U8FromInput(c));
           setDesiredColumn(*cursor, desired_column);
           saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,

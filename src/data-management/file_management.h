@@ -81,14 +81,11 @@ Cursor goToBegin(Cursor cursor);
 ////// -------------- SELECTION MANAGEMENT --------------
 
 
-bool isCursorDisabled(Cursor cursor);
-bool isCursorDescriptorDisabled(CursorDescriptor cursor);
-
 int utf8CharBetween2Cursor(Cursor cur1, Cursor cur2);
 
 unsigned int byteBetween2Cursor(Cursor cur1, Cursor cur2);
 
-Cursor disableCursor(Cursor cursor);
+Cursor cursor_disable(Cursor cursor);
 
 void setSelectCursorOn(Cursor cursor, Cursor* select_cursor);
 void setSelectCursorOff(Cursor* cursor, Cursor* select_cursor, SELECT_OFF_STYLE style);

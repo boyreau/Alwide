@@ -21,8 +21,9 @@ bool gui_resumeHoverInformation(Cursor* cursor, ViewPort* view_port, Hover* hove
 
 
   // if the last cursor position is not inside the range we don't trigger the popup !
-  if (!isCursorDescriptorBetweenOthers(view_port->gui->edw_context.lastMousePosition, start_descriptor,
-                                       end_descriptor)) {
+  if (!cursor_desc_is_between(view_port->gui->edw_context.lastMousePosition, start_descriptor,
+                                    end_descriptor)) {
+
     fprintf(stderr, "don't opening popup !\n");
     return false;
   }
@@ -66,7 +67,7 @@ bool gui_resumeCompletionTextAnchor(ViewPort* view_port, Cursor* cursor) {
 
 void gui_showGenericPopupWithTextAnchor(ViewPort* view_port, Cursor* cursor, int height, int width,
                                         PopupOwner popup_owner) {
-  return gui_showGenericPopup(view_port->gui, getAbsRow(cursor) - *view_port->screen_y + 1,
+  return gui_showGenericPopup(view_port->gui, cursor_row(*cursor) - *view_port->screen_y + 1,
                               getScreenXForCursor(*cursor, *view_port->screen_x), height, width, popup_owner);
 }
 

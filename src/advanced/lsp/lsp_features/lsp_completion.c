@@ -31,7 +31,7 @@ int compareTextEdit(const void* e1_p, const void* e2_p) {
 }
 
 Range getReplaceRange(Cursor* cursor, char insertText[METHOD_MAX_LENGTH]) {
-  Cursor select = disableCursor(*cursor);
+  Cursor select = cursor_disable(*cursor);
   if (cursor->line_id.absolute_column != 0) {
     Cursor tmp = *cursor;
     selectWord(&tmp, &select);
@@ -41,7 +41,7 @@ Range getReplaceRange(Cursor* cursor, char insertText[METHOD_MAX_LENGTH]) {
   int index = 0;
 
   bool begin_matching = true;
-  while (!isCursorDisabled(select) && isCursorStrictPreviousThanOther(select, *cursor)) {
+  while (!cursor_is_disabled(select) && cursor_lt(select, *cursor)) {
     select = moveRight(select);
     Char_U8 ch = getCharAtCursor(select);
     for (int i = 0; i < sizeChar_U8(ch); i++) {
@@ -54,7 +54,7 @@ Range getReplaceRange(Cursor* cursor, char insertText[METHOD_MAX_LENGTH]) {
     }
   }
 
-  if (isCursorDisabled(select) || begin_matching == false) {
+  if (cursor_is_disabled(select) || begin_matching == false) {
     begin = *cursor;
   }
 
@@ -87,12 +87,12 @@ void LSP_executeCompletion(Cursor* cursor, CompletionItem* item, History** histo
     if (!main_text_edit_done && compareTextEdit(&item->text_edit, item->additionalTextEdits + i) != 1) {
       main_text_edit_done = true;
       applyTextEdit(cursor, &item->text_edit, history_p, payload_state_change);
-      position_after_insert = cursorToDescriptor(cursor);
+      position_after_insert = cursor_to_desc(*cursor);
     }
     else {
       *cursor = tryToReachAbsPosition(*cursor, item->additionalTextEdits[i].range.pos1.row + 1,
                                       item->additionalTextEdits[i].range.pos1.column);
-      CursorDescriptor tmp = cursorToDescriptor(cursor);
+      CursorDescriptor tmp = cursor_to_desc(*cursor);
       applyTextEdit(cursor, item->additionalTextEdits + i, history_p, payload_state_change);
       i++;
       // if the end position of the cursor is already setted we have to follow the new add in the file to follow lines.
@@ -125,9 +125,9 @@ void askCompletion(GUIContext* gui_context, Cursor* cursor, int* screen_x, int* 
       LSP_destroyCompletionList(&lsp_data->computed->completions);
     }
     LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
-                          getAbsRow(cursor), getAbsCol(cursor));
+                          cursor_row(*cursor), cursor_col(*cursor));
     if (gui_context->edw_context.pow_owner != COMPLETION) {
-      gui_setLastTextAnchor(gui_context, cursorToDescriptor(cursor));
+      gui_setLastTextAnchor(gui_context, cursor_to_desc(*cursor));
     }
     else {
       ViewPort view_port = getViewPort(gui_context, screen_x, screen_y);

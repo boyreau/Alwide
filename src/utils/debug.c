@@ -5,9 +5,7 @@
 #include "../data-structure/file_structure.h"
 #include "debug.h"
 
-bool isCursorDisabled2(Cursor cursor) { return cursor.file_id.absolute_row == -1; }
-
-Cursor disableCursor2(Cursor cursor) {
+Cursor cursor_disable(Cursor cursor) {
   cursor.file_id.absolute_row = -1;
   return cursor;
 }
@@ -43,8 +41,8 @@ void printFile2(Cursor cursor, Cursor select_cursor, int screen_x, int screen_y)
     int column = screen_x;
     while (end_screen_line_cur.absolute_column >= column) {
       // determine if the char is selected or not.
-      bool selected_style = isCursorDisabled2(select_cursor) == false &&
-        isCursorBetweenOthers(cursorOf(file_cur, begin_screen_line_cur), select_cursor, cursor);
+      bool selected_style = cursor_is_disabled(select_cursor) == false &&
+        cursor_is_inside(cursorOf(file_cur, begin_screen_line_cur), select_cursor, cursor);
 
       if (selected_style)
         attron(A_STANDOUT | A_DIM);
@@ -85,7 +83,7 @@ void debugPrintFullFile() {
 
   Cursor cursor_tmp = cursorOf(moduloFileIdentifierR(root, 1),
                                moduloLineIdentifierR(getLineForFileIdentifier(moduloFileIdentifierR(root, 1)), 0));
-  Cursor select = disableCursor2(cursor_tmp);
+  Cursor select = cursor_disable(cursor_tmp);
   int screen_x = 1;
   int screen_y = 1;
   printFile2(cursor_tmp, select, screen_x, screen_y);

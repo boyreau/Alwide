@@ -2031,7 +2031,7 @@ Cursor supprCharAtCursor_internal(Cursor cursor) {
 }
 
 Cursor bulkDelete(Cursor cursor, Cursor select_cursor) {
-  if (isCursorPreviousThanOther(select_cursor, cursor)) {
+  if (cursor_le(select_cursor, cursor)) {
     Cursor tmp = select_cursor;
     select_cursor = cursor;
     cursor = tmp;
@@ -2086,78 +2086,115 @@ Cursor tryToReachAbsPosition(Cursor cursor, int row, int column) {
 
 Char_U8 getCharAtCursor(Cursor cursor) { return getCharForLineIdentifier(cursor.line_id); }
 
+// --- Internal Utilities ---
 
-bool isCursorPreviousThanOther(Cursor cursor, Cursor other) {
-  if (cursor.file_id.absolute_row < other.file_id.absolute_row)
-    return true;
-  if (cursor.file_id.absolute_row > other.file_id.absolute_row)
-    return false;
-  assert(cursor.file_id.absolute_row == other.file_id.absolute_row);
-
-  return cursor.line_id.absolute_column <= other.line_id.absolute_column;
-}
-
-bool isCursorStrictPreviousThanOther(Cursor cursor, Cursor other) {
-  if (cursor.file_id.absolute_row < other.file_id.absolute_row)
-    return true;
-  if (cursor.file_id.absolute_row > other.file_id.absolute_row)
-    return false;
-  assert(cursor.file_id.absolute_row == other.file_id.absolute_row);
-
-  return cursor.line_id.absolute_column < other.line_id.absolute_column;
-}
-
-bool isCursorDescriptorPreviousThanOther(CursorDescriptor cur1, CursorDescriptor cur2) {
-  Cursor cursor1;
-  cursor1.file_id.absolute_row = cur1.row;
-  cursor1.line_id.absolute_column = cur1.column;
-  Cursor cursor2;
-  cursor2.file_id.absolute_row = cur2.row;
-  cursor2.line_id.absolute_column = cur2.column;
-
-  return isCursorPreviousThanOther(cursor1, cursor2);
-}
-
-bool is_inside_others(int row, int column, int row_start, int column_start, int row_end, int column_end) {
+static bool is_inside_others(int row, int column, int row_start, int column_start, int row_end, int column_end) {
   return (row_start < row || (row_start == row && column_start < column)) &&
     (row < row_end || (row == row_end && column <= column_end));
 }
 
-bool isCursorDescriptorBetweenOthers(CursorDescriptor cursor, CursorDescriptor cur1, CursorDescriptor cur2) {
-  if (isCursorDescriptorPreviousThanOther(cur1, cur2) == false) {
-    CursorDescriptor tmp = cur1;
-    cur1 = cur2;
-    cur2 = tmp;
+// --- Cursor Operations ---
+
+int cursor_cmp(Cursor c1, Cursor c2) {
+  if (c1.file_id.absolute_row < c2.file_id.absolute_row)
+    return -1;
+  if (c1.file_id.absolute_row > c2.file_id.absolute_row)
+    return 1;
+  if (c1.line_id.absolute_column < c2.line_id.absolute_column)
+    return -1;
+  if (c1.line_id.absolute_column > c2.line_id.absolute_column)
+    return 1;
+  return 0;
+}
+
+bool cursor_eq(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) == 0; }
+bool cursor_ne(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) != 0; }
+bool cursor_lt(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) < 0; }
+bool cursor_le(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) <= 0; }
+bool cursor_gt(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) > 0; }
+bool cursor_ge(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) >= 0; }
+
+bool cursor_is_between(Cursor c, Cursor cur1, Cursor cur2) {
+  Cursor start = cursor_min(cur1, cur2);
+  Cursor end = cursor_max(cur1, cur2);
+  return cursor_ge(c, start) && cursor_le(c, end);
+}
+
+bool cursor_is_inside(Cursor c, Cursor start, Cursor end) {
+  // Logic from isCursorBetweenOthers (start < c <= end after sort)
+  if (cursor_le(start, end) == false) {
+    Cursor tmp = start;
+    start = end;
+    end = tmp;
   }
-
-  return is_inside_others(cursor.row, cursor.column, cur1.row, cur1.column, cur2.row, cur2.column);
+  return is_inside_others(c.file_id.absolute_row, c.line_id.absolute_column, start.file_id.absolute_row,
+                          start.line_id.absolute_column, end.file_id.absolute_row, end.line_id.absolute_column);
 }
 
-bool isCursorBetweenOthers(Cursor cursor, Cursor cur1, Cursor cur2) {
-  if (isCursorPreviousThanOther(cur1, cur2) == false) {
-    Cursor tmp = cur1;
-    cur1 = cur2;
-    cur2 = tmp;
-  }
+// --- CursorDescriptor Operations ---
 
-  int row = cursor.file_id.absolute_row;
-  int column = cursor.line_id.absolute_column;
-
-  int row_start = cur1.file_id.absolute_row;
-  int column_start = cur1.line_id.absolute_column;
-
-  int row_end = cur2.file_id.absolute_row;
-  int column_end = cur2.line_id.absolute_column;
-
-
-  return is_inside_others(row, column, row_start, column_start, row_end, column_end);
+int cursor_desc_cmp(CursorDescriptor c1, CursorDescriptor c2) {
+  if (c1.row < c2.row)
+    return -1;
+  if (c1.row > c2.row)
+    return 1;
+  if (c1.column < c2.column)
+    return -1;
+  if (c1.column > c2.column)
+    return 1;
+  return 0;
 }
 
+bool cursor_desc_eq(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) == 0; }
+bool cursor_desc_ne(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) != 0; }
+bool cursor_desc_lt(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) < 0; }
+bool cursor_desc_le(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) <= 0; }
+bool cursor_desc_gt(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) > 0; }
+bool cursor_desc_ge(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) >= 0; }
 
-bool areCursorEqual(Cursor cur1, Cursor cur2) {
-  return cur1.file_id.absolute_row == cur2.file_id.absolute_row &&
-    cur1.line_id.absolute_column == cur2.line_id.absolute_column;
+bool cursor_desc_is_between(CursorDescriptor cd, CursorDescriptor cur1, CursorDescriptor cur2) {
+  CursorDescriptor start = cursor_desc_min(cur1, cur2);
+  CursorDescriptor end = cursor_desc_max(cur1, cur2);
+  return cursor_desc_ge(cd, start) && cursor_desc_le(cd, end);
 }
+
+// --- Status ---
+
+bool cursor_is_disabled(Cursor c) { return c.file_id.absolute_row == -1; }
+bool cursor_desc_is_disabled(CursorDescriptor cd) { return cd.row == -1; }
+Cursor cursor_disable(Cursor c) {
+  c.file_id.absolute_row = -1;
+  return c;
+}
+
+int cursor_row(Cursor c) { return c.file_id.absolute_row; }
+int cursor_col(Cursor c) { return c.line_id.absolute_column; }
+
+// --- Utilities ---
+
+Cursor cursor_min(Cursor c1, Cursor c2) { return cursor_le(c1, c2) ? c1 : c2; }
+Cursor cursor_max(Cursor c1, Cursor c2) { return cursor_ge(c1, c2) ? c1 : c2; }
+
+CursorDescriptor cursor_desc_min(CursorDescriptor c1, CursorDescriptor c2) {
+  return cursor_desc_le(c1, c2) ? c1 : c2;
+}
+CursorDescriptor cursor_desc_max(CursorDescriptor c1, CursorDescriptor c2) {
+  return cursor_desc_ge(c1, c2) ? c1 : c2;
+}
+
+// --- Conversion ---
+
+CursorDescriptor cursor_to_desc(Cursor cursor) {
+  CursorDescriptor descriptor;
+  descriptor.row = cursor.file_id.absolute_row;
+  descriptor.column = cursor.line_id.absolute_column;
+  return descriptor;
+}
+
+Cursor desc_to_cursor(Cursor base, CursorDescriptor descriptor) {
+  return tryToReachAbsPosition(base, descriptor.row, descriptor.column);
+}
+
 
 unsigned int getIndexForCursor(Cursor cursor) {
   cursor = moduloCursor(cursor);
@@ -2421,14 +2458,3 @@ int readNBytesAtPosition(Cursor* cursor_p, int row_raw, int column_raw, char* de
   return readNBytesCharAtCursor(cursor_p, dest, length);
 }
 
-
-CursorDescriptor cursorToDescriptor(Cursor* cursor) {
-  CursorDescriptor descriptor;
-  descriptor.row = getAbsRow(cursor);
-  descriptor.column = getAbsCol(cursor);
-  return descriptor;
-}
-
-
-int getAbsRow(Cursor* cursor) { return cursor->file_id.absolute_row; }
-int getAbsCol(Cursor* cursor) { return cursor->line_id.absolute_column; }

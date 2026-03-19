@@ -103,7 +103,7 @@ mouse_read:;
   }
 
   // Avoid refreshing when it's just mouse movement with no change.
-  if (m_event->bstate == NO_EVENT_MOUSE /*No event state*/ && *mouse_drag == false && force_repaint == false) {
+  if (*mouse_drag == false && force_repaint == false) {
     return false;
   }
   return true;
@@ -116,6 +116,8 @@ mouse_read:;
 bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_cursor, int* desired_column,
                        int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag, FileContainer* file,
                        WindowHighlightDescriptor* highlight_descriptor) {
+  bool need_repaint = false;
+
   int edws_offset_x = getbegx(gui_context->edw_context.ftw);
   int edws_offset_y = getbegy(gui_context->edw_context.ftw);
   if (m_event->y - edws_offset_y < 0) {
@@ -130,15 +132,16 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     LineIdentifier new_line_id = getLineIdForScreenX(moduloLineIdentifierR(getLineForFileIdentifier(new_file_id), 0),
                                                      *screen_x, m_event->x - edws_offset_x);
 
-    if (isCursorDisabled(*select_cursor) == false) {
+    if (cursor_is_disabled(*select_cursor) == false) {
       *cursor = cursorOf(new_file_id, new_line_id);
     }
-    else if (areCursorEqual(*cursor, cursorOf(new_file_id, new_line_id)) == false) {
+    else if (cursor_ne(*cursor, cursorOf(new_file_id, new_line_id))) {
       *select_cursor = *cursor;
       *cursor = cursorOf(new_file_id, new_line_id);
     }
     setDesiredColumn(*cursor, desired_column);
     gui_closePopup(gui_context);
+    need_repaint = true;
   }
 
   if (m_event->bstate & BUTTON1_PRESSED) {
@@ -146,11 +149,13 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     *cursor = getCursorForEDWClick(cursor, m_event, *screen_x, *screen_y, edws_offset_x, edws_offset_y);
     setDesiredColumn(*cursor, desired_column);
     gui_closePopup(gui_context);
+    need_repaint = true;
   }
 
   if (m_event->bstate & BUTTON1_DOUBLE_CLICKED) {
     selectWord(cursor, select_cursor);
     gui_closePopup(gui_context);
+    need_repaint = true;
   }
 
 
@@ -160,12 +165,14 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     *screen_y -= SCROLL_SPEED;
     if (*screen_y < 1)
       *screen_y = 1;
+    need_repaint = true;
   }
   else if (m_event->bstate & BUTTON4_PRESSED && m_event->bstate & BUTTON_SHIFT) {
     // Move Left
     *screen_x -= SCROLL_SPEED;
     if (*screen_x < 1)
       *screen_x = 1;
+    need_repaint = true;
   }
 
   if (m_event->bstate & BUTTON5_PRESSED && !(m_event->bstate & BUTTON_SHIFT)) {
@@ -177,10 +184,12 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
       if (*screen_y < 1)
         *screen_y = 1;
     }
+    need_repaint = true;
   }
   else if (m_event->bstate & BUTTON5_PRESSED && m_event->bstate & BUTTON_SHIFT) {
     // Move Right
     *screen_x += SCROLL_SPEED;
+    need_repaint = true;
   }
 
   // line number marker.
@@ -193,21 +202,21 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
         diagnostic != NULL) {
       gui_showDiagnostic(gui_context, m_event->y - getbegy(gui_context->edw_context.lnw) + 1,
                          getbegy(gui_context->edw_context.ftw), diagnostic);
-      return true;
+      need_repaint = true;
     }
   }
   else if (isClickInsideWindow(gui_context->edw_context.ftw, m_event)) {
     // track mouse position
     // TODO may safe raw m_event position to avoid calling @getCursorForEDWCLick() everytime which is heavy.
     Cursor hover_cursor = getCursorForEDWClick(cursor, m_event, *screen_x, *screen_y, edws_offset_x, edws_offset_y);
-    gui_context->edw_context.lastMousePosition = cursorToDescriptor(&hover_cursor);
+    gui_context->edw_context.lastMousePosition = cursor_to_desc(hover_cursor);
     if (file->lsp_datas.is_enable && m_event->bstate & BUTTON_CTRL) {
 
       // Regulate the hover requests, to avoid spamming for nothing. Don't reask for the same word.
       if (file->lsp_datas.computed->hover.is_range == false ||
-          !isCursorDescriptorBetweenOthers(cursorToDescriptor(&hover_cursor),
-                                           positionToCursorDescriptor(file->lsp_datas.computed->hover.range.pos1),
-                                           positionToCursorDescriptor(file->lsp_datas.computed->hover.range.pos2))) {
+          !cursor_desc_is_between(cursor_to_desc(hover_cursor),
+                                  positionToCursorDescriptor(file->lsp_datas.computed->hover.range.pos1),
+                                  positionToCursorDescriptor(file->lsp_datas.computed->hover.range.pos2))) {
 
 
         LSP_requestHover(getLSPServerForLanguage(&lsp_servers, file->lsp_datas.lang_id), file->io_file.path_abs,
@@ -217,19 +226,19 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
         // We resume the hover data previously fetched.
         ViewPort view_port = (ViewPort){.gui = gui_context, .screen_x = screen_x, .screen_y = screen_y};
         gui_resumeHoverInformation(cursor, &view_port, &file->lsp_datas.computed->hover);
+        need_repaint = true;
       }
-
     }
   }
   else if (gui_context->edw_context.show_pow == true &&
            (gui_context->edw_context.pow_owner == DIAGNOSTICS ||
             gui_context->edw_context.pow_owner == HOVER_DIAGNOSTICS)) {
     gui_closePopup(gui_context);
-    return true;
+    need_repaint = true;
   }
 
 
-  return false;
+  return need_repaint;
 }
 
 int handleOpenedFileSelectClick(GUIContext* gui_context, FileContainer* files, int* file_count, int* current_file,

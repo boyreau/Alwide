@@ -40,7 +40,7 @@ void receiveHoverData(cJSON* packet, FileContainer* file, ViewPort* view_port, C
     Position* pos = payload;
 
     Cursor end = tryToReachAbsPosition(*cursor, pos->row, pos->column);
-    Cursor begin = disableCursor(*cursor);
+    Cursor begin = cursor_disable(*cursor);
     selectWord(&end, &begin);
 
     // set up the new range
