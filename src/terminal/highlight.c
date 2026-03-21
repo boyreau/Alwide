@@ -7,7 +7,7 @@
 
 #include "../advanced/tree-sitter/tree_query.h"
 #include "../data-management/file_structure.h"
-#include "../utils/constants.h"
+#include "../environnement/constants.h"
 #include "term_handler.h"
 
 

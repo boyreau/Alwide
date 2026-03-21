@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include <sys/ttydefaults.h>
-#include "../utils/constants.h"
+#include "../environnement/constants.h"
 
 
 void getWorkspaceSettingsForCurrentDir(WorkspaceSettings* settings, FileContainer* files, int file_count,

@@ -5,8 +5,8 @@
 #include <time.h>
 
 #include "../../../lib/tree-sitter/lib/src/tree.h"
-#include "../../utils/constants.h"
-#include "../../utils/global-variables.h"
+#include "../../environnement/constants.h"
+#include "../../environnement/global-variables.h"
 #include "tree_query.h"
 
 

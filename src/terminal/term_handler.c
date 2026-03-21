@@ -9,7 +9,7 @@
 #include <limits.h>
 #include <math.h>
 
-#include "../utils/constants.h"
+#include "../environnement/constants.h"
 #include "highlight.h"
 #include "windows/edw.h"
 #include "windows/few.h"

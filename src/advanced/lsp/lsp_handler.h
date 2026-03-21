@@ -2,8 +2,8 @@
 #define LSP_HANDLER_H
 #include <stdbool.h>
 
+#include "../../environnement/constants.h"
 #include "../../io_management/io_manager.h"
-#include "../../utils/constants.h"
 #include "lsp_client.h"
 
 

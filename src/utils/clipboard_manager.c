@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "../data-management/file_management.h"
-#include "constants.h"
+#include "../environnement/constants.h"
 
 int xclip = -1;
 int wl_copy = -1;

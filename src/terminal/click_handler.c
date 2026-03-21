@@ -6,8 +6,8 @@
 #include <time.h>
 
 #include "../data-management/file_management.h"
-#include "../utils/constants.h"
-#include "../utils/global-variables.h"
+#include "../environnement/constants.h"
+#include "../environnement/global-variables.h"
 #include "../utils/key_management.h"
 #include "term_handler.h"
 #include "windows/edw.h"

@@ -3,7 +3,7 @@
 #include <libgen.h>
 #include <ncurses.h>
 
-#include "../../utils/constants.h"
+#include "../../environnement/constants.h"
 #include "../../utils/tools.h"
 #include "edw.h"
 #include "ofw.h"

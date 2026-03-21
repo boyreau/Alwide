@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../environnement/constants.h"
+#include "../environnement/global-variables.h"
 #include "../io_management/viewport_history.h"
 #include "../terminal/term_handler.h"
-#include "../utils/constants.h"
-#include "../utils/global-variables.h"
 
 
 ////// -------------- FILE CONTAINER --------------

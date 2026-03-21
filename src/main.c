@@ -19,6 +19,8 @@
 #include "data-management/file_management.h"
 #include "data-management/file_structure.h"
 #include "data-management/state_control.h"
+#include "environnement/constants.h"
+#include "environnement/global-variables.h"
 #include "io_management/io_explorer.h"
 #include "io_management/io_manager.h"
 #include "io_management/viewport_history.h"
@@ -31,8 +33,6 @@
 #include "terminal/windows/ofw.h"
 #include "terminal/windows/pow.h"
 #include "utils/clipboard_manager.h"
-#include "utils/constants.h"
-#include "utils/global-variables.h"
 #include "utils/key_management.h"
 
 #define SHOW_ERROR true

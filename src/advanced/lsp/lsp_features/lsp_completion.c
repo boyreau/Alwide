@@ -3,10 +3,10 @@
 #include <assert.h>
 #include <string.h>
 
+#include "../../../environnement/global-variables.h"
 #include "../../../io_management/viewport_history.h"
 #include "../../../terminal/windows/edw.h"
 #include "../../../terminal/windows/pow.h"
-#include "../../../utils/global-variables.h"
 
 
 void applyTextEdit(Cursor* cursor, TextEdit* text_edit, History** history_p, PayloadStateChange payload_state_change) {
