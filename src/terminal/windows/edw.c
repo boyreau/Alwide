@@ -58,7 +58,7 @@ void printEditor_printLineNumber(EDW_GUIContext* context, Cursor cursor, int scr
   attr_t attr = A_BOLD | A_ITALIC;
 
 
-  LineMarker marker = getMarkerForCurrentLine(row, highlight_descriptor, whd_offset, NULL);
+  LineMarker marker = gui_getMarkerForCurrentLine(row, highlight_descriptor, whd_offset, NULL);
   switch (marker) {
     case LSP_ERROR:
       color = ERROR_COLOR_PAIR;
@@ -151,11 +151,11 @@ void printEditor_printFileContent(EDW_GUIContext* context, Cursor cursor, Cursor
     if (ch.t[0] == '\t') {
       Char_U8 space = readChar_U8FromInput(' ');
       for (int i = 0; i < TAB_SIZE; i++) {
-        printChar_U8ToNcurses(context->ftw, space);
+        gui_printChar_U8ToNcurses(context->ftw, space);
       }
     }
     else {
-      printChar_U8ToNcurses(context->ftw, ch);
+      gui_printChar_U8ToNcurses(context->ftw, ch);
     }
 
     // move to next column
@@ -348,7 +348,7 @@ bool gui_adaptPopup(GUIContext* gui_context, int slice_x, int slice_y) {
 
   gui_context->edw_context.show_pow = gui_context->edw_context.pow != NULL;
   if (gui_context->edw_context.pow) {
-    updateEDW(gui_context);
+    gui_updateEDW(gui_context);
   }
   else {
     gui_context->edw_context.pow_owner = NO_OWNER;
@@ -360,5 +360,5 @@ bool gui_adaptPopup(GUIContext* gui_context, int slice_x, int slice_y) {
 void gui_closePopup(GUIContext* gui_context) {
   gui_context->edw_context.show_pow = false;
   gui_context->edw_context.pow_owner = NO_OWNER;
-  updateEDW(gui_context);
+  gui_updateEDW(gui_context);
 }

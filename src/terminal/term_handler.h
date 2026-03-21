@@ -12,31 +12,33 @@
 
 ////// -------------- WINDOWS MANAGEMENTS --------------
 
-void initGUIContext(GUIContext* gui_context);
+void gui_initGUIContext(GUIContext* gui_context);
 
-void initNCurses(GUIContext* gui_context);
+void gui_initNCurses(GUIContext* gui_context);
 
-void setFocus(GUIContext* gui_context, WINDOW* w);
+void gui_setFocus(GUIContext* gui_context, WINDOW* w);
 
-void resetFocus(GUIContext* gui_context);
+void gui_resetFocus(GUIContext* gui_context);
 
 ////// -------------- PRINT FUNCTIONS --------------
 
-void repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_descriptor, ExplorerFolder* explorer,
+void gui_repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_descriptor, ExplorerFolder* explorer,
                 FileContainer* files, int file_count, int current_file);
 
-void printChar_U8ToNcurses(WINDOW* w, Char_U8 ch);
+void gui_printChar_U8ToNcurses(WINDOW* w, Char_U8 ch);
 
-LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
+LineMarker gui_getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
                                    void** diagnostic);
 
-void updateEDW(GUIContext* gui_context);
+void gui_updateEDW(GUIContext* gui_context);
 
-void updateFEW(GUIContext* gui_context);
+void gui_updateFEW(GUIContext* gui_context);
 
-void updateOFW(GUIContext* gui_context);
+void gui_updateOFW(GUIContext* gui_context);
 
-void updateGUI(GUIContext* gui_context);
+void gui_updateGUI(GUIContext* gui_context);
+
+bool gui_doesGUINeedRepaint(GUIContext* gui_context);
 
 ////// -------------- UTILS FUNCTIONS --------------
 

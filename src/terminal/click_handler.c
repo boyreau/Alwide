@@ -30,7 +30,7 @@ Cursor getCursorForEDWClick(Cursor* cursor, MEVENT* m_event, int screen_x, int s
 }
 
 
-bool handleClick(GUIContext* gui_context, FileContainer** files, int* file_count, int* current_file_index,
+void handleClick(GUIContext* gui_context, FileContainer** files, int* file_count, int* current_file_index,
                  ExplorerFolder* pwd, Cursor* cursor, Cursor* select_cursor, int* desired_column, int* screen_x,
                  int* screen_y, bool* refresh_local_vars, MEVENT* m_event, int* peek_c, bool* mouse_drag,
                  time_val* last_time_mouse_drag, time_val* t_date, clock_t* t_clock, int* c,
@@ -39,7 +39,6 @@ mouse_read:;
   assert(mouse_drag != NULL);
 
   detectComplexMouseEvents(m_event);
-
 
   // Avoid too much refresh, to avoid input buffer full.
   if (m_event->bstate == NO_EVENT_MOUSE && *mouse_drag == true) {
@@ -57,15 +56,12 @@ mouse_read:;
           *t_clock = clock();
           goto mouse_read;
         }
-        else {
-          return false;
-        }
+        return;
       }
     }
     *last_time_mouse_drag = current_time;
   }
 
-  bool force_repaint = false;
   // If pressed enable drag
   if (m_event->bstate & BUTTON1_PRESSED && *mouse_drag == false) {
     *mouse_drag = true;
@@ -77,8 +73,7 @@ mouse_read:;
     if (m_event->bstate & BUTTON1_PRESSED) {
       gui_context->focus_w = gui_context->few_context.few;
     }
-    force_repaint = force_repaint ||
-      handleFileExplorerClick(gui_context, files, file_count, current_file_index, pwd, *m_event, refresh_local_vars);
+    handleFileExplorerClick(gui_context, files, file_count, current_file_index, pwd, *m_event, refresh_local_vars);
   }
   else if ((m_event->y - gui_context->ofw_context.ofw_height < 0 && gui_context->focus_w == NULL) ||
            (gui_context->ofw_context.ofw != NULL && gui_context->focus_w == gui_context->ofw_context.ofw)) {
@@ -86,41 +81,31 @@ mouse_read:;
     if (m_event->bstate & BUTTON1_PRESSED) {
       gui_context->focus_w = gui_context->ofw_context.ofw;
     }
-    force_repaint = force_repaint ||
-      handleOpenedFileClick(gui_context, *files, file_count, current_file_index, *m_event, refresh_local_vars,
-                            *mouse_drag);
+    handleOpenedFileClick(gui_context, *files, file_count, current_file_index, *m_event, refresh_local_vars,
+                          *mouse_drag);
   }
   else {
     // Click on editor windows
     if (m_event->bstate & BUTTON1_PRESSED) {
       gui_context->focus_w = gui_context->edw_context.ftw;
     }
-    force_repaint = force_repaint ||
-      handleEditorClick(gui_context, cursor, select_cursor, desired_column, screen_x, screen_y, m_event, *mouse_drag,
-                        *files + *current_file_index, highlight_descriptor);
+    handleEditorClick(gui_context, cursor, select_cursor, desired_column, screen_x, screen_y, m_event, *mouse_drag,
+                      *files + *current_file_index, highlight_descriptor);
   }
 
   if (m_event->bstate & BUTTON1_RELEASED || m_event->bstate & BUTTON1_CLICKED) {
     gui_context->focus_w = NULL;
     *mouse_drag = false;
   }
-
-  // Avoid refreshing when it's just mouse movement with no change.
-  if (*mouse_drag == false && force_repaint == false) {
-    return false;
-  }
-  return true;
 }
 
 
 ////// -------------- CLICK FUNCTIONS --------------
 
 
-bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_cursor, int* desired_column,
+void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_cursor, int* desired_column,
                        int* screen_x, int* screen_y, MEVENT* m_event, bool mouse_drag, FileContainer* file,
                        WindowHighlightDescriptor* highlight_descriptor) {
-  bool need_repaint = false;
-
   int edws_offset_x = getbegx(gui_context->edw_context.ftw);
   int edws_offset_y = getbegy(gui_context->edw_context.ftw);
   if (m_event->y - edws_offset_y < 0) {
@@ -144,7 +129,6 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     }
     setDesiredColumn(*cursor, desired_column);
     gui_closePopup(gui_context);
-    need_repaint = true;
   }
 
   if (m_event->bstate & BUTTON1_PRESSED) {
@@ -152,13 +136,11 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     *cursor = getCursorForEDWClick(cursor, m_event, *screen_x, *screen_y, edws_offset_x, edws_offset_y);
     setDesiredColumn(*cursor, desired_column);
     gui_closePopup(gui_context);
-    need_repaint = true;
   }
 
   if (m_event->bstate & BUTTON1_DOUBLE_CLICKED) {
     selectWord(cursor, select_cursor);
     gui_closePopup(gui_context);
-    need_repaint = true;
   }
 
 
@@ -168,14 +150,14 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     *screen_y -= SCROLL_SPEED;
     if (*screen_y < 1)
       *screen_y = 1;
-    need_repaint = true;
+    gui_updateEDW(gui_context);
   }
   else if (m_event->bstate & BUTTON4_PRESSED && m_event->bstate & BUTTON_SHIFT) {
     // Move Left
     *screen_x -= SCROLL_SPEED;
     if (*screen_x < 1)
       *screen_x = 1;
-    need_repaint = true;
+    gui_updateEDW(gui_context);
   }
 
   if (m_event->bstate & BUTTON5_PRESSED && !(m_event->bstate & BUTTON_SHIFT)) {
@@ -187,25 +169,24 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
       if (*screen_y < 1)
         *screen_y = 1;
     }
-    need_repaint = true;
+    gui_updateEDW(gui_context);
   }
   else if (m_event->bstate & BUTTON5_PRESSED && m_event->bstate & BUTTON_SHIFT) {
     // Move Right
     *screen_x += SCROLL_SPEED;
-    need_repaint = true;
+    gui_updateEDW(gui_context);
   }
 
   // line number marker.
   if (isClickInsideWindow(gui_context->edw_context.lnw, m_event)) {
     Diagnostic* diagnostic;
-    LineMarker marker = getMarkerForCurrentLine(*screen_y + m_event->y - getbegy(gui_context->edw_context.lnw),
+    LineMarker marker = gui_getMarkerForCurrentLine(*screen_y + m_event->y - getbegy(gui_context->edw_context.lnw),
                                                 highlight_descriptor, 0, (void**)&diagnostic);
 
     if ((marker == LSP_ERROR || marker == LSP_HINT || marker == LSP_INFORMATION || marker == LSP_WARNING) &&
         diagnostic != NULL) {
       gui_showDiagnostic(gui_context, m_event->y - getbegy(gui_context->edw_context.lnw) + 1,
                          getbegy(gui_context->edw_context.ftw), diagnostic);
-      need_repaint = true;
     }
   }
   else if (isClickInsideWindow(gui_context->edw_context.ftw, m_event)) {
@@ -229,7 +210,6 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
         // We resume the hover data previously fetched.
         ViewPort view_port = (ViewPort){.gui = gui_context, .screen_x = screen_x, .screen_y = screen_y};
         gui_resumeHoverInformation(cursor, &view_port, &file->lsp_datas.computed->hover);
-        need_repaint = true;
       }
     }
   }
@@ -237,11 +217,7 @@ bool handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
            (gui_context->edw_context.pow_owner == DIAGNOSTICS ||
             gui_context->edw_context.pow_owner == HOVER_DIAGNOSTICS)) {
     gui_closePopup(gui_context);
-    need_repaint = true;
   }
-
-
-  return need_repaint;
 }
 
 int handleOpenedFileSelectClick(GUIContext* gui_context, FileContainer* files, int* file_count, int* current_file,
@@ -286,7 +262,7 @@ int handleOpenedFileSelectClick(GUIContext* gui_context, FileContainer* files, i
 }
 
 
-bool handleOpenedFileClick(GUIContext* gui_context, FileContainer* files, int* file_count, int* current_file,
+void handleOpenedFileClick(GUIContext* gui_context, FileContainer* files, int* file_count, int* current_file,
                            MEVENT m_event, bool* refresh_local_vars, bool mouse_drag) {
   OFW_GUIContext* ofw_context = &gui_context->ofw_context;
   if (m_event.bstate & BUTTON4_PRESSED && !(m_event.bstate & BUTTON_SHIFT)) {
@@ -294,16 +270,17 @@ bool handleOpenedFileClick(GUIContext* gui_context, FileContainer* files, int* f
     (ofw_context->current_file_offset)--;
     if (ofw_context->current_file_offset < 0)
       ofw_context->current_file_offset = 0;
-    ofw_context->refresh_ofw = true;
-    return true;
+    gui_updateOFW(gui_context);
+    return;
   }
+
   if (m_event.bstate & BUTTON5_PRESSED && !(m_event.bstate & BUTTON_SHIFT)) {
     // Move Down
     (ofw_context->current_file_offset)++;
     if (ofw_context->current_file_offset > *file_count - 1)
       ofw_context->current_file_offset = *file_count - 1;
-    ofw_context->refresh_ofw = true;
-    return true;
+    gui_updateOFW(gui_context);
+    return;
   }
 
 
@@ -311,14 +288,14 @@ bool handleOpenedFileClick(GUIContext* gui_context, FileContainer* files, int* f
     int result_ofw_click = handleOpenedFileSelectClick(gui_context, files, file_count, current_file, m_event);
 
     if (result_ofw_click == -1) {
-      return false;
+      return;
     }
 
     *current_file = result_ofw_click;
 
     *refresh_local_vars = true;
-    ofw_context->refresh_ofw = true;
-    return true;
+    gui_updateOFW(gui_context);
+    return;
   }
 
   // ReOrder opened Files.
@@ -326,7 +303,7 @@ bool handleOpenedFileClick(GUIContext* gui_context, FileContainer* files, int* f
     int result_ofw_click = handleOpenedFileSelectClick(gui_context, files, file_count, current_file, m_event);
 
     if (result_ofw_click == -1 || result_ofw_click == *current_file) {
-      return false;
+      return;
     }
 
     // Swap both files.
@@ -337,12 +314,11 @@ bool handleOpenedFileClick(GUIContext* gui_context, FileContainer* files, int* f
     *current_file = result_ofw_click;
 
     *refresh_local_vars = true;
-    ofw_context->refresh_ofw = true;
-    return true;
+    gui_updateOFW(gui_context);
   }
 }
 
-bool handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int* file_count, int* current_file,
+void handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int* file_count, int* current_file,
                              ExplorerFolder* pwd, MEVENT m_event, bool* refresh_local_vars) {
   FEW_GUIContext* few_context = &gui_context->few_context;
 
@@ -352,7 +328,7 @@ bool handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int
     few_context->few_y_offset -= SCROLL_SPEED;
     if (few_context->few_y_offset < 0)
       few_context->few_y_offset = 0;
-    updateFEW(gui_context);
+    gui_updateFEW(gui_context);
   }
   else if (m_event.bstate & BUTTON4_PRESSED && m_event.bstate & BUTTON_SHIFT) {
     // Move Left
@@ -362,7 +338,7 @@ bool handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int
   if (m_event.bstate & BUTTON5_PRESSED && !(m_event.bstate & BUTTON_SHIFT)) {
     // Move Down
     few_context->few_y_offset += SCROLL_SPEED;
-    updateFEW(gui_context);
+    gui_updateFEW(gui_context);
   }
   else if (m_event.bstate & BUTTON5_PRESSED && m_event.bstate & BUTTON_SHIFT) {
     // Move Right
@@ -373,11 +349,11 @@ bool handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int
 
   if (m_event.bstate & BUTTON1_PRESSED) {
     few_context->few_selected_line = few_context->few_y_offset + m_event.y + 1;
-    updateFEW(gui_context);
+    gui_updateFEW(gui_context);
   }
 
   if (!(m_event.bstate & BUTTON1_DOUBLE_CLICKED)) {
-    return false;
+    return;
   }
 
   ExplorerFolder* res_folder;
@@ -387,7 +363,7 @@ bool handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int
   few_context->few_selected_line = few_context->few_y_offset + m_event.y + 1;
   // If click on nothing break;
   if (found == false) {
-    return false;
+    return;
   }
 
   if (res_index == -1) {
@@ -401,8 +377,7 @@ bool handleFileExplorerClick(GUIContext* gui_context, FileContainer** files, int
                 &gui_context->ofw_context.refresh_ofw, refresh_local_vars);
   }
 
-  updateFEW(gui_context);
-  return true;
+  gui_updateFEW(gui_context);
 }
 
 
