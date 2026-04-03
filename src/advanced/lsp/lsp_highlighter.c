@@ -14,10 +14,10 @@ void LSP_highlightCurrentFile(LSP_Data* lsp_datas, Cursor cursor, WindowHighligh
   }
   assert(lsp_datas->computed != NULL);
   for (int i = 0; i < lsp_datas->computed->diagnostics_size; i++) {
-    Cursor begin_cursor = tryToReachAbsPosition(cursor, lsp_datas->computed->diagnostics[i].range.pos1.row + 1,
-                                                lsp_datas->computed->diagnostics[i].range.pos1.column + 1);
-    Cursor end_cursor = tryToReachAbsPosition(cursor, lsp_datas->computed->diagnostics[i].range.pos2.row + 1,
-                                              lsp_datas->computed->diagnostics[i].range.pos2.column);
+    Cursor begin_cursor =
+      tryToReachAbsPosition(cursor, LSP_0_row_to_1_row(lsp_datas->computed->diagnostics[i].range.pos1.row),
+                            lsp_datas->computed->diagnostics[i].range.pos1.column + 1);
+    Cursor end_cursor = LSP_tryToReachCursorForLSPPosition(cursor, lsp_datas->computed->diagnostics[i].range.pos2);
 
     attr_t attr = A_UNDERLINE;
     NCURSES_PAIRS_T color = COLOR_RED;

@@ -14,23 +14,19 @@ void jumpToLocation(DispatcherPayload* data, LSP_Location location) {
   FileContainer* current = *data->files_state.files + *data->files_state.current_file_index;
   // LSP rows are 0-based, WishWim rows are 1-based.
   // LSP columns are 0-based, WishWim columns are 0-based.
-  current->cursor = tryToReachAbsPosition(current->cursor, location.range.pos1.row + 1, location.range.pos1.column);
+  current->cursor = tryToReachAbsPosition(current->cursor, LSP_0_row_to_1_row(location.range.pos1.row), location.range.pos1.column);
 
   moveScreenToMatchCursor(data->view_port.gui, current->cursor, &current->screen_x, &current->screen_y);
 }
 
-bool isPositionInRange(LSP_Position wishwim_pos, LSP_Range lsp_range) {
-  // wishwim_pos.row is 1-based, lsp_range rows are 0-based.
-  int lsp_pos_row = wishwim_pos.row - 1;
-
-  if (lsp_pos_row < lsp_range.pos1.row || lsp_pos_row > lsp_range.pos2.row) {
+bool LSP_isPositionInRange(LSP_Position lsp_pos, LSP_Range lsp_range) {
+  if (lsp_pos.row < lsp_range.pos1.row || lsp_pos.row > lsp_range.pos2.row) {
     return false;
   }
-  // LSP columns are 0-based, WishWim columns are 0-based.
-  if (lsp_pos_row == lsp_range.pos1.row && wishwim_pos.column < lsp_range.pos1.column) {
+  if (lsp_pos.row == lsp_range.pos1.row && lsp_pos.column < lsp_range.pos1.column) {
     return false;
   }
-  if (lsp_pos_row == lsp_range.pos2.row && wishwim_pos.column > lsp_range.pos2.column) {
+  if (lsp_pos.row == lsp_range.pos2.row && lsp_pos.column > lsp_range.pos2.column) {
     return false;
   }
   return true;
@@ -49,7 +45,7 @@ void receiveGotoData(cJSON* packet, LSP_Server* lsp, FileContainer* file, Dispat
       LSP_Location loc = location_array->items[i];
       // Check if the location is in the same file and the original position is within its range
       if (strcmp(loc.file_name.file_name, file->io_file.path_abs) == 0 &&
-          isPositionInRange(goto_payload->pos, loc.range)) {
+          LSP_isPositionInRange(goto_payload->pos, loc.range)) {
         // Skip this location
         continue;
       }
@@ -62,13 +58,13 @@ void receiveGotoData(cJSON* packet, LSP_Server* lsp, FileContainer* file, Dispat
   if (location_array->size == 0) {
     if (goto_payload != NULL) {
       if (goto_payload->goto_type == LSP_GOTO_DEFINITION) {
-        LSP_requestGoto(lsp, file->io_file.path_abs, goto_payload->pos.row, goto_payload->pos.column, LSP_FIND_REFERENCE);
+        LSP_requestGoto(lsp, file->io_file.path_abs, goto_payload->pos, LSP_FIND_REFERENCE);
       }
       else if (goto_payload->goto_type == LSP_FIND_REFERENCE) {
-        LSP_requestGoto(lsp, file->io_file.path_abs, goto_payload->pos.row, goto_payload->pos.column, LSP_GOTO_DECLARATION);
+        LSP_requestGoto(lsp, file->io_file.path_abs, goto_payload->pos, LSP_GOTO_DECLARATION);
       }
       else if (goto_payload->goto_type == LSP_GOTO_DECLARATION) {
-        LSP_requestGoto(lsp, file->io_file.path_abs, goto_payload->pos.row, goto_payload->pos.column, LSP_GOTO_IMPLEMENTATION);
+        LSP_requestGoto(lsp, file->io_file.path_abs, goto_payload->pos, LSP_GOTO_IMPLEMENTATION);
       }
       else {
         fprintf(stderr, "No location found for %s\n", method);

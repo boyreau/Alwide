@@ -9,11 +9,12 @@
 #include "../../../terminal/windows/pow.h"
 
 
-void applyTextEdit(Cursor* cursor, LSP_TextEdit* text_edit, History** history_p, PayloadStateChange payload_state_change) {
+void applyTextEdit(Cursor* cursor, LSP_TextEdit* text_edit, History** history_p,
+                   PayloadStateChange payload_state_change) {
   // As a text edit can represent a "replacement" we have to handle this deleting old text and inserting new text after.
   // Delete part
-  *cursor = tryToReachAbsPosition(*cursor, text_edit->range.pos1.row + 1, text_edit->range.pos1.column);
-  Cursor end = tryToReachAbsPosition(*cursor, text_edit->range.pos2.row + 1, text_edit->range.pos2.column);
+  *cursor = LSP_tryToReachCursorForLSPPosition(*cursor, text_edit->range.pos1);
+  Cursor end = LSP_tryToReachCursorForLSPPosition(*cursor, text_edit->range.pos2);
   deleteSelectionWithState(history_p, cursor, &end, payload_state_change);
   // insert part
   *cursor = insertCharArrayAtCursorWithHist(history_p, *cursor, text_edit->new_text, payload_state_change);
@@ -58,8 +59,8 @@ LSP_Range getReplaceRange(Cursor* cursor, char insertText[METHOD_MAX_LENGTH]) {
     begin = *cursor;
   }
 
-  return (LSP_Range){.pos1 = {.row = begin.file_id.absolute_row - 1, .column = begin.line_id.absolute_column},
-                 .pos2 = {.row = cursor->file_id.absolute_row - 1, .column = cursor->line_id.absolute_column}};
+  return LSP_range_from_cursor(begin.file_id.absolute_row, begin.line_id.absolute_column, cursor->file_id.absolute_row,
+                               cursor->line_id.absolute_column);
 }
 
 void LSP_executeCompletion(Cursor* cursor, LSP_CompletionItem* item, History** history_p,
@@ -125,7 +126,7 @@ void askCompletion(GUIContext* gui_context, Cursor* cursor, int* screen_x, int* 
       LSP_destroyCompletionList(&lsp_data->computed->completions);
     }
     LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
-                          cursor_row(*cursor), cursor_col(*cursor));
+                          LSP_pos_from_cursor(cursor_row(*cursor), cursor_col(*cursor)));
     if (gui_context->edw_context.pow_owner != COMPLETION) {
       gui_setLastTextAnchor(gui_context, cursor_to_desc(*cursor));
     }

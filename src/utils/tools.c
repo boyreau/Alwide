@@ -415,5 +415,21 @@ void decodeURI(const char* src, char* dest, size_t dest_size) {
 
 
 CursorDescriptor positionToCursorDescriptor(LSP_Position position) {
-  return (CursorDescriptor){.row = position.row + 1, .column = position.column};
+  return (CursorDescriptor){.row = LSP_0_row_to_1_row(position.row), .column = position.column};
+}
+
+
+// --- Conversion Helpers ---
+
+LSP_Position LSP_pos_from_cursor(int ww_row, int ww_col) { return (LSP_Position){.row = ww_row - 1, .column = ww_col}; }
+
+LSP_Range LSP_range_from_cursor(int r1, int c1, int r2, int c2) {
+  return (LSP_Range){.pos1 = LSP_pos_from_cursor(r1, c1), .pos2 = LSP_pos_from_cursor(r2, c2)};
+}
+
+
+int LSP_0_row_to_1_row(int lsp_row) { return lsp_row + 1; }
+
+Cursor LSP_tryToReachCursorForLSPPosition(Cursor cursor, LSP_Position position) {
+  return tryToReachAbsPosition(cursor, LSP_0_row_to_1_row(position.row), position.column);
 }

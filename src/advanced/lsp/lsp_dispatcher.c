@@ -14,13 +14,13 @@ void dispatcher(cJSON* packet, LSP_Server* lsp, void* payload) {
 
   // Dispatcher
   switch (LSP_getPacketType(packet)) {
-    case REQUEST:
+    case LSP_REQUEST:
       assert(false); // should be a request there !
       break;
-    case NOTIFICATION:
+    case LSP_NOTIFICATION:
       notificationDispatcher(packet, data);
       break;
-    case RESPONSE:
+    case LSP_RESPONSE:
       responseDispatcher(packet, lsp, data);
       break;
   }
@@ -54,7 +54,7 @@ int getIndexFileContainerForUri(DispatcherPayload* payload, cJSON* params) {
 
 
 void printPacket(cJSON* packet, cJSON* params) {
-  if (LSP_getPacketType(packet) == NOTIFICATION) {
+  if (LSP_getPacketType(packet) == LSP_NOTIFICATION) {
     fprintf(stderr, "\n\n <<< ================ %s ================\n",
             cJSON_GetStringValue(cJSON_GetObjectItem(packet, "method")));
   }

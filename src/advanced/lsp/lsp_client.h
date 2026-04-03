@@ -1,6 +1,12 @@
 /*
  * Partial implementation of :
  * https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
+ *
+ * !! WARNING !!
+ *
+ * Note that all LSP_* structure are (0-based for row and column) and that the Cursor api is (1-based row, and 0-based
+ * column)
+ *
  */
 #ifndef CLIENT_H
 #define CLIENT_H
@@ -15,7 +21,7 @@
 #define METHOD_MAX_LENGTH 200
 #define LANGUAGE_ID_LENGTH 100
 
-typedef enum { REQUEST, NOTIFICATION, RESPONSE } PACKET_TYPE;
+typedef enum { LSP_REQUEST, LSP_NOTIFICATION, LSP_RESPONSE } LSP_PACKET_TYPE;
 
 typedef unsigned long LSP_PacketID;
 
@@ -56,11 +62,11 @@ char* LSP_readPacket(LSP_Server* server);
 
 cJSON* LSP_readPacketAsJSON(LSP_Server* server, bool block);
 
-int LSP_sendPacket(LSP_Server* server, char* method, char* params, PACKET_TYPE type);
+int LSP_sendPacket(LSP_Server* server, char* method, char* params, LSP_PACKET_TYPE type);
 
-int LSP_sendPacketWithJSON(LSP_Server* server, char* method, cJSON* content, PACKET_TYPE type);
+int LSP_sendPacketWithJSON(LSP_Server* server, char* method, cJSON* content, LSP_PACKET_TYPE type);
 
-PACKET_TYPE LSP_getPacketType(cJSON* content);
+LSP_PACKET_TYPE LSP_getPacketType(cJSON* content);
 
 void LSP_addResponseContext(LSP_Server* server, LSP_PacketID id, char* method, char* file_name, void* payload);
 bool LSP_popResponseContext(LSP_Server* server, LSP_PacketID id, LSP_ResponseContext* context);
@@ -93,27 +99,29 @@ typedef enum {
 } LSP_GOTO_TYPE;
 
 typedef struct {
-  int row;
-  int column;
+  int row;    // 0-based
+  int column; // 0-based
 } LSP_Position;
-
-typedef struct {
-  LSP_Position pos;
-  LSP_GOTO_TYPE goto_type;
-} GotoContext;
-
-LSP_Position LSP_getPositionOf(int cursor_row, int cursor_column);
-cJSON* LSP_getJSONPosition(int cursor_row, int cursor_column);
-LSP_Position LSP_getPositionFromJSON(cJSON* json);
 
 typedef struct {
   LSP_Position pos1;
   LSP_Position pos2;
 } LSP_Range;
 
-LSP_Range LSP_getRangeOf(int cur1_row, int cur1_column, int cur2_row, int cur2_column);
-cJSON* LSP_getJSONRange(int cur1_row, int cur1_column, int cur2_row, int cur2_column);
+
+
+typedef struct {
+  LSP_Position pos;
+  LSP_GOTO_TYPE goto_type;
+} GotoContext;
+
+LSP_Position LSP_pos(int lsp_row, int lsp_col);
+LSP_Position LSP_getPositionFromJSON(cJSON* json);
+cJSON* LSP_getJSONPosition(LSP_Position pos);
+
+LSP_Range LSP_range(LSP_Position p1, LSP_Position p2);
 LSP_Range LSP_getRangeFromJSON(cJSON* json);
+cJSON* LSP_getJSONRange(LSP_Range range);
 
 typedef struct {
   char file_name[PATH_MAX];
@@ -143,8 +151,8 @@ typedef struct {
   LSP_Position position;
 } LSP_TextDocumentPositionParams;
 
-LSP_TextDocumentPositionParams LSP_getTextDocumentPositionParamsOf(char* file_name, int cur_row, int cur_column);
-cJSON* LSP_getJSONTextDocumentPositionParams(char* file_name, int cur_row, int cur_column);
+LSP_TextDocumentPositionParams LSP_getTextDocumentPositionParamsOf(char* file_name, LSP_Position pos);
+cJSON* LSP_getJSONTextDocumentPositionParams(char* file_name, LSP_Position pos);
 LSP_TextDocumentPositionParams LSP_getTextDocumentPositionParamsFromJSON(cJSON* json);
 void LSP_destroyTextDocumentPositionParams(LSP_TextDocumentPositionParams text_document_position_params);
 
@@ -153,8 +161,8 @@ typedef struct {
   char* new_text;
 } LSP_TextEdit;
 
-LSP_TextEdit LSP_getTextEditOf(int cur1_row, int cur1_column, int cur2_row, int cur2_column, char* new_text);
-cJSON* LSP_getJSONTextEdit(int cur1_row, int cur1_column, int cur2_row, int cur2_column, char* new_text);
+LSP_TextEdit LSP_getTextEditOf(LSP_Range range, char* new_text);
+cJSON* LSP_getJSONTextEdit(LSP_Range range, char* new_text);
 LSP_TextEdit LSP_getTextEditFromJSON(cJSON* json);
 void LSP_destroyTextEdit(LSP_TextEdit text_edit);
 
@@ -163,10 +171,8 @@ typedef struct {
   LSP_TextEdit edits[1];
 } LSP_TextDocumentEdit;
 
-LSP_TextDocumentEdit LSP_getTextDocumentEditOf(char* file_name, int cur1_row, int cur1_column, int cur2_row,
-                                           int cur2_column, char* new_text);
-cJSON* LSP_getJSONTextDocumentEdit(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column,
-                                   char* new_text);
+LSP_TextDocumentEdit LSP_getTextDocumentEditOf(char* file_name, LSP_Range range, char* new_text);
+cJSON* LSP_getJSONTextDocumentEdit(char* file_name, LSP_Range range, char* new_text);
 LSP_TextDocumentEdit LSP_getTextDocumentEditFromJSON(cJSON* json);
 void LSP_destroyTextDocumentEdit(LSP_TextDocumentEdit text_document_edit);
 
@@ -175,8 +181,8 @@ typedef struct {
   LSP_Range range;
 } LSP_Location;
 
-LSP_Location LSP_getLocationOf(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
-cJSON* LSP_getJSONLocation(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
+LSP_Location LSP_getLocationOf(char* file_name, LSP_Range range);
+cJSON* LSP_getJSONLocation(char* file_name, LSP_Range range);
 LSP_Location LSP_getLocationFromJSON(cJSON* json);
 void LSP_destroyLocation(LSP_Location* location);
 
@@ -194,15 +200,19 @@ typedef struct {
 } LSP_DiagnosticRelatedInformation;
 
 // TODO implement if needed
-LSP_DiagnosticRelatedInformation LSP_getDiagnosticRelatedInformationOf(char* file_name, int cur1_row, int cur1_column,
-                                                                   int cur2_row, int cur2_column);
-cJSON* LSP_getJSONDiagnosticRelatedInformation(char* file_name, int cur1_row, int cur1_column, int cur2_row,
-                                               int cur2_column);
+LSP_DiagnosticRelatedInformation LSP_getDiagnosticRelatedInformationOf(char* file_name, LSP_Range range);
+cJSON* LSP_getJSONDiagnosticRelatedInformation(char* file_name, LSP_Range range);
 LSP_DiagnosticRelatedInformation LSP_getDiagnosticRelatedInformationFromJSON(cJSON* json);
 void LSP_destroyDiagnosticRelatedInformation(LSP_DiagnosticRelatedInformation location);
 
-typedef enum { ERROR = 1, WARNING = 2, INFORMATION = 3, HINT = 4, SEVERITY_NONE = 0 } LSP_DiagnosticSeverity;
-typedef enum { UNNECESSARY = 1, DEPRECATED = 2, TAG_NONE = 0 } LSP_DiagnosticTag;
+typedef enum {
+  LSP_DIAG_ERROR = 1,
+  LSP_DIAG_WARNING = 2,
+  LSP_DIAG_INFORMATION = 3,
+  LSP_DIAG_HINT = 4,
+  LSP_DIAG_SEVERITY_NONE = 0
+} LSP_DiagnosticSeverity;
+typedef enum { LSP_DIAG_UNNECESSARY = 1, LSP_DIAG_DEPRECATED = 2, LSP_DIAG_TAG_NONE = 0 } LSP_DiagnosticTag;
 typedef struct {
   LSP_DiagnosticSeverity severity;
   LSP_Range range;
@@ -216,8 +226,8 @@ typedef struct {
   LSP_DiagnosticRelatedInformation infos[0];
 } LSP_Diagnostic;
 
-LSP_Diagnostic LSP_getDiagnosticOf(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
-cJSON* LSP_getJSONDiagnostic(char* file_name, int cur1_row, int cur1_column, int cur2_row, int cur2_column);
+LSP_Diagnostic LSP_getDiagnosticOf(LSP_Range range);
+cJSON* LSP_getJSONDiagnostic(LSP_Range range);
 LSP_Diagnostic LSP_getDiagnosticFromJSON(cJSON* json);
 void LSP_destroyDiagnostic(LSP_Diagnostic* diagnostic);
 
@@ -327,8 +337,8 @@ void LSP_notifyLspFileDidChange(LSP_Server* lsp, char* file_name, cJSON* array_o
 //// -------- Request Functions --------
 
 
-void LSP_requestCompletion(LSP_Server* lsp, char* file_name, int row, int column);
-void LSP_requestHover(LSP_Server* lsp, char* file_name, int row, int column);
-void LSP_requestGoto(LSP_Server* lsp, char* file_name, int row, int column, LSP_GOTO_TYPE goto_type);
+void LSP_requestCompletion(LSP_Server* lsp, char* file_name, LSP_Position pos);
+void LSP_requestHover(LSP_Server* lsp, char* file_name, LSP_Position pos);
+void LSP_requestGoto(LSP_Server* lsp, char* file_name, LSP_Position pos, LSP_GOTO_TYPE goto_type);
 
 #endif // CLIENT_H

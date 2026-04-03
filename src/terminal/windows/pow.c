@@ -118,13 +118,13 @@ void gui_showDiagnostic(GUIContext* gui_context, int y, int x, LSP_Diagnostic* d
 
   int color = 0;
   switch (diagnostic->severity) {
-    case LSP_ERROR:
+    case LSP_DIAG_ERROR:
       color = ERROR_COLOR_PAIR;
       break;
-    case LSP_WARNING:
+    case LSP_DIAG_WARNING:
       color = WARNING_COLOR_PAIR;
       break;
-    case LSP_INFORMATION:
+    case LSP_DIAG_INFORMATION:
       color = INFO_COLOR_PAIR;
       break;
     default:

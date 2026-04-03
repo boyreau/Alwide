@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-#include "../io_management/io_manager.h"
 #include "../advanced/lsp/lsp_client.h"
+#include "../io_management/io_manager.h"
 
 #define URI_MAX (PATH_MAX * 3 + 8)
 
@@ -58,5 +58,13 @@ void decodeURI(const char* src, char* dest, size_t dest_size);
 void encodeURI(const char* src, char* dest, size_t dest_size);
 
 CursorDescriptor positionToCursorDescriptor(LSP_Position position);
+
+// Strictly 0-based LSP position constructor
+// Convert from WishWim (1-based row, 0-based col) to LSP (0-based row, 0-based col)
+LSP_Position LSP_pos_from_cursor(int ww_row, int ww_col);
+LSP_Range LSP_range_from_cursor(int r1, int c1, int r2, int c2);
+Cursor LSP_tryToReachCursorForLSPPosition(Cursor cursor, LSP_Position position);
+int LSP_0_row_to_1_row(int lsp_row);
+
 
 #endif // TOOLS_H

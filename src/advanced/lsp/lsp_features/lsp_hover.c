@@ -26,15 +26,14 @@ void receiveHoverData(cJSON* packet, FileContainer* file, ViewPort* view_port, C
   if (file->lsp_datas.computed->hover.size > 0 && file->lsp_datas.computed->hover.is_range == false) {
     LSP_Position* pos = payload;
 
-    Cursor end = tryToReachAbsPosition(*cursor, pos->row, pos->column);
+    Cursor end = tryToReachAbsPosition(*cursor, LSP_0_row_to_1_row(pos->row), pos->column);
     Cursor begin = cursor_disable(*cursor);
     selectWord(&end, &begin);
 
     // set up the new range
     file->lsp_datas.computed->hover.range.pos1 =
-      (LSP_Position){.row = begin.file_id.absolute_row - 1, .column = begin.line_id.absolute_column};
-    file->lsp_datas.computed->hover.range.pos2 =
-      (LSP_Position){.row = end.file_id.absolute_row - 1, .column = end.line_id.absolute_column};
+      LSP_pos_from_cursor(begin.file_id.absolute_row, begin.line_id.absolute_column);
+    file->lsp_datas.computed->hover.range.pos2 = LSP_pos_from_cursor(end.file_id.absolute_row, end.line_id.absolute_column);
     file->lsp_datas.computed->hover.is_range = true;
   }
 
