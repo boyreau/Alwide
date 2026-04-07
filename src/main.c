@@ -12,13 +12,15 @@
 #include "advanced/lsp/lsp_client.h"
 #include "advanced/lsp/lsp_dispatcher.h"
 #include "advanced/lsp/lsp_features/lsp_completion.h"
-#include "advanced/lsp/lsp_features/lsp_highlighter.h"
+#include "advanced/lsp/lsp_highlighter.h"
 #include "advanced/tree-sitter/tree_manager.h"
 #include "advanced/tree-sitter/tree_sitter_highlighter.h"
 #include "config/config.h"
 #include "data-management/file_management.h"
 #include "data-management/file_structure.h"
 #include "data-management/state_control.h"
+#include "environnement/constants.h"
+#include "environnement/global-variables.h"
 #include "io_management/io_explorer.h"
 #include "io_management/io_manager.h"
 #include "io_management/viewport_history.h"
@@ -31,8 +33,6 @@
 #include "terminal/windows/ofw.h"
 #include "terminal/windows/pow.h"
 #include "utils/clipboard_manager.h"
-#include "utils/constants.h"
-#include "utils/global-variables.h"
 #include "utils/key_management.h"
 
 #define SHOW_ERROR true
@@ -63,7 +63,7 @@ int main(int file_count, char** args) {
     fclose(f);
   }
   else {
-    FILE* f = fopen("./logs.txt", "w");
+    FILE* f = fopen("./.logs.txt", "w");
     if (f != NULL) {
       dup2(fileno(f), STDERR_FILENO);
       fclose(f);
@@ -73,7 +73,7 @@ int main(int file_count, char** args) {
   setlocale(LC_ALL, "");
   setlocale(LC_NUMERIC, "C");
   // TODO Remove when lsp_logs.txt will be unused.
-  system("echo > lsp_logs.txt");
+  system("echo > .lsp_logs.txt");
   // system("echo "" > tree_logs.txt");
 
   // remove first args which is the executable file name.
@@ -92,9 +92,9 @@ int main(int file_count, char** args) {
   /// --- Init TUI ---
   // Init GUIContext
   GUIContext gui_context;
-  initGUIContext(&gui_context);
+  gui_initGUIContext(&gui_context);
   // Init terminal with ncurses
-  initNCurses(&gui_context);
+  gui_initNCurses(&gui_context);
 
   /// --- Setup Files ---
   // Containers of current opened buffers.
@@ -150,13 +150,13 @@ int main(int file_count, char** args) {
   time_val last_time_mouse_drag = timeInMilliseconds();
   time_val t_date = timeInMilliseconds();
   clock_t t_clock = clock();
-
   Cursor old_selected_cursor;
 
   while (true) {
     //// --------------- Post Processing -----------------
 
     if (refresh_local_vars == true) {
+      gui_closePopup(&gui_context);
       setupLocalVars(files, current_file_index, &io_file, &root, &cursor, &select_cursor, &old_cur, &desired_column,
                      &screen_x, &screen_y, &old_screen_x, &old_screen_y, &history_root, &history_frame, &ts_data,
                      &lsp_data);
@@ -164,28 +164,28 @@ int main(int file_count, char** args) {
       old_history_frame = *history_frame;
       payload_state_change = getPayloadStateChange(ts_data, lsp_data);
       old_selected_cursor = *select_cursor;
-      updateEDW(&gui_context);
+      gui_updateEDW(&gui_context);
     }
 
     // flag cursor change
-    if (!areCursorEqual(*cursor, *old_cur)) {
+    if (!cursor_eq(*cursor, *old_cur)) {
       *old_cur = *cursor;
       moveScreenToMatchCursor(&gui_context, *cursor, screen_x, screen_y);
-      updateEDW(&gui_context);
+      gui_updateEDW(&gui_context);
     }
 
     // flag selection change
-    if (!areCursorEqual(*select_cursor, old_selected_cursor)) {
+    if (!cursor_eq(*select_cursor, old_selected_cursor)) {
       old_selected_cursor = *select_cursor;
-      updateEDW(&gui_context);
-      if (!isCursorDisabled(*select_cursor)) {
+      gui_updateEDW(&gui_context);
+      if (!cursor_is_disabled(*select_cursor)) {
         gui_closePopup(&gui_context);
       }
     }
 
     // flag screen_x change
     if (*old_screen_x != *screen_x) {
-      updateEDW(&gui_context);
+      gui_updateEDW(&gui_context);
       gui_adaptPopup(&gui_context, *screen_x - *old_screen_x, 0);
 
       *old_screen_x = *screen_x;
@@ -193,7 +193,7 @@ int main(int file_count, char** args) {
 
     // flag screen_y change
     if (*old_screen_y != *screen_y) {
-      updateEDW(&gui_context);
+      gui_updateEDW(&gui_context);
       gui_adaptPopup(&gui_context, 0, *screen_y - *old_screen_y);
 
       // resize lnw_w to match with line_number_length
@@ -223,10 +223,10 @@ int main(int file_count, char** args) {
                               &highlight_descriptor);
 
       // add lsp highlights
-      LSP_highlightCurrentFile(lsp_data, *cursor, &highlight_descriptor);
+      LSP_highlightCurrentFile(lsp_data, *cursor, &highlight_descriptor, &gui_context);
     }
 
-    repaintGUI(&gui_context, &highlight_descriptor, &pwd, files, file_count, current_file_index);
+    gui_repaintGUI(&gui_context, &highlight_descriptor, &pwd, files, file_count, current_file_index);
 
 
     assert(checkFileIntegrity(*root) == true);
@@ -270,9 +270,8 @@ int main(int file_count, char** args) {
 
 
     DispatcherPayload payload;
-    payload.files = files;
-    payload.size = file_count;
-    payload.view_port = getViewPort(&gui_context, screen_x, screen_y);
+    payload.files_state = filesStateOf(&files, &file_count, &current_file_index, &refresh_local_vars);
+    payload.view_port = viewPortOf(&gui_context, screen_x, screen_y);
     payload.cursor = cursor;
 
 
@@ -287,12 +286,26 @@ int main(int file_count, char** args) {
       cell = cell->next;
     }
 
+    // flag if the lsp may have changed the opened file
+    if (refresh_local_vars) {
+      continue;
+    }
+
     if (hash == ERR) {
       goto read_input;
     }
 
+    if (hash == KEY_MOUSE) {
+      if (getmouse(&m_event) != OK) {
+        fprintf(stderr, "MOUVE_EVENT_NOT_OK !\r\n");
+        goto read_input;
+      }
+      detectComplexMouseEvents(&m_event);
+    }
+
     bool has_popup_handle_input =
-      gui_handlePopupInput(&gui_context, cursor, hash, c, lsp_data->computed, history_frame, payload_state_change);
+      gui_handlePopupInput(&gui_context, cursor, hash, c, lsp_data->computed, history_frame, payload_state_change,
+                           &payload, (hash == KEY_MOUSE ? &m_event : NULL));
     if (has_popup_handle_input) {
       c = ONLY_REPAINT_INPUT;
       hash = ONLY_REPAINT_INPUT;
@@ -301,7 +314,7 @@ int main(int file_count, char** args) {
     switch (hash) {
         // ---------------------- NCURSES THINGS ----------------------
       case ONLY_REPAINT_INPUT:
-        updateGUI(&gui_context);
+        gui_updateGUI(&gui_context);
         break;
 
       case BEGIN_MOUSE_LISTEN:
@@ -313,7 +326,7 @@ int main(int file_count, char** args) {
         gui_resizeOFW(&gui_context);
         gui_resizeEDW(&gui_context, -1);
 
-        updateGUI(&gui_context);
+        gui_updateGUI(&gui_context);
         break;
 
         // ---------------------- MOUSE ----------------------
@@ -326,10 +339,13 @@ int main(int file_count, char** args) {
           // break;
         }
 
-        if (!handleClick(&gui_context, &files, &file_count, &current_file_index, &pwd, cursor, select_cursor,
-                         desired_column, screen_x, screen_y, &refresh_local_vars, &m_event, &peek_c, &mouse_drag,
-                         &last_time_mouse_drag, &t_date, &t_clock, &c, &highlight_descriptor))
+        handleClick(&gui_context, &files, &file_count, &current_file_index, &pwd, cursor, select_cursor, desired_column,
+                    screen_x, screen_y, &refresh_local_vars, &m_event, &peek_c, &mouse_drag, &last_time_mouse_drag,
+                    &t_date, &t_clock, &c, &highlight_descriptor);
+
+        if (!gui_doesGUINeedRepaint(&gui_context)) {
           goto read_input;
+        }
 
         break;
 
@@ -337,14 +353,14 @@ int main(int file_count, char** args) {
 
 
       case H_KEY_RIGHT:
-        if (isCursorDisabled(*select_cursor))
+        if (cursor_is_disabled(*select_cursor))
           *cursor = moveRight(*cursor);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
         setDesiredColumn(*cursor, desired_column);
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_LEFT:
-        if (isCursorDisabled(*select_cursor))
+        if (cursor_is_disabled(*select_cursor))
           *cursor = moveLeft(*cursor);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
         setDesiredColumn(*cursor, desired_column);
@@ -353,12 +369,10 @@ int main(int file_count, char** args) {
       case H_KEY_UP:
         *cursor = moveUp(*cursor, *desired_column);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
-        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_DOWN:
         *cursor = moveDown(*cursor, *desired_column);
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
-        askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_MAJ_RIGHT:
         setSelectCursorOn(*cursor, select_cursor);
@@ -412,7 +426,7 @@ int main(int file_count, char** args) {
           current_file_index--;
         refresh_local_vars = true;
         // TODO check if the file selected is showing in ofw. If not move it in.
-        updateOFW(&gui_context);
+        gui_updateOFW(&gui_context);
         break;
       case H_KEY_CTRL_MAJ_UP:
         // Do something with this.
@@ -420,7 +434,7 @@ int main(int file_count, char** args) {
           current_file_index++;
         refresh_local_vars = true;
         // TODO check if the file selected is showing in ofw. If not move it in.
-        updateOFW(&gui_context);
+        gui_updateOFW(&gui_context);
         break;
       case H_KEY_BEGIN:
         setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
@@ -452,7 +466,7 @@ int main(int file_count, char** args) {
         *cursor = undo(history_frame, *cursor, globalOnStageChange, (long*)&payload_state_change);
         old_history_frame = NULL;
         setDesiredColumn(*cursor, desired_column);
-        updateEDW(&gui_context);
+        gui_updateEDW(&gui_context);
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, true, false);
         break;
       case CTRL('y'):
@@ -460,7 +474,7 @@ int main(int file_count, char** args) {
         *cursor = redo(history_frame, *cursor, globalOnStageChange, (long*)&payload_state_change);
         old_history_frame = NULL;
         setDesiredColumn(*cursor, desired_column);
-        updateEDW(&gui_context);
+        gui_updateEDW(&gui_context);
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, true, false);
         break;
       case CTRL('c'):
@@ -474,11 +488,11 @@ int main(int file_count, char** args) {
         saveToClipBoard(*cursor, *select_cursor);
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
-        updateEDW(&gui_context);
+        gui_updateEDW(&gui_context);
         break;
       case CTRL('v'):
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-        tmp = cursorToDescriptor(cursor);
+        tmp = cursor_to_desc(*cursor);
         *cursor = loadFromClipBoard(*cursor);
         saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
                    (long*)&payload_state_change);
@@ -493,15 +507,15 @@ int main(int file_count, char** args) {
             }
             saveFile(files[i].root, &files[i].io_file);
             assert(io_file->status == EXIST);
-            setlastFilePosition(files[i].io_file.path_abs, getAbsRow(&files[i].cursor), getAbsCol(&files[i].cursor),
+            setlastFilePosition(files[i].io_file.path_abs, cursor_row(*&files[i].cursor), cursor_col(*&files[i].cursor),
                                 files[i].screen_x, files[i].screen_y);
             saveCurrentStateControl(*files[i].history_root, files[i].history_frame, files[i].io_file.path_abs);
           }
         goto end;
       case CTRL('w'):
         closeFile(&files, &file_count, &current_file_index, &refresh_local_vars);
-        updateOFW(&gui_context);
-        updateEDW(&gui_context);
+        gui_updateOFW(&gui_context);
+        gui_updateEDW(&gui_context);
         break;
       case CTRL('s'):
         if (io_file->status == NONE) {
@@ -510,7 +524,7 @@ int main(int file_count, char** args) {
         }
         saveFile(*root, io_file);
         assert(io_file->status == EXIST);
-        setlastFilePosition(io_file->path_abs, getAbsRow(cursor), getAbsCol(cursor), *screen_x, *screen_y);
+        setlastFilePosition(io_file->path_abs, cursor_row(*cursor), cursor_col(*cursor), *screen_x, *screen_y);
         saveCurrentStateControl(**history_root, *history_frame, io_file->path_abs);
         break;
 
@@ -529,14 +543,14 @@ int main(int file_count, char** args) {
       case '\n':
       case KEY_ENTER:
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-        tmp = cursorToDescriptor(cursor);
+        tmp = cursor_to_desc(*cursor);
         *cursor = insertNewLineInLineC(*cursor);
         saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
                    (long*)&payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         break;
       case H_KEY_DELETE:
-        if (isCursorDisabled(*select_cursor)) {
+        if (cursor_is_disabled(*select_cursor)) {
           *select_cursor = moveLeft(*cursor);
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
@@ -544,13 +558,13 @@ int main(int file_count, char** args) {
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
         break;
       case H_KEY_SUPPR:
-        if (isCursorDisabled(*select_cursor)) {
+        if (cursor_is_disabled(*select_cursor)) {
           *select_cursor = moveRight(*cursor);
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
-        updateEDW(&gui_context);
+        gui_updateEDW(&gui_context);
         break;
       case H_KEY_CTRL_SUPPR:
         setSelectCursorOn(*cursor, select_cursor);
@@ -558,11 +572,11 @@ int main(int file_count, char** args) {
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         askCompletion(&gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
-        updateEDW(&gui_context);
+        gui_updateEDW(&gui_context);
         break;
       case KEY_TAB:
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-        tmp = cursorToDescriptor(cursor);
+        tmp = cursor_to_desc(*cursor);
         if (TAB_CHAR_USE) {
           *cursor = insertCharInLineC(*cursor, readChar_U8FromInput('\t'));
         }
@@ -576,13 +590,13 @@ int main(int file_count, char** args) {
         setDesiredColumn(*cursor, desired_column);
         break;
       case CTRL('d'):
-        if (isCursorDisabled(*select_cursor) == true) {
+        if (cursor_is_disabled(*select_cursor) == true) {
           selectLine(cursor, select_cursor);
         }
         deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
         setDesiredColumn(*cursor, desired_column);
         gui_closePopup(&gui_context);
-        updateEDW(&gui_context);
+        gui_updateEDW(&gui_context);
         break;
 
 
@@ -610,7 +624,7 @@ int main(int file_count, char** args) {
         }
         else {
           deleteSelectionWithState(history_frame, cursor, select_cursor, payload_state_change);
-          tmp = cursorToDescriptor(cursor);
+          tmp = cursor_to_desc(*cursor);
           *cursor = insertCharInLineC(*cursor, readChar_U8FromInput(c));
           setDesiredColumn(*cursor, desired_column);
           saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,

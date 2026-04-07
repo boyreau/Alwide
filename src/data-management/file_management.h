@@ -25,6 +25,13 @@ typedef struct {
   LSP_Data lsp_datas;     // Object which contain all the datas of lsp.
 } FileContainer;
 
+typedef struct {
+  FileContainer** files;
+  int* size;
+  int* current_file_index;
+  bool* refresh_local_vars;
+} FilesState;
+
 
 typedef enum { SELECT_OFF_RIGHT, SELECT_OFF_LEFT } SELECT_OFF_STYLE;
 
@@ -49,6 +56,9 @@ void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file,
 bool isFileContainerEmpty(FileContainer* container);
 
 void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files);
+
+FilesState filesStateOf(FileContainer** files, int* size, int* current_file_index,
+                                        bool* refresh_local_vars);
 
 
 ////// -------------- CURSOR ACTIONS --------------
@@ -81,14 +91,11 @@ Cursor goToBegin(Cursor cursor);
 ////// -------------- SELECTION MANAGEMENT --------------
 
 
-bool isCursorDisabled(Cursor cursor);
-bool isCursorDescriptorDisabled(CursorDescriptor cursor);
-
 int utf8CharBetween2Cursor(Cursor cur1, Cursor cur2);
 
 unsigned int byteBetween2Cursor(Cursor cur1, Cursor cur2);
 
-Cursor disableCursor(Cursor cursor);
+Cursor cursor_disable(Cursor cursor);
 
 void setSelectCursorOn(Cursor cursor, Cursor* select_cursor);
 void setSelectCursorOff(Cursor* cursor, Cursor* select_cursor, SELECT_OFF_STYLE style);

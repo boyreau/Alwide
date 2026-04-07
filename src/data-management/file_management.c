@@ -6,10 +6,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../environnement/constants.h"
+#include "../environnement/global-variables.h"
 #include "../io_management/viewport_history.h"
 #include "../terminal/term_handler.h"
-#include "../utils/constants.h"
-#include "../utils/global-variables.h"
 
 
 ////// -------------- FILE CONTAINER --------------
@@ -100,7 +100,7 @@ void setupFileContainer(char* path, FileContainer* container) {
   container->history_frame = container->history_root;
 
   container->cursor = createRoot(container->io_file);
-  container->select_cursor = disableCursor(container->cursor);
+  container->select_cursor = cursor_disable(container->cursor);
   setDesiredColumn(container->cursor, &container->desired_column);
 
   container->root = container->cursor.file_id.file;
@@ -141,7 +141,7 @@ bool isFileContainerEmpty(FileContainer* container) {
     return false;
 
   return container->cursor.file_id.absolute_row == 1 && container->cursor.line_id.absolute_column == 0 &&
-    areCursorEqual(container->cursor, moveRight(container->cursor));
+    cursor_eq(container->cursor, moveRight(container->cursor));
 }
 
 void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files) {
@@ -170,6 +170,12 @@ void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files)
                                (*files)[0].io_file.path_args, "");
     }
   }
+}
+
+FilesState filesStateOf(FileContainer** files, int* size, int* current_file_index,
+                                        bool* refresh_local_vars) {
+  return (FilesState){
+    .files = files, .size = size, .current_file_index = current_file_index, .refresh_local_vars = refresh_local_vars};
 }
 
 //// -------------- CURSOR MANAGEMENT --------------
@@ -302,7 +308,7 @@ Cursor moveToNextWord(Cursor cursor) {
     cursor = tmp_cur;
   }
 
-  if (areCursorEqual(old_cur, cursor)) {
+  if (cursor_eq(old_cur, cursor)) {
     return moveRight(cursor);
   }
 
@@ -325,7 +331,7 @@ Cursor moveToPreviousWord(Cursor cursor) {
     cursor = moveLeft(cursor);
   }
 
-  if (areCursorEqual(old_cur, cursor)) {
+  if (cursor_eq(old_cur, cursor)) {
     return moveLeft(cursor);
   }
 
@@ -391,7 +397,7 @@ Cursor insertCharArrayAtCursorWithHist(History** history_p, Cursor cursor, char*
                                        PayloadStateChange payload_state_change) {
   Cursor tmp = cursor;
   cursor = insertCharArrayAtCursor(cursor, chs);
-  saveAction(history_p, createInsertAction(tmp, cursorToDescriptor(&cursor)), globalOnStageChange, &cursor,
+  saveAction(history_p, createInsertAction(tmp, cursor_to_desc(cursor)), globalOnStageChange, &cursor,
              &payload_state_change);
 
   return cursor;
@@ -405,7 +411,7 @@ Cursor byteCursorToCursor(Cursor cursor, int row, int byte_column) {
   while (byte_count < byte_column) {
     Cursor old_cur = cursor;
     cursor = moveRight(cursor);
-    if (old_cur.file_id.absolute_row != cursor.file_id.absolute_row || areCursorEqual(old_cur, cursor)) {
+    if (old_cur.file_id.absolute_row != cursor.file_id.absolute_row || cursor_eq(old_cur, cursor)) {
       return old_cur;
     }
     byte_count += sizeChar_U8(getCharAtCursor(cursor));
@@ -427,18 +433,15 @@ Cursor goToBegin(Cursor cursor) {
 ////// -------------- SELECTION MANAGEMENT --------------
 
 
-bool isCursorDisabled(Cursor cursor) { return cursor.file_id.absolute_row == -1; }
-bool isCursorDescriptorDisabled(CursorDescriptor cursor) { return cursor.row == -1; }
-
 int utf8CharBetween2Cursor(Cursor cur1, Cursor cur2) {
-  if (isCursorPreviousThanOther(cur2, cur1)) {
+  if (cursor_le(cur2, cur1)) {
     Cursor tmp = cur1;
     cur1 = cur2;
     cur2 = tmp;
   }
 
   int count = 0;
-  while (isCursorPreviousThanOther(cur1, cur2)) {
+  while (cursor_le(cur1, cur2)) {
     cur1 = moveRight(cur1);
     count++;
   }
@@ -446,7 +449,7 @@ int utf8CharBetween2Cursor(Cursor cur1, Cursor cur2) {
 }
 
 unsigned int byteBetween2Cursor(Cursor cur1, Cursor cur2) {
-  if (isCursorPreviousThanOther(cur2, cur1)) {
+  if (cursor_le(cur2, cur1)) {
     Cursor tmp = cur1;
     cur1 = cur2;
     cur2 = tmp;
@@ -454,7 +457,7 @@ unsigned int byteBetween2Cursor(Cursor cur1, Cursor cur2) {
 
   Cursor it = cur1;
   int byte_between_2_cursor = 0;
-  while (isCursorStrictPreviousThanOther(it, cur2)) {
+  while (cursor_lt(it, cur2)) {
     Cursor tmp = it;
     it = moveRight(it);
 
@@ -467,44 +470,39 @@ unsigned int byteBetween2Cursor(Cursor cur1, Cursor cur2) {
     }
   }
 
-  assert(areCursorEqual(it, cur2));
+  assert(cursor_eq(it, cur2));
 
   return byte_between_2_cursor;
 }
 
-Cursor disableCursor(Cursor cursor) {
-  cursor.file_id.absolute_row = -1;
-  return cursor;
-}
-
 void setSelectCursorOn(Cursor cursor, Cursor* select_cursor) {
-  if (isCursorDisabled(*select_cursor) == true) {
+  if (cursor_is_disabled(*select_cursor) == true) {
     *select_cursor = cursor;
   }
 }
 
 void setSelectCursorOff(Cursor* cursor, Cursor* select_cursor, SELECT_OFF_STYLE style) {
-  if (isCursorDisabled(*select_cursor) == true)
+  if (cursor_is_disabled(*select_cursor) == true)
     return;
 
 
-  if (style == SELECT_OFF_RIGHT && isCursorPreviousThanOther(*cursor, *select_cursor)) {
+  if (style == SELECT_OFF_RIGHT && cursor_le(*cursor, *select_cursor)) {
     Cursor tmp = *cursor;
     *cursor = *select_cursor;
     *select_cursor = tmp;
   }
-  else if (style == SELECT_OFF_LEFT && isCursorPreviousThanOther(*select_cursor, *cursor)) {
+  else if (style == SELECT_OFF_LEFT && cursor_le(*select_cursor, *cursor)) {
     Cursor tmp = *cursor;
     *cursor = *select_cursor;
     *select_cursor = tmp;
   }
 
-  *select_cursor = disableCursor(*select_cursor);
+  *select_cursor = cursor_disable(*select_cursor);
 }
 
 
 void selectWord(Cursor* cursor, Cursor* select_cursor) {
-  if (getAbsCol(cursor) != 0 && isAWordLetter(getCharForLineIdentifier(cursor->line_id)) == true) {
+  if (cursor_col(*cursor) != 0 && isAWordLetter(getCharForLineIdentifier(cursor->line_id)) == true) {
     *cursor = moveToPreviousWord(*cursor);
   }
   setSelectCursorOn(*cursor, select_cursor);
@@ -513,8 +511,8 @@ void selectWord(Cursor* cursor, Cursor* select_cursor) {
 
 void selectLine(Cursor* cursor, Cursor* select_cursor) {
   Cursor tmp = cursorOf(cursor->file_id, moduloLineIdentifierR(getLineForFileIdentifier(cursor->file_id), 0));
-  select_cursor->file_id = tryToReachAbsRow(cursor->file_id, getAbsRow(cursor) + 1);
-  if (getAbsRow(select_cursor) == getAbsRow(cursor)) {
+  select_cursor->file_id = tryToReachAbsRow(cursor->file_id, cursor_row(*cursor) + 1);
+  if (cursor_row(*select_cursor) == cursor_row(*cursor)) {
     tmp = moveLeft(tmp);
     select_cursor->line_id = getLastLineNode(getLineForFileIdentifier(cursor->file_id));
   }
@@ -526,33 +524,33 @@ void selectLine(Cursor* cursor, Cursor* select_cursor) {
 }
 
 void deleteSelection(Cursor* cursor, Cursor* select_cursor) {
-  if (isCursorDisabled(*select_cursor) == true) {
+  if (cursor_is_disabled(*select_cursor) == true) {
     return;
   }
 
-  if (isCursorPreviousThanOther(*select_cursor, *cursor)) {
+  if (cursor_le(*select_cursor, *cursor)) {
     Cursor tmp = *select_cursor;
     *select_cursor = *cursor;
     *cursor = tmp;
   }
 
-  assert(isCursorPreviousThanOther(*cursor, *select_cursor));
+  assert(cursor_le(*cursor, *select_cursor));
 
   *cursor = bulkDelete(*cursor, *select_cursor);
 
-  *select_cursor = disableCursor(*select_cursor);
+  *select_cursor = cursor_disable(*select_cursor);
 }
 
 void deleteSelectionWithState(History** history_p, Cursor* cursor, Cursor* select_cursor,
                               PayloadStateChange payload_state_change) {
-  saveAction(history_p, createDeleteAction(*cursor, cursorToDescriptor(select_cursor)), globalOnStageChange, cursor,
+  saveAction(history_p, createDeleteAction(*cursor, cursor_to_desc(*select_cursor)), globalOnStageChange, cursor,
              (void*)&payload_state_change);
   deleteSelection(cursor, select_cursor);
 }
 
 
 char* dumpSelection(Cursor cur1, Cursor cur2) {
-  if (isCursorPreviousThanOther(cur2, cur1)) {
+  if (cursor_le(cur2, cur1)) {
     Cursor tmp = cur1;
     cur1 = cur2;
     cur2 = tmp;
@@ -575,7 +573,7 @@ char* dumpSelection(Cursor cur1, Cursor cur2) {
 
   Cursor it = cur1;
   int index = 0;
-  while (isCursorStrictPreviousThanOther(it, cur2)) {
+  while (cursor_lt(it, cur2)) {
     it = moveRight(it);
 
     if (hasElementBeforeLine(it.line_id) == true) {

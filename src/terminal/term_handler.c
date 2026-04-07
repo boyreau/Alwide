@@ -9,7 +9,7 @@
 #include <limits.h>
 #include <math.h>
 
-#include "../utils/constants.h"
+#include "../environnement/constants.h"
 #include "highlight.h"
 #include "windows/edw.h"
 #include "windows/few.h"
@@ -19,7 +19,7 @@
 ////// -------------- WINDOWS MANAGEMENTS --------------
 
 
-void initGUIContext(GUIContext* gui_context) {
+void gui_initGUIContext(GUIContext* gui_context) {
   gui_context->focus_w = NULL; // Used to set the window where start mouse drag
 
   gui_initEDWContext(&gui_context->edw_context);
@@ -27,7 +27,7 @@ void initGUIContext(GUIContext* gui_context) {
   gui_initOFWContext(&gui_context->ofw_context);
 }
 
-void initNCurses(GUIContext* gui_context) {
+void gui_initNCurses(GUIContext* gui_context) {
   set_escdelay(25);
   // Init ncurses
   initscr();
@@ -66,14 +66,14 @@ void initNCurses(GUIContext* gui_context) {
   init_extended_pair(INFO_COLOR_HOVER_PAIR, COLOR_CYAN, BG_COLOR_HOVER);
 }
 
-void setFocus(GUIContext* gui_context, WINDOW* w) { gui_context->focus_w = w; }
+void gui_setFocus(GUIContext* gui_context, WINDOW* w) { gui_context->focus_w = w; }
 
-void resetFocus(GUIContext* gui_context) { gui_context->focus_w = NULL; }
+void gui_resetFocus(GUIContext* gui_context) { gui_context->focus_w = NULL; }
 
 ////// -------------- PRINT FUNCTIONS --------------
 
 
-void repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_descriptor, ExplorerFolder* explorer,
+void gui_repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_descriptor, ExplorerFolder* explorer,
                 FileContainer* files, int file_count, int current_file) {
   wnoutrefresh(stdscr);
   gui_repaintEDW(&gui_context->edw_context, files[current_file].cursor, files[current_file].select_cursor,
@@ -85,7 +85,7 @@ void repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_de
 }
 
 
-void printChar_U8ToNcurses(WINDOW* w, Char_U8 ch) {
+void gui_printChar_U8ToNcurses(WINDOW* w, Char_U8 ch) {
   int size = sizeChar_U8(ch);
   for (int i = 0; i < size; i++) {
     wprintw(w, "%c", ch.t[i]);
@@ -93,8 +93,8 @@ void printChar_U8ToNcurses(WINDOW* w, Char_U8 ch) {
 }
 
 
-LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
-                                   Diagnostic** diagnostic) {
+LineMarker gui_getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
+                                   void** diagnostic) {
   LineMarker marker = LINE_MARKER_NONE;
   if (diagnostic != NULL) {
     *diagnostic = NULL;
@@ -119,16 +119,21 @@ LineMarker getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight
   return marker;
 }
 
-void updateEDW(GUIContext* gui_context) { gui_context->edw_context.refresh_edw = true; }
+void gui_updateEDW(GUIContext* gui_context) { gui_context->edw_context.refresh_edw = true; }
 
-void updateFEW(GUIContext* gui_context) { gui_context->few_context.refresh_few = true; }
+void gui_updateFEW(GUIContext* gui_context) { gui_context->few_context.refresh_few = true; }
 
-void updateOFW(GUIContext* gui_context) { gui_context->ofw_context.refresh_ofw = true; }
+void gui_updateOFW(GUIContext* gui_context) { gui_context->ofw_context.refresh_ofw = true; }
 
-void updateGUI(GUIContext* gui_context) {
-  updateEDW(gui_context);
-  updateFEW(gui_context);
-  updateOFW(gui_context);
+void gui_updateGUI(GUIContext* gui_context) {
+  gui_updateEDW(gui_context);
+  gui_updateFEW(gui_context);
+  gui_updateOFW(gui_context);
+}
+
+bool gui_doesGUINeedRepaint(GUIContext* gui_context) {
+  return gui_context->edw_context.refresh_edw || gui_context->few_context.refresh_few ||
+    gui_context->ofw_context.refresh_ofw;
 }
 
 ////// -------------- UTILS FUNCTIONS --------------
@@ -191,7 +196,7 @@ int getScreenXForCursor(Cursor cursor, int screen_x) {
   cursor = moveLeft(cursor);
 
 
-  while (screen_x <= cursor.line_id.absolute_column && areCursorEqual(cursor, old_cursor) == false &&
+  while (screen_x <= cursor.line_id.absolute_column && cursor_eq(cursor, old_cursor) == false &&
          cursor.file_id.absolute_row == old_cursor.file_id.absolute_row) {
     assert(cursor.line_id.absolute_column != 0);
     Char_U8 current_ch = getCharForLineIdentifier(cursor.line_id);
@@ -268,11 +273,11 @@ void printToWindow(WINDOW* w, char* ch, int length, int offset_x, int offset_y, 
       current_line_length += charPrintSize(tmp_ch);
 
       if (tmp_ch.t[0] != '\t') {
-        printChar_U8ToNcurses(w, tmp_ch);
+        gui_printChar_U8ToNcurses(w, tmp_ch);
       }
       else {
         for (int i = 0; i < TAB_SIZE; i++) {
-          printChar_U8ToNcurses(w, space);
+          gui_printChar_U8ToNcurses(w, space);
         }
       }
     }

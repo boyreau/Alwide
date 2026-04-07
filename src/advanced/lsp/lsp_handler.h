@@ -2,15 +2,19 @@
 #define LSP_HANDLER_H
 #include <stdbool.h>
 
+#include "../../environnement/constants.h"
 #include "../../io_management/io_manager.h"
-#include "../../utils/constants.h"
 #include "lsp_client.h"
 
 
 typedef struct {
-  Diagnostic* diagnostics;
+  LSP_Diagnostic* diagnostics;
   int diagnostics_size;
-  CompletionList completions;
+  LSP_CompletionList completions;
+  LSP_Hover hover;
+  // used by the TUI when multiple choice happens to let choose the user.
+  LSP_LocationArray gotos;
+  LSP_GOTO_TYPE goto_type;
 } LSP_ComputedData;
 
 void LSP_initComputedData(LSP_ComputedData* payload);

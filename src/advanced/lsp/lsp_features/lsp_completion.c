@@ -3,25 +3,26 @@
 #include <assert.h>
 #include <string.h>
 
+#include "../../../environnement/global-variables.h"
 #include "../../../io_management/viewport_history.h"
 #include "../../../terminal/windows/edw.h"
 #include "../../../terminal/windows/pow.h"
-#include "../../../utils/global-variables.h"
 
 
-void applyTextEdit(Cursor* cursor, TextEdit* text_edit, History** history_p, PayloadStateChange payload_state_change) {
+void applyTextEdit(Cursor* cursor, LSP_TextEdit* text_edit, History** history_p,
+                   PayloadStateChange payload_state_change) {
   // As a text edit can represent a "replacement" we have to handle this deleting old text and inserting new text after.
   // Delete part
-  *cursor = tryToReachAbsPosition(*cursor, text_edit->range.pos1.row + 1, text_edit->range.pos1.column);
-  Cursor end = tryToReachAbsPosition(*cursor, text_edit->range.pos2.row + 1, text_edit->range.pos2.column);
+  *cursor = LSP_tryToReachCursorForLSPPosition(*cursor, text_edit->range.pos1);
+  Cursor end = LSP_tryToReachCursorForLSPPosition(*cursor, text_edit->range.pos2);
   deleteSelectionWithState(history_p, cursor, &end, payload_state_change);
   // insert part
   *cursor = insertCharArrayAtCursorWithHist(history_p, *cursor, text_edit->new_text, payload_state_change);
 }
 
 int compareTextEdit(const void* e1_p, const void* e2_p) {
-  TextEdit* e1 = (TextEdit*)e1_p;
-  TextEdit* e2 = (TextEdit*)e2_p;
+  LSP_TextEdit* e1 = (LSP_TextEdit*)e1_p;
+  LSP_TextEdit* e2 = (LSP_TextEdit*)e2_p;
   if (e1->range.pos1.row < e2->range.pos1.row)
     return 1;
   if (e1->range.pos1.row > e2->range.pos1.row)
@@ -30,8 +31,8 @@ int compareTextEdit(const void* e1_p, const void* e2_p) {
   return e1->range.pos1.column <= e2->range.pos1.column ? 1 : -1;
 }
 
-Range getReplaceRange(Cursor* cursor, char insertText[METHOD_MAX_LENGTH]) {
-  Cursor select = disableCursor(*cursor);
+LSP_Range getReplaceRange(Cursor* cursor, char insertText[METHOD_MAX_LENGTH]) {
+  Cursor select = cursor_disable(*cursor);
   if (cursor->line_id.absolute_column != 0) {
     Cursor tmp = *cursor;
     selectWord(&tmp, &select);
@@ -41,7 +42,7 @@ Range getReplaceRange(Cursor* cursor, char insertText[METHOD_MAX_LENGTH]) {
   int index = 0;
 
   bool begin_matching = true;
-  while (!isCursorDisabled(select) && isCursorStrictPreviousThanOther(select, *cursor)) {
+  while (!cursor_is_disabled(select) && cursor_lt(select, *cursor)) {
     select = moveRight(select);
     Char_U8 ch = getCharAtCursor(select);
     for (int i = 0; i < sizeChar_U8(ch); i++) {
@@ -54,15 +55,15 @@ Range getReplaceRange(Cursor* cursor, char insertText[METHOD_MAX_LENGTH]) {
     }
   }
 
-  if (isCursorDisabled(select) || begin_matching == false) {
+  if (cursor_is_disabled(select) || begin_matching == false) {
     begin = *cursor;
   }
 
-  return (Range){.pos1 = {.row = begin.file_id.absolute_row - 1, .column = begin.line_id.absolute_column},
-                 .pos2 = {.row = cursor->file_id.absolute_row - 1, .column = cursor->line_id.absolute_column}};
+  return LSP_range_from_cursor(begin.file_id.absolute_row, begin.line_id.absolute_column, cursor->file_id.absolute_row,
+                               cursor->line_id.absolute_column);
 }
 
-void LSP_executeCompletion(Cursor* cursor, CompletionItem* item, History** history_p,
+void LSP_executeCompletion(Cursor* cursor, LSP_CompletionItem* item, History** history_p,
                            PayloadStateChange payload_state_change) {
   if (!item->is_text_edit) {
     // copy the text to the edit.
@@ -80,19 +81,19 @@ void LSP_executeCompletion(Cursor* cursor, CompletionItem* item, History** histo
   position_after_insert.column = -1;
 
   // TODO may check if it check well using multiple additionalTextEdit
-  qsort(item->additionalTextEdits, item->additionalTextEditsSize, sizeof(TextEdit), compareTextEdit);
+  qsort(item->additionalTextEdits, item->additionalTextEditsSize, sizeof(LSP_TextEdit), compareTextEdit);
 
   int i = 0;
   while (i < item->additionalTextEditsSize) {
     if (!main_text_edit_done && compareTextEdit(&item->text_edit, item->additionalTextEdits + i) != 1) {
       main_text_edit_done = true;
       applyTextEdit(cursor, &item->text_edit, history_p, payload_state_change);
-      position_after_insert = cursorToDescriptor(cursor);
+      position_after_insert = cursor_to_desc(*cursor);
     }
     else {
       *cursor = tryToReachAbsPosition(*cursor, item->additionalTextEdits[i].range.pos1.row + 1,
                                       item->additionalTextEdits[i].range.pos1.column);
-      CursorDescriptor tmp = cursorToDescriptor(cursor);
+      CursorDescriptor tmp = cursor_to_desc(*cursor);
       applyTextEdit(cursor, item->additionalTextEdits + i, history_p, payload_state_change);
       i++;
       // if the end position of the cursor is already setted we have to follow the new add in the file to follow lines.
@@ -125,13 +126,28 @@ void askCompletion(GUIContext* gui_context, Cursor* cursor, int* screen_x, int* 
       LSP_destroyCompletionList(&lsp_data->computed->completions);
     }
     LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id), lsp_data->path_abs,
-                          getAbsRow(cursor), getAbsCol(cursor));
+                          LSP_pos_from_cursor(cursor_row(*cursor), cursor_col(*cursor)));
     if (gui_context->edw_context.pow_owner != COMPLETION) {
-      gui_setLastTextAnchor(gui_context, cursorToDescriptor(cursor));
+      gui_setLastTextAnchor(gui_context, cursor_to_desc(*cursor));
     }
     else {
-      ViewPort view_port = getViewPort(gui_context, screen_x, screen_y);
-      gui_showCompletionTextAnchor(&view_port, cursor);
+      ViewPort view_port = viewPortOf(gui_context, screen_x, screen_y);
+      gui_showGenericPopupWithTextAnchor(&view_port, cursor, 7, 50, COMPLETION);
     }
   }
+}
+
+void receiveCompletionData(cJSON* packet, FileContainer* file, ViewPort* view_port, Cursor* cursor) {
+  LSP_destroyCompletionList(&file->lsp_datas.computed->completions);
+  LSP_getCompletionListFromJSON(LSP_getPacketResult(packet), &file->lsp_datas.computed->completions);
+
+  // if there is no hover data we close the popup
+  if (file->lsp_datas.computed->completions.completions.size == 0) {
+    if (view_port->gui->edw_context.pow_owner == COMPLETION) {
+      gui_closePopup(view_port->gui);
+    }
+    return;
+  }
+
+  gui_resumeCompletionTextAnchor(view_port, cursor);
 }

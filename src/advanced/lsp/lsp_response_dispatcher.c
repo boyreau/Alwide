@@ -1,29 +1,22 @@
 #include "lsp_response_dispatcher.h"
 
+#include <assert.h>
 #include <string.h>
 
+#include "../../terminal/term_handler.h"
 #include "../../terminal/windows/edw.h"
 #include "../../terminal/windows/pow.h"
-
-void receiveCompletionData(cJSON* packet, FileContainer* file, ViewPort* view_port, Cursor* cursor) {
-  LSP_destroyCompletionList(&file->lsp_datas.computed->completions);
-  LSP_getCompletionListFromJSON(LSP_getPacketResult(packet), &file->lsp_datas.computed->completions);
-  if (file->lsp_datas.computed->completions.completions.size == 0) {
-    if (view_port->gui->edw_context.pow_owner == COMPLETION) {
-      gui_closePopup(view_port->gui);
-    }
-  }
-  else {
-    gui_resumeCompletionTextAnchor(view_port, cursor);
-  }
-}
+#include "lsp_features/lsp_completion.h"
+#include "lsp_features/lsp_goto.h"
+#include "lsp_features/lsp_hover.h"
 
 
 void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data) {
   LSP_PacketID id = LSP_getPacketID(packet);
 
   LSP_ResponseContext context;
-  LSP_popResponseContext(lsp, id, &context);
+  bool pop_result = LSP_popResponseContext(lsp, id, &context);
+  assert(pop_result);
 
   int index = getIndexFileContainerForName(data, context.file_name);
   if (index == -1) {
@@ -31,6 +24,8 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data)
     exit(-1); // TODO remove
     return;
   }
+
+  FileContainer* file = (*data->files_state.files) + index;
 
   if (cJSON_GetObjectItem(packet, "error")) {
     if (strcmp(context.method, "textDocument/completion") == 0) {
@@ -45,9 +40,17 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data)
   }
 
   if (strcmp(context.method, "textDocument/completion") == 0) {
-    // TODO implement the handle of the completion receive !
-    fprintf(stderr, "RECEIVE completion !\n");
-    receiveCompletionData(packet, data->files + index, &data->view_port, data->cursor);
+    receiveCompletionData(packet, file, &data->view_port, data->cursor);
+  }
+  else if (strcmp(context.method, "textDocument/hover") == 0) {
+    receiveHoverData(packet, file, &data->view_port, data->cursor, context.payload);
+  }
+  else if (strcmp(context.method, "textDocument/definition") == 0 ||
+           strcmp(context.method, "textDocument/declaration") == 0 ||
+           strcmp(context.method, "textDocument/typeDefinition") == 0 ||
+           strcmp(context.method, "textDocument/implementation") == 0 ||
+           strcmp(context.method, "textDocument/references") == 0) {
+    receiveGotoData(packet, lsp, file, data, &file->lsp_datas.computed->gotos, context.method, context.payload);
   }
   else {
     fprintf(stderr, "Response method NOT SUPPORTED !\n      => %s\n", context.method);

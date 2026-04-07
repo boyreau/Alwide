@@ -4,6 +4,7 @@
 #define LANG_ID_LENGTH 100
 
 // #define PARSE_PRINT
+#define SIMULATED_CURSOR
 
 #define SCROLL_SPEED 3
 #define NO_EVENT_MOUSE 268435456

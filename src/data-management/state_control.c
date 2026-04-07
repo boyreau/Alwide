@@ -106,14 +106,14 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
       if (action.unique_ch == '\n') {
         cursor = insertNewLineInLineC(tmp);
         destroyAction(action);
-        *action_p = createInsertAction(tmp, cursorToDescriptor(&cursor));
+        *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
         if (onEachStateChange != NULL)
           onEachStateChange(*action_p, &cursor, payload);
         return cursor;
       }
       cursor = insertCharInLineC(tmp, readChar_U8FromInput(action.unique_ch));
       destroyAction(action);
-      *action_p = createInsertAction(tmp, cursorToDescriptor(&cursor));
+      *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
       if (onEachStateChange != NULL)
         onEachStateChange(*action_p, &cursor, payload);
       return cursor;
@@ -122,7 +122,7 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
       tmp.line_id = moduloLineIdentifierR(getLineForFileIdentifier(tmp.file_id), action.cur.column);
       cursor = insertCharArrayAtCursor(tmp, action.ch);
       destroyAction(action);
-      *action_p = createInsertAction(tmp, cursorToDescriptor(&cursor));
+      *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
       if (onEachStateChange != NULL)
         onEachStateChange(*action_p, &cursor, payload);
       return cursor;
@@ -133,7 +133,7 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
       tmp_end.line_id = moduloLineIdentifierR(getLineForFileIdentifier(tmp_end.file_id), action.cur_end.column);
 
       destroyAction(action);
-      *action_p = createDeleteAction(tmp, cursorToDescriptor(&tmp_end));
+      *action_p = createDeleteAction(tmp, cursor_to_desc(tmp_end));
       deleteSelection(&tmp, &tmp_end);
       if (onEachStateChange != NULL)
         onEachStateChange(*action_p, &tmp, payload);
@@ -146,7 +146,7 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
 }
 
 Action createDeleteAction(Cursor cur1, CursorDescriptor cur2_desc) {
-  if (isCursorDisabled(cur1) || isCursorDescriptorDisabled(cur2_desc)) {
+  if (cursor_is_disabled(cur1) || cursor_desc_is_disabled(cur2_desc)) {
     Action action;
     action.action = ACTION_NONE;
     action.time = 0;
@@ -155,7 +155,7 @@ Action createDeleteAction(Cursor cur1, CursorDescriptor cur2_desc) {
 
   Cursor cur2 = tryToReachAbsPosition(cur1, cur2_desc.row, cur2_desc.column);
 
-  if (isCursorPreviousThanOther(cur2, cur1)) {
+  if (cursor_le(cur2, cur1)) {
     Cursor tmp = cur1;
     cur1 = cur2;
     cur2 = tmp;
@@ -163,10 +163,10 @@ Action createDeleteAction(Cursor cur1, CursorDescriptor cur2_desc) {
 
   Action action;
   action.time = timeInMilliseconds();
-  action.cur = cursorToDescriptor(&cur1);
+  action.cur = cursor_to_desc(cur1);
   // Not used.
-  Cursor disabled_cursor = disableCursor(cur1);
-  action.cur_end = cursorToDescriptor(&disabled_cursor);
+  Cursor disabled_cursor = cursor_disable(cur1);
+  action.cur_end = cursor_to_desc(disabled_cursor);
 
   char* dump = dumpSelection(cur1, cur2);
 
@@ -206,7 +206,7 @@ Action createInsertAction(Cursor cur1, CursorDescriptor cur2_desc) {
   Action action;
   action.action = INSERT;
   // Know that cur is the first cursor can be useful.
-  if (isCursorPreviousThanOther(cur2, cur1) == true) {
+  if (cursor_le(cur2, cur1) == true) {
     Cursor tmp = cur1;
     cur1 = cur2;
     cur2 = tmp;
@@ -214,8 +214,8 @@ Action createInsertAction(Cursor cur1, CursorDescriptor cur2_desc) {
   action.time = timeInMilliseconds();
   action.unique_ch = '\0';
   action.ch = NULL;
-  action.cur = cursorToDescriptor(&cur1);
-  action.cur_end = cursorToDescriptor(&cur2);
+  action.cur = cursor_to_desc(cur1);
+  action.cur_end = cursor_to_desc(cur2);
   action.byte_start = getIndexForCursor(cur1);
   action.byte_end = getIndexForCursor(cur2);
   return action;

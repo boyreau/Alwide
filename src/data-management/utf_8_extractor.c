@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <wchar.h>
 
-#include "../utils/constants.h"
+#include "../environnement/constants.h"
 
 /**
  * Print the Char_U8 to the file.

@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-#include "../../utils/global-variables.h"
+#include "../../environnement/global-variables.h"
 #include "../../utils/tools.h"
 
 
@@ -40,15 +40,23 @@ void LSP_destroyComputedData(LSP_ComputedData* lsp_payload) {
 
   // free diagnostics
   for (int i = 0; i < lsp_payload->diagnostics_size; i++) {
-    LSP_destroyDiagnostic(lsp_payload->diagnostics[i]);
+    LSP_destroyDiagnostic(lsp_payload->diagnostics + i);
   }
   free(lsp_payload->diagnostics);
 
   // free completionList
   LSP_destroyCompletionList(&lsp_payload->completions);
+
+  // free hoverlist
+  LSP_destroyHover(&lsp_payload->hover);
+
+  // free definition-like lists
+  LSP_destroyLocationArray(&lsp_payload->gotos);
 }
 
 void LSP_initComputedData(LSP_ComputedData* payload) {
+  // TODO create LSP_init***** to avoid initializing every fields of every fields...
+
   // init diagnostics
   payload->diagnostics = NULL;
   payload->diagnostics_size = 0;
@@ -57,6 +65,16 @@ void LSP_initComputedData(LSP_ComputedData* payload) {
   payload->completions.completions.items = NULL;
   payload->completions.completions.size = 0;
   payload->completions.isIncomplete = false;
+
+  // init hover
+  payload->hover.size = 0;
+  payload->hover.contents = NULL;
+  payload->hover.is_range = false;
+
+  // init definition-like lists
+  payload->gotos.items = NULL;
+  payload->gotos.size = 0;
+  payload->goto_type = LSP_GOTO_DEFINITION;
 }
 
 void initLSPServerList(LSPServerLinkedList* list) { list->head = NULL; }

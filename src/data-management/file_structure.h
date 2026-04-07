@@ -312,13 +312,92 @@ Cursor tryToReachAbsPosition(Cursor cursor, int row, int column);
 
 Char_U8 getCharAtCursor(Cursor cursor);
 
-bool isCursorPreviousThanOther(Cursor cursor, Cursor other);
+// --- Cursor Operations ---
 
-bool isCursorStrictPreviousThanOther(Cursor cursor, Cursor other);
+/**
+ * Compare two cursors.
+ * Returns -1 if c1 < c2, 1 if c1 > c2, or 0 if they are equal.
+ */
+int cursor_cmp(Cursor c1, Cursor c2);
+bool cursor_eq(Cursor c1, Cursor c2);
+bool cursor_ne(Cursor c1, Cursor c2);
+bool cursor_lt(Cursor c1, Cursor c2);
+bool cursor_le(Cursor c1, Cursor c2);
+bool cursor_gt(Cursor c1, Cursor c2);
+bool cursor_ge(Cursor c1, Cursor c2);
 
-bool isCursorBetweenOthers(Cursor cursor, Cursor cur1, Cursor cur2);
+/**
+ * Standard inclusive range check: [min(cur1, cur2), max(cur1, cur2)].
+ * Returns true if c is greater than or equal to the start AND less than or equal to the end.
+ * Use this for general boundary logic.
+ */
+bool cursor_is_between(Cursor c, Cursor cur1, Cursor cur2);
 
-bool areCursorEqual(Cursor cur1, Cursor cur2);
+/**
+ * Text highlighting range check (Exclusive-Inclusive): (start, end].
+ * Returns true if c is strictly greater than start AND less than or equal to end (after sorting).
+ * This is specifically designed for buffer rendering/highlighting where a character at index i 
+ * is logically located at column i+1.
+ */
+bool cursor_is_inside(Cursor c, Cursor start, Cursor end);
+
+// --- CursorDescriptor Operations ---
+
+/**
+ * Compare two cursor descriptors (absolute row/column only).
+ * Returns -1 if c1 < c2, 1 if c1 > c2, or 0 if they are equal.
+ */
+int cursor_desc_cmp(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_eq(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_ne(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_lt(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_le(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_gt(CursorDescriptor c1, CursorDescriptor c2);
+bool cursor_desc_ge(CursorDescriptor c1, CursorDescriptor c2);
+
+/**
+ * Inclusive range check for descriptors: [min(cur1, cur2), max(cur1, cur2)].
+ */
+bool cursor_desc_is_between(CursorDescriptor c, CursorDescriptor cur1, CursorDescriptor cur2);
+
+// --- Status ---
+
+/**
+ * Check if a cursor is in a disabled/null state (absolute_row == -1).
+ */
+bool cursor_is_disabled(Cursor c);
+bool cursor_desc_is_disabled(CursorDescriptor cd);
+
+/**
+ * Return a disabled version of the provided cursor.
+ */
+Cursor cursor_disable(Cursor c);
+
+/**
+ * Accessors for absolute position.
+ */
+int cursor_row(Cursor c);
+int cursor_col(Cursor c);
+
+// --- Utilities ---
+Cursor cursor_min(Cursor c1, Cursor c2);
+Cursor cursor_max(Cursor c1, Cursor c2);
+CursorDescriptor cursor_desc_min(CursorDescriptor c1, CursorDescriptor c2);
+CursorDescriptor cursor_desc_max(CursorDescriptor c1, CursorDescriptor c2);
+
+// --- Conversion ---
+
+/**
+ * Convert a rich Cursor (with node pointers) to a flat CursorDescriptor (row/col).
+ */
+CursorDescriptor cursor_to_desc(Cursor c);
+
+/**
+ * Convert a flat CursorDescriptor back to a rich Cursor by searching the buffer.
+ * @param base A valid cursor used as a starting point for the search (usually the root).
+ */
+Cursor desc_to_cursor(Cursor base, CursorDescriptor descriptor);
+
 
 unsigned int getIndexForCursor(Cursor cursor);
 
@@ -335,11 +414,5 @@ int readNBytesCharAtCursor(Cursor* cursor, char* dest, int length);
 
 int readNBytesAtPosition(Cursor* cursor, int row_raw, int column_raw, char* dest, int length);
 
-
-CursorDescriptor cursorToDescriptor(Cursor* cursor);
-
-
-int getAbsRow(Cursor *cursor);
-int getAbsCol(Cursor *cursor);
 
 #endif

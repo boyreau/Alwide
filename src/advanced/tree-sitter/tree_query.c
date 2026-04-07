@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../utils/constants.h"
+#include "../../environnement/constants.h"
 
 void printQueryLoadError(uint32_t error_offset, TSQueryError error_type) {
   switch (error_type) {
