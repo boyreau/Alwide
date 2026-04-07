@@ -332,13 +332,6 @@ int main(int file_count, char** args) {
         // ---------------------- MOUSE ----------------------
 
       case KEY_MOUSE:
-        if (getmouse(&m_event) != OK) {
-          fprintf(stderr, "MOUVE_EVENT_NOT_OK !\r\n");
-          goto read_input;
-          // exit(0);
-          // break;
-        }
-
         handleClick(&gui_context, &files, &file_count, &current_file_index, &pwd, cursor, select_cursor, desired_column,
                     screen_x, screen_y, &refresh_local_vars, &m_event, &peek_c, &mouse_drag, &last_time_mouse_drag,
                     &t_date, &t_clock, &c, &highlight_descriptor);
