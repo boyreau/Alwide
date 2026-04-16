@@ -36,7 +36,7 @@ cJSON* loadConfig() {
     if (f == NULL) {
       printf("ERROR opening config file.\n");
     }
-    fprintf(f, "%s", DEFAULT_CONFIG);
+    fprintf(f, DEFAULT_CONFIG, getenv("HOME"));
     fclose(f);
   }
 
