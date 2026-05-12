@@ -4,15 +4,17 @@
 
 #include "../../io_management/viewport_history.h"
 
-bool gui_resumeHoverInformation(Cursor* cursor, ViewPort* view_port, LSP_Hover *hover);
+bool gui_resumeHoverInformation(Cursor* cursor, ViewPort* view_port, LSP_Hover* hover);
 
 bool gui_resumeGotoChoice(ViewPort* view_port, Cursor* cursor);
 
 bool gui_resumeCompletionTextAnchor(ViewPort* view_port, Cursor* cursor);
 
-void gui_showGenericPopupWithTextAnchor(ViewPort* view_port, Cursor* cursor, int height, int width, PopupOwner popup_owner);
+void gui_showGenericPopupWithTextAnchor(ViewPort* view_port, Cursor* cursor, int height, int width,
+                                        PopupOwner popup_owner);
 
-void gui_showGenericPopup(GUIContext* gui_context, int y, int x, int prefered_height, int prefered_width, PopupOwner popup_owner);
+void gui_showGenericPopup(GUIContext* gui_context, int y, int x, int prefered_height, int prefered_width,
+                          PopupOwner popup_owner);
 
 void gui_setLastTextAnchor(GUIContext* gui_context, CursorDescriptor descriptor);
 
@@ -25,6 +27,7 @@ typedef struct DispatcherPayload DispatcherPayload;
 
 #include "../../data-management/file_management.h"
 
-bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw, PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event);
+bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw,
+                          PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event);
 
 #endif // WISHWIM_POW_H

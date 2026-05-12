@@ -2,12 +2,11 @@
 #define WISHWIM_EDITOR_CONTEXT_H
 
 #include <stdbool.h>
-#include <time.h>
+
 #include "../data-management/file_management.h"
 #include "../io_management/io_explorer.h"
-#include "../terminal/windows/edw.h"
 #include "../terminal/highlight.h"
-#include "../advanced/lsp/lsp_dispatcher.h"
+#include "../terminal/windows/edw.h"
 
 typedef enum {
   EVENT_CONTINUE,

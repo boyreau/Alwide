@@ -2,8 +2,8 @@
 #include "../advanced/tree-sitter/tree_manager.h"
 #include "../data-management/state_control.h"
 #include "../terminal/term_handler.h"
-#include "../terminal/windows/pow.h"
 #include "../terminal/windows/edw.h"
+
 void run_post_processing(EditorContext* ctx) {
   FileContainer* fc = &ctx->files[ctx->current_file_index];
   if (ctx->refresh_local_vars == true) {

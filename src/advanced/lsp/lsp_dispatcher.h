@@ -9,7 +9,7 @@
 typedef struct DispatcherPayload {
   FilesState files_state;
   ViewPort view_port;
-  Cursor *cursor;
+  Cursor* cursor;
 } DispatcherPayload;
 
 

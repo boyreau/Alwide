@@ -1,8 +1,11 @@
 #include "editor_lsp.h"
-#include "../environnement/global-variables.h"
-#include "../advanced/lsp/lsp_client.h"
-#include "../utils/key_management.h"
+
 #include <ncurses.h>
+
+#include "../advanced/lsp/lsp_client.h"
+#include "../environnement/global-variables.h"
+#include "../utils/key_management.h"
+
 DispatcherPayload build_dispatcher_payload(EditorContext* ctx) {
   FileContainer* fc = &ctx->files[ctx->current_file_index];
   DispatcherPayload payload;

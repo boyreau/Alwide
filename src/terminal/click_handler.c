@@ -30,70 +30,68 @@ Cursor getCursorForEDWClick(Cursor* cursor, MEVENT* m_event, int screen_x, int s
 }
 
 
-void handleClick(GUIContext* gui_context, FileContainer** files, int* file_count, int* current_file_index,
-                 ExplorerFolder* pwd, Cursor* cursor, Cursor* select_cursor, int* desired_column, int* screen_x,
-                 int* screen_y, bool* refresh_local_vars, MEVENT* m_event, int* peek_c, bool* mouse_drag,
-                 time_val* last_time_mouse_drag, time_val* t_date, clock_t* t_clock, int* c,
-                 WindowHighlightDescriptor* highlight_descriptor) {
+void handleClick(EditorContext* ctx, int* c) {
 mouse_read:;
-  assert(mouse_drag != NULL);
+  assert(&ctx->mouse_drag != NULL);
 
   // Avoid too much refresh, to avoid input buffer full.
-  if (m_event->bstate == NO_EVENT_MOUSE && *mouse_drag == true) {
+  if (ctx->m_event.bstate == NO_EVENT_MOUSE && ctx->mouse_drag == true) {
     time_val current_time = timeInMilliseconds();
-    if (diff2Time(*last_time_mouse_drag, current_time) < SKIP_MOUSE_EVENT_DELAY) {
-      *peek_c = getch();
-      if (*peek_c != ERR && *peek_c == KEY_MOUSE) {
+    if (diff2Time(ctx->last_time_mouse_drag, current_time) < SKIP_MOUSE_EVENT_DELAY) {
+      ctx->peek_c = getch();
+      if (ctx->peek_c != ERR && ctx->peek_c == KEY_MOUSE) {
         MEVENT tmp_event;
         if (getmouse(&tmp_event) == OK) {
           // skip current event.
-          *c = *peek_c;
-          *peek_c = -1;
-          *m_event = tmp_event;
-          *t_date = timeInMilliseconds();
-          *t_clock = clock();
+          *c = ctx->peek_c;
+          ctx->peek_c = -1;
+          ctx->m_event = tmp_event;
+          ctx->t_date = timeInMilliseconds();
+          ctx->t_clock = clock();
           goto mouse_read;
         }
         return;
       }
     }
-    *last_time_mouse_drag = current_time;
+    ctx->last_time_mouse_drag = current_time;
   }
 
   // If pressed enable drag
-  if (m_event->bstate & BUTTON1_PRESSED && *mouse_drag == false) {
-    *mouse_drag = true;
+  if (ctx->m_event.bstate & BUTTON1_PRESSED && ctx->mouse_drag == false) {
+    ctx->mouse_drag = true;
   }
 
-  if ((m_event->x < getbegx(gui_context->edw_context.lnw) && gui_context->focus_w == NULL) ||
-      (gui_context->few_context.few != NULL && gui_context->focus_w == gui_context->few_context.few)) {
+  FileContainer* fc = &ctx->files[ctx->current_file_index];
+
+  if ((ctx->m_event.x < getbegx(ctx->gui_context.edw_context.lnw) && ctx->gui_context.focus_w == NULL) ||
+      (ctx->gui_context.few_context.few != NULL && ctx->gui_context.focus_w == ctx->gui_context.few_context.few)) {
     // Click in File Explorer Window
-    if (m_event->bstate & BUTTON1_PRESSED) {
-      gui_context->focus_w = gui_context->few_context.few;
+    if (ctx->m_event.bstate & BUTTON1_PRESSED) {
+      ctx->gui_context.focus_w = ctx->gui_context.few_context.few;
     }
-    handleFileExplorerClick(gui_context, files, file_count, current_file_index, pwd, *m_event, refresh_local_vars);
+    handleFileExplorerClick(&ctx->gui_context, &ctx->files, &ctx->file_count, &ctx->current_file_index, &ctx->pwd, ctx->m_event, &ctx->refresh_local_vars);
   }
-  else if ((m_event->y - gui_context->ofw_context.ofw_height < 0 && gui_context->focus_w == NULL) ||
-           (gui_context->ofw_context.ofw != NULL && gui_context->focus_w == gui_context->ofw_context.ofw)) {
+  else if ((ctx->m_event.y - ctx->gui_context.ofw_context.ofw_height < 0 && ctx->gui_context.focus_w == NULL) ||
+           (ctx->gui_context.ofw_context.ofw != NULL && ctx->gui_context.focus_w == ctx->gui_context.ofw_context.ofw)) {
     // Click on opened file window
-    if (m_event->bstate & BUTTON1_PRESSED) {
-      gui_context->focus_w = gui_context->ofw_context.ofw;
+    if (ctx->m_event.bstate & BUTTON1_PRESSED) {
+      ctx->gui_context.focus_w = ctx->gui_context.ofw_context.ofw;
     }
-    handleOpenedFileClick(gui_context, *files, file_count, current_file_index, *m_event, refresh_local_vars,
-                          *mouse_drag);
+    handleOpenedFileClick(&ctx->gui_context, ctx->files, &ctx->file_count, &ctx->current_file_index, ctx->m_event, &ctx->refresh_local_vars,
+                          ctx->mouse_drag);
   }
   else {
     // Click on editor windows
-    if (m_event->bstate & BUTTON1_PRESSED) {
-      gui_context->focus_w = gui_context->edw_context.ftw;
+    if (ctx->m_event.bstate & BUTTON1_PRESSED) {
+      ctx->gui_context.focus_w = ctx->gui_context.edw_context.ftw;
     }
-    handleEditorClick(gui_context, cursor, select_cursor, desired_column, screen_x, screen_y, m_event, *mouse_drag,
-                      *files + *current_file_index, highlight_descriptor);
+    handleEditorClick(&ctx->gui_context, &fc->cursor, &fc->select_cursor, &fc->desired_column, &fc->screen_x, &fc->screen_y, &ctx->m_event, ctx->mouse_drag,
+                      fc, &ctx->highlight_descriptor);
   }
 
-  if (m_event->bstate & BUTTON1_RELEASED || m_event->bstate & BUTTON1_CLICKED) {
-    gui_context->focus_w = NULL;
-    *mouse_drag = false;
+  if (ctx->m_event.bstate & BUTTON1_RELEASED || ctx->m_event.bstate & BUTTON1_CLICKED) {
+    ctx->gui_context.focus_w = NULL;
+    ctx->mouse_drag = false;
   }
 }
 

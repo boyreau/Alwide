@@ -266,7 +266,8 @@ void gui_printPopup(EDW_GUIContext* context, Cursor* cursor, LSP_ComputedData* l
   }
 }
 
-bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw, PayloadStateChange payload_state_change, MEVENT* m_event) {
+bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw,
+                               PayloadStateChange payload_state_change, MEVENT* m_event) {
   Cursor* cursor = &fc->cursor;
   LSP_ComputedData* lsp_data = fc->lsp_datas.computed;
   History** history_p = &fc->history_frame;
@@ -347,7 +348,8 @@ bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_has
   return false;
 }
 
-bool gui_handleGotoChoiceInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw, PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event) {
+bool gui_handleGotoChoiceInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw,
+                               PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event) {
   LSP_ComputedData* lsp_data = fc->lsp_datas.computed;
   int height = getmaxy(context->edw_context.pow) - 2;
 
@@ -385,7 +387,6 @@ bool gui_handleGotoChoiceInput(GUIContext* context, FileContainer* fc, int c_has
       }
     }
     return true;
-
   }
 
   switch (c_hash) {
@@ -421,7 +422,8 @@ bool gui_handleGotoChoiceInput(GUIContext* context, FileContainer* fc, int c_has
   return false;
 }
 
-bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw, PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event) {
+bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw,
+                          PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event) {
   if (context->edw_context.show_pow == false || context->edw_context.pow == NULL) {
     return false;
   }

@@ -1,46 +1,30 @@
-#include <assert.h>
-#include <ctype.h>
-#include <limits.h>
-#include <locale.h>
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/ttydefaults.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "advanced/lsp/lsp_client.h"
 #include "advanced/lsp/lsp_dispatcher.h"
-#include "advanced/lsp/lsp_features/lsp_completion.h"
 #include "advanced/lsp/lsp_highlighter.h"
 #include "advanced/tree-sitter/tree_manager.h"
-#include "advanced/tree-sitter/tree_sitter_highlighter.h"
 #include "config/config.h"
 #include "data-management/file_management.h"
-#include "data-management/file_structure.h"
 #include "data-management/state_control.h"
 #include "environnement/constants.h"
 #include "environnement/global-variables.h"
 #include "io_management/io_explorer.h"
-#include "io_management/io_manager.h"
-#include "io_management/viewport_history.h"
 #include "io_management/workspace_settings.h"
-#include "terminal/click_handler.h"
 #include "terminal/highlight.h"
 #include "terminal/term_handler.h"
-#include "terminal/windows/edw.h"
-#include "terminal/windows/few.h"
-#include "terminal/windows/ofw.h"
-#include "terminal/windows/pow.h"
-#include "utils/clipboard_manager.h"
 #include "utils/key_management.h"
 
-#include "environnement/setup.h"
 #include "core/editor_context.h"
-#include "core/editor_state.h"
-#include "core/editor_render.h"
-#include "core/editor_lsp.h"
 #include "core/editor_input.h"
+#include "core/editor_lsp.h"
+#include "core/editor_render.h"
+#include "core/editor_state.h"
+#include "environnement/setup.h"
 
 // Global vars.
 int color_pair = 5;
@@ -49,22 +33,6 @@ cJSON* config;
 ParserList parsers;
 LSPServerLinkedList lsp_servers;
 WorkspaceSettings workspace_settings;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 int main(int file_count, char** args) {

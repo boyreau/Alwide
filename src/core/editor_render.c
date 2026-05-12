@@ -1,9 +1,12 @@
 #include "editor_render.h"
+
 #include <assert.h>
-#include "../advanced/tree-sitter/tree_sitter_highlighter.h"
+
 #include "../advanced/lsp/lsp_highlighter.h"
+#include "../advanced/tree-sitter/tree_sitter_highlighter.h"
 #include "../terminal/highlight.h"
 #include "../terminal/term_handler.h"
+
 void paint_gui(EditorContext* ctx) {
   FileContainer* fc = &ctx->files[ctx->current_file_index];
   // Refresh Editor Windows vars

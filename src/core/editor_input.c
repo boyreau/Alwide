@@ -5,8 +5,9 @@
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/ttydefaults.h>
+#include <time.h>
+
 #include "../advanced/lsp/lsp_features/lsp_completion.h"
 #include "../data-management/state_control.h"
 #include "../environnement/global-variables.h"
@@ -17,6 +18,8 @@
 #include "../terminal/windows/pow.h"
 #include "../utils/clipboard_manager.h"
 #include "../utils/key_management.h"
+
+
 bool handle_popup_input(EditorContext* ctx, int hash, int c, DispatcherPayload* payload) {
   FileContainer* fc = &ctx->files[ctx->current_file_index];
   MEVENT* mouse_event = (hash == KEY_MOUSE) ? &ctx->m_event : NULL;
@@ -27,7 +30,8 @@ void read_next_input(EditorContext* ctx, int* out_c, int* out_hash) {
   int c;
   if (ctx->peek_c == -1) {
     c = getch();
-  } else {
+  }
+  else {
     c = ctx->peek_c;
     ctx->peek_c = -1;
   }
@@ -43,7 +47,8 @@ void read_next_input(EditorContext* ctx, int* out_c, int* out_hash) {
       if (key_str[0] != '^') {
         hash = hashString((unsigned char*)key_str);
       }
-    } else {
+    }
+    else {
       fprintf(stderr, "keyname is NULL");
     }
   }
@@ -81,10 +86,7 @@ EventLoopAction process_key_event(EditorContext* ctx, int hash, int c) {
       break;
 
     case KEY_MOUSE:
-      handleClick(&ctx->gui_context, &ctx->files, &ctx->file_count, &ctx->current_file_index, &ctx->pwd, cursor,
-                  select_cursor, desired_column, screen_x, screen_y, &ctx->refresh_local_vars, &ctx->m_event,
-                  &ctx->peek_c, &ctx->mouse_drag, &ctx->last_time_mouse_drag, &ctx->t_date, &ctx->t_clock, &c,
-                  &ctx->highlight_descriptor);
+      handleClick(ctx, &c);
       if (!gui_doesGUINeedRepaint(&ctx->gui_context)) {
         return EVENT_READ_INPUT;
       }
