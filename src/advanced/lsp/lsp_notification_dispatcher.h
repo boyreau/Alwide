@@ -5,6 +5,6 @@
 #include "lsp_dispatcher.h"
 
 
-void notificationDispatcher(cJSON* packet, DispatcherPayload* data);
+void notificationDispatcher(cJSON* packet, ModuleContext* data);
 
 #endif // WISHWIM_LSP_DIAGNOSTIC_HANDLER_H

@@ -351,7 +351,7 @@ bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_has
 }
 
 bool gui_handleGotoChoiceInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw,
-                               PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event) {
+                               PayloadStateChange payload_state_change, ModuleContext* payload, MEVENT* m_event) {
   LSP_ComputedData* lsp_data = fc->lsp_datas.computed;
   int height = getmaxy(context->edw_context.pow) - 2;
 
@@ -427,7 +427,7 @@ bool gui_handleGotoChoiceInput(GUIContext* context, FileContainer* fc, int c_has
 }
 
 bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_raw, int c_hash,
-                          PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event) {
+                          PayloadStateChange payload_state_change, ModuleContext* payload, MEVENT* m_event) {
   if (context->edw_context.show_pow == false || context->edw_context.pow == NULL) {
     return false;
   }

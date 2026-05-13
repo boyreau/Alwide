@@ -22,12 +22,12 @@ void gui_showDiagnostic(GUIContext* gui_context, int y, int x, LSP_Diagnostic* d
 
 void gui_printPopup(EDW_GUIContext* context, Cursor* cursor, LSP_ComputedData* lsp_data);
 
-struct DispatcherPayload;
-typedef struct DispatcherPayload DispatcherPayload;
+struct ModuleContext;
+typedef struct ModuleContext ModuleContext;
 
 #include "../../data-management/file_management.h"
 
 bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_raw, int c_hash,
-                          PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event);
+                          PayloadStateChange payload_state_change, ModuleContext* payload, MEVENT* m_event);
 
 #endif // WISHWIM_POW_H

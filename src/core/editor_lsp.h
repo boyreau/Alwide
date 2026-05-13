@@ -4,7 +4,7 @@
 #include "../advanced/lsp/lsp_dispatcher.h"
 #include "editor_context.h"
 
-DispatcherPayload build_dispatcher_payload(EditorContext* ctx);
-void dispatch_lsp(DispatcherPayload* payload, int* c, int* hash);
+ModuleContext buildModuleContext(EditorContext* ctx);
+void handleLspServers(ModuleContext* payload, int* c, int* hash);
 
 #endif

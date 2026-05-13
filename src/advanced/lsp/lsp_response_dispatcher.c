@@ -11,7 +11,7 @@
 #include "lsp_features/lsp_hover.h"
 
 
-void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data) {
+void responseDispatcher(cJSON* packet, LSP_Server* lsp, ModuleContext* data) {
   LSP_PacketID id = LSP_getPacketID(packet);
 
   LSP_ResponseContext context;

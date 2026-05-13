@@ -20,13 +20,13 @@
 #include "../utils/key_management.h"
 
 
-bool handle_popup_input(EditorContext* ctx, int c, int hash, DispatcherPayload* payload) {
+bool handlePopupInput(EditorContext* ctx, int c, int hash, ModuleContext* payload) {
   FileContainer* fc = &ctx->files[ctx->current_file_index];
   MEVENT* mouse_event = (hash == KEY_MOUSE) ? &ctx->m_event : NULL;
   return gui_handlePopupInput(&ctx->gui_context, fc, c, hash, ctx->payload_state_change, payload, mouse_event);
 }
 
-void read_next_input(EditorContext* ctx, int* out_c, int* out_hash) {
+void readNextInput(EditorContext* ctx, int* out_c, int* out_hash) {
   int c;
   if (ctx->peek_c == -1) {
     c = getch();
@@ -57,7 +57,7 @@ void read_next_input(EditorContext* ctx, int* out_c, int* out_hash) {
   *out_hash = hash;
 }
 
-EventLoopAction process_key_event(EditorContext* ctx, int c, int hash) {
+EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
   FileContainer* fc = &ctx->files[ctx->current_file_index];
 
   Cursor* cursor = &fc->cursor;

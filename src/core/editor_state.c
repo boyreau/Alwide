@@ -4,7 +4,7 @@
 #include "../terminal/term_handler.h"
 #include "../terminal/windows/edw.h"
 
-void run_post_processing(EditorContext* ctx) {
+void runPostProcessing(EditorContext* ctx) {
   FileContainer* fc = &ctx->files[ctx->current_file_index];
   if (ctx->refresh_local_vars == true) {
     gui_closePopup(&ctx->gui_context);

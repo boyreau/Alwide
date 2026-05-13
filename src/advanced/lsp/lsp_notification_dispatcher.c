@@ -15,7 +15,7 @@ void readPublishDiagnostic(cJSON* params, LSP_ComputedData* computed_data) {
 }
 
 
-void notificationDispatcher(cJSON* packet, DispatcherPayload* data) {
+void notificationDispatcher(cJSON* packet, ModuleContext* data) {
   char* method = LSP_getPacketMethod(packet);
   cJSON* params = cJSON_GetObjectItem(packet, "params");
 

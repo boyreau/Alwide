@@ -6,18 +6,18 @@
 #include "../../data-management/file_management.h"
 #include "../../io_management/viewport_history.h"
 
-typedef struct DispatcherPayload {
+typedef struct ModuleContext {
   FilesState files_state;
   ViewPort view_port;
   Cursor* cursor;
-} DispatcherPayload;
+} ModuleContext;
 
 
 void dispatcher(cJSON* packet, LSP_Server* lsp, void* payload);
 
-int getIndexFileContainerForUri(DispatcherPayload* payload, cJSON* params);
+int getIndexFileContainerForUri(ModuleContext* payload, cJSON* params);
 
-int getIndexFileContainerForName(DispatcherPayload* payload, char* file_name);
+int getIndexFileContainerForName(ModuleContext* payload, char* file_name);
 
 void printPacket(cJSON* packet, cJSON* params);
 

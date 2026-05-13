@@ -4,9 +4,9 @@
 #include "../advanced/lsp/lsp_dispatcher.h"
 
 
-bool handle_popup_input(EditorContext* ctx, int c, int hash, DispatcherPayload* payload);
-void read_next_input(EditorContext* ctx, int* out_c, int* out_hash);
-EventLoopAction process_key_event(EditorContext* ctx, int c, int hash);
+bool handlePopupInput(EditorContext* ctx, int c, int hash, ModuleContext* payload);
+void readNextInput(EditorContext* ctx, int* out_c, int* out_hash);
+EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash);
 
 
 #endif

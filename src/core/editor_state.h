@@ -3,6 +3,6 @@
 
 #include "editor_context.h"
 
-void run_post_processing(EditorContext* ctx);
+void runPostProcessing(EditorContext* ctx);
 
 #endif

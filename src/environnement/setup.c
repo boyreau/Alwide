@@ -7,7 +7,7 @@
 
 #include "constants.h"
 
-void setup_environment() {
+void setupProgramEnvironnemnt() {
   if (!SHOW_ERROR) {
     FILE* f = fopen("/dev/null", "w");
     dup2(fileno(f), STDERR_FILENO);

@@ -41,6 +41,7 @@ SRC_MODULES= \
 	src/advanced/lsp/lsp_features/lsp_hover.c \
 	src/advanced/lsp/lsp_dispatcher.c \
 	src/advanced/lsp/lsp_emitter.c \
+	src/core/editor_init.c \
 	src/core/editor_state.c \
 	src/core/editor_render.c \
 	src/core/editor_lsp.c \

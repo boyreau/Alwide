@@ -3,6 +3,6 @@
 
 #include "editor_context.h"
 
-void paint_gui(EditorContext* ctx);
+void runGuiUpdate(EditorContext* ctx);
 
 #endif

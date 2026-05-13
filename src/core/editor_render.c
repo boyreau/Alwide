@@ -7,7 +7,7 @@
 #include "../terminal/highlight.h"
 #include "../terminal/term_handler.h"
 
-void paint_gui(EditorContext* ctx) {
+void runGuiUpdate(EditorContext* ctx) {
   FileContainer* fc = &ctx->files[ctx->current_file_index];
   // Refresh Editor Windows vars
   if (ctx->gui_context.edw_context.refresh_edw == true) {

@@ -112,67 +112,84 @@ char* LSP_readPacket(LSP_Server* server) {
   // read the first head field title.
   int header_size = strlen(HEADER_FIRST_FIELD);
   int n = read(server->inpipefd[0], buf, header_size);
-  buf[header_size] = '\0';
+
+  if (n <= 0) {
+    return NULL;
+  }
+  buf[n] = '\0';
 
   // If the first header is not the expected one.
   if (n != header_size || strcmp(HEADER_FIRST_FIELD, buf) != 0) {
-    fprintf(stderr, "Error with lsp read.\r\n");
-    exit(0);
+    fprintf(stderr, "Error with lsp read : expected '%s' but got '%s'.\r\n", HEADER_FIRST_FIELD, buf);
     return NULL;
   }
 
   // save the value of the first field in buf.
   int index = 0;
-  while ((n = read(server->inpipefd[0], buf + index, 1)) > 0 && buf[index] != '\n') {
+  while (index < BUFF_SIZE - 1) {
+    if (poll(&(struct pollfd){.fd = server->inpipefd[0], .events = POLLIN}, 1, 100) != 1) {
+      break;
+    }
+    n = read(server->inpipefd[0], buf + index, 1);
+    if (n <= 0 || buf[index] == '\n') {
+      break;
+    }
     index++;
-    assert(index < BUFF_SIZE);
   }
-  assert(index >= 1);
-  buf[index - 1] = '\0';
+  buf[index] = '\0';
 
   // Extract the content_length from buf.
-  int content_length;
-  sscanf(buf, " %d ", &content_length);
+  int content_length = 0;
+  if (sscanf(buf, " %d ", &content_length) != 1) {
+    fprintf(stderr, "Error with lsp read : couldn't extract content length from '%s'.\r\n", buf);
+    return NULL;
+  }
 
   // Extract the full second field. (This field is ignored).
   index = 0;
-  while ((n = read(server->inpipefd[0], buf + index, 1)) > 0 && buf[index] != '\n') {
+  while (index < BUFF_SIZE - 1) {
+    if (poll(&(struct pollfd){.fd = server->inpipefd[0], .events = POLLIN}, 1, 100) != 1) {
+      break;
+    }
+    n = read(server->inpipefd[0], buf + index, 1);
+    if (n <= 0 || buf[index] == '\n') {
+      break;
+    }
     index++;
-    assert(index < BUFF_SIZE);
   }
-  assert(index >= 1);
-  buf[index - 1] = '\0';
-
-#ifdef LOGS
-  printf("Second header (ignored) : %s\n", buf);
-#endif
 
   // reach first '{' some lsp servers add more break lines...  :/
   index = 0;
-  while ((n = read(server->inpipefd[0], buf + index, 1)) > 0 && buf[index] != '{') {
-    index++;
-    assert(index < BUFF_SIZE);
+  while (index < BUFF_SIZE - 1) {
+    if (poll(&(struct pollfd){.fd = server->inpipefd[0], .events = POLLIN}, 1, 100) != 1) {
+      break;
+    }
+    n = read(server->inpipefd[0], buf, 1);
+    if (n <= 0 || buf[0] == '{') {
+      break;
+    }
   }
 
   // Allocate the content array
   char* content = malloc(content_length * sizeof(char) + 1 /* +1 for null char*/);
-  assert(content != NULL);
+  if (content == NULL) {
+    return NULL;
+  }
 
   content[0] = '{'; // We already read the first '{'
   n = 0;
-  while (n != content_length - 1) {
-    n += read(server->inpipefd[0], content + 1 + n, content_length - 1 - n);
+  while (n < content_length - 1) {
+    if (poll(&(struct pollfd){.fd = server->inpipefd[0], .events = POLLIN}, 1, 1000) != 1) {
+      fprintf(stderr, "LSP timeout while reading body.\n");
+      break;
+    }
+    int r = read(server->inpipefd[0], content + 1 + n, content_length - 1 - n);
+    if (r <= 0) {
+      break;
+    }
+    n += r;
   }
-  content[content_length] = '\0';
-  assert(n == content_length - 1);
-
-#ifdef LOGS
-  printf("Readed bytes : %d\n", n);
-#endif
-  // If we didn't read the right number of bytes exit. May improve by the use of the buf.
-
-  // fwrite(content, 1, content_length, stdout);
-  // printf("\n");
+  content[n + 1] = '\0';
 
   return content;
 }
