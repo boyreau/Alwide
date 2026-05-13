@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,9 +86,11 @@ int main(int file_count, char** args) {
 
     // lsp ask to refresh local_vars
     if (ctx.refresh_local_vars) {
+      // TODO careful we may drop an input doing this jump.
       continue;
     }
 
+    // if no input was fetched
     if (hash == ERR) {
       goto read_input;
     }
@@ -101,20 +104,26 @@ int main(int file_count, char** args) {
     }
 
     EventLoopAction action = EVENT_CONTINUE;
-    bool has_popup_handle_input = handle_popup_input(&ctx, hash, c, &payload);
+    bool has_popup_handle_input = handle_popup_input(&ctx, c, hash, &payload);
 
-    if (has_popup_handle_input) {
-      action = EVENT_CONTINUE;
-    }
-    else {
-      action = process_key_event(&ctx, hash, c);
+    if (!has_popup_handle_input) {
+      action = process_key_event(&ctx, c, hash);
     }
 
-    if (action == EVENT_QUIT) {
-      goto end;
-    }
-    if (action == EVENT_READ_INPUT) {
-      goto read_input;
+
+    // end while jump
+    switch (action) {
+      case EVENT_QUIT:
+        goto end;
+      case EVENT_READ_INPUT:
+        if (gui_doesGUINeedRepaint(&ctx.gui_context)) {
+          continue;
+        }
+        goto read_input;
+      case EVENT_CONTINUE:
+        continue;
+      default:
+        assert(false);
     }
   }
 

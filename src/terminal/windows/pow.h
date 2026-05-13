@@ -27,7 +27,7 @@ typedef struct DispatcherPayload DispatcherPayload;
 
 #include "../../data-management/file_management.h"
 
-bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw,
+bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_raw, int c_hash,
                           PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event);
 
 #endif // WISHWIM_POW_H

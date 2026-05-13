@@ -316,6 +316,7 @@ bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_has
       if (context->edw_context.item_selected < context->edw_context.item_select_offset_y) {
         context->edw_context.item_select_offset_y = context->edw_context.item_selected;
       }
+      gui_updateEDW(context);
       return true;
     case H_KEY_DOWN:
       context->edw_context.item_selected++;
@@ -325,6 +326,7 @@ bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_has
       if (context->edw_context.item_selected >= context->edw_context.item_select_offset_y + height) {
         context->edw_context.item_select_offset_y++;
       }
+      gui_updateEDW(context);
       return true;
     case '\n':
     case KEY_ENTER:
@@ -397,6 +399,7 @@ bool gui_handleGotoChoiceInput(GUIContext* context, FileContainer* fc, int c_has
       if (context->edw_context.item_selected < context->edw_context.item_select_offset_y) {
         context->edw_context.item_select_offset_y = context->edw_context.item_selected;
       }
+      gui_updateEDW(context);
       return true;
     case H_KEY_DOWN:
       context->edw_context.item_selected++;
@@ -406,6 +409,7 @@ bool gui_handleGotoChoiceInput(GUIContext* context, FileContainer* fc, int c_has
       if (context->edw_context.item_selected >= context->edw_context.item_select_offset_y + height) {
         context->edw_context.item_select_offset_y++;
       }
+      gui_updateEDW(context);
       return true;
     case '\n':
     case KEY_ENTER:
@@ -422,7 +426,7 @@ bool gui_handleGotoChoiceInput(GUIContext* context, FileContainer* fc, int c_has
   return false;
 }
 
-bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_hash, int c_raw,
+bool gui_handlePopupInput(GUIContext* context, FileContainer* fc, int c_raw, int c_hash,
                           PayloadStateChange payload_state_change, DispatcherPayload* payload, MEVENT* m_event) {
   if (context->edw_context.show_pow == false || context->edw_context.pow == NULL) {
     return false;
