@@ -1,12 +1,8 @@
 #include <assert.h>
 #include <ncurses.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 
-#include "advanced/lsp/lsp_client.h"
 #include "advanced/lsp/lsp_dispatcher.h"
-#include "advanced/lsp/lsp_highlighter.h"
 #include "advanced/tree-sitter/tree_manager.h"
 #include "config/config.h"
 #include "data-management/file_management.h"

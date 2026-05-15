@@ -9,6 +9,8 @@
 #include <time.h>
 
 #include "../advanced/lsp/lsp-features/lsp_completion.h"
+#include "../advanced/lsp/lsp-features/lsp_formatting.h"
+#include "../advanced/lsp/lsp_dispatcher.h"
 #include "../data-management/state_control.h"
 #include "../environnement/global-variables.h"
 #include "../io-management/io_manager.h"
@@ -18,6 +20,8 @@
 #include "../terminal/windows/pow.h"
 #include "../utils/clipboard_manager.h"
 #include "../utils/key_management.h"
+#include "../utils/tools.h"
+#include "editor_lsp.h"
 
 
 bool handlePopupInput(EditorContext* ctx, int c, int hash, ModuleContext* payload) {
@@ -171,6 +175,9 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       ctx->refresh_local_vars = true;
       gui_updateOFW(&ctx->gui_context);
       break;
+    case CTRL('R'):
+      askFormatting(fc);
+      break;
     case H_KEY_BEGIN:
       setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
       *cursor = goToBegin(*cursor);
@@ -240,6 +247,10 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       if (io_file->status == NONE) {
         printf("\r\nNo specified file\r\n");
         return EVENT_QUIT;
+      }
+      if (lsp_data->is_enable) {
+        askFormatting(fc);
+        waitForLspResponse(ctx, 200);
       }
       saveFile(*root, io_file);
       assert(io_file->status == EXIST);

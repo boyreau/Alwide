@@ -44,6 +44,9 @@ typedef struct {
   cJSON* init_result;
   LSP_PacketID request_id;
   LSP_ResponseContext* response_contexts;
+
+  // Internal wait
+  pthread_mutex_t initDone;
 } LSP_Server;
 
 
@@ -107,7 +110,6 @@ typedef struct {
   LSP_Position pos1;
   LSP_Position pos2;
 } LSP_Range;
-
 
 
 typedef struct {
@@ -308,13 +310,20 @@ typedef struct MarkedString {
   LSP_DocumentationType documentationType;
 } LSP_MarkedString;
 
-typedef struct Hover {
+typedef struct {
   LSP_MarkedString* contents;
   int size;
   bool is_range;
   LSP_Range range;
 } LSP_Hover;
 
+typedef struct {
+  int tabSize;
+  bool insertSpaces;
+  bool trimTrailingWhitespace;
+  bool insertFinalNewline;
+  bool trimFinalNewlines;
+} LSP_FormattingOptions;
 
 void LSP_getHoverFromJSON(cJSON* json, LSP_Hover* hover_list);
 void LSP_getMarkedStringFromJSON(cJSON* json, LSP_MarkedString* item);
@@ -340,5 +349,7 @@ void LSP_notifyLspFileDidChange(LSP_Server* lsp, char* file_name, cJSON* array_o
 void LSP_requestCompletion(LSP_Server* lsp, char* file_name, LSP_Position pos);
 void LSP_requestHover(LSP_Server* lsp, char* file_name, LSP_Position pos);
 void LSP_requestGoto(LSP_Server* lsp, char* file_name, LSP_Position pos, LSP_GOTO_TYPE goto_type);
+void LSP_requestFormatting(LSP_Server* lsp, char* file_name, LSP_FormattingOptions options);
+
 
 #endif // CLIENT_H

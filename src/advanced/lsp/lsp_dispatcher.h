@@ -5,11 +5,13 @@
 
 #include "../../data-management/file_management.h"
 #include "../../io-management/viewport_history.h"
+#include "../shared.h"
 
 typedef struct ModuleContext {
   FilesState files_state;
   ViewPort view_port;
   Cursor* cursor;
+  PayloadStateChange payload_state_change;
 } ModuleContext;
 
 

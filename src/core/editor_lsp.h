@@ -6,5 +6,6 @@
 
 ModuleContext buildModuleContext(EditorContext* ctx);
 void handleLspServers(ModuleContext* payload, int* c, int* hash);
+void waitForLspResponse(EditorContext* ctx, int timeout_ms);
 
 #endif

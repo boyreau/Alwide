@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <libgen.h>
 #include <linux/limits.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,6 +44,8 @@ bool LSP_openLSPServer(char* name, char* command_args, char* language, LSP_Serve
 
   server->request_id = 0;
   server->response_contexts = NULL;
+  pthread_mutex_init(&server->initDone, NULL);
+  pthread_mutex_lock(&server->initDone);
 
   // printf("Starting server on path : %s\n", pathMemSafe);
 
@@ -98,6 +101,7 @@ void LSP_closeLSPServer(LSP_Server* server) {
   waitpid(server->pid, &status, 0);
   cJSON_Delete(server->init_result);
   LSP_clearResponseContext(server);
+  pthread_mutex_destroy(&server->initDone);
 }
 
 
@@ -214,6 +218,10 @@ cJSON* LSP_readPacketAsJSON(LSP_Server* server, bool block) {
 }
 
 int LSP_sendPacket(LSP_Server* server, char* method, char* params, LSP_PACKET_TYPE type) {
+  if (strcmp(method, "initialize") != 0) {
+    pthread_mutex_lock(&server->initDone);
+    pthread_mutex_unlock(&server->initDone);
+  }
   if (params == NULL) {
     params = "{}";
   }
@@ -252,8 +260,9 @@ int LSP_sendPacket(LSP_Server* server, char* method, char* params, LSP_PACKET_TY
   free(content_str);
   cJSON_Delete(json_request_obj);
 
-  if (type == LSP_REQUEST)
+  if (type == LSP_REQUEST) {
     return server->request_id;
+  }
   return 0;
 }
 
@@ -340,6 +349,12 @@ void LSP_initializeServer(LSP_Server* lsp, char* client_name, char* client_versi
   cJSON* init_params = cJSON_CreateObject();
   cJSON_AddNumberToObject(init_params, "processId", lsp->pid);
 
+  char workspaceURI[URI_MAX];
+  getLocalURI(current_workspace_path, workspaceURI);
+
+  cJSON_AddStringToObject(init_params, "rootUri", workspaceURI);
+  cJSON_AddStringToObject(init_params, "rootPath", current_workspace_path);
+
   cJSON* client_info = cJSON_AddObjectToObject(init_params, "clientInfo");
   cJSON_AddStringToObject(client_info, "name", client_name);
   cJSON_AddStringToObject(client_info, "version", client_version);
@@ -347,8 +362,6 @@ void LSP_initializeServer(LSP_Server* lsp, char* client_name, char* client_versi
   cJSON* workspace_array = cJSON_AddArrayToObject(init_params, "workspaceFolders");
 
   cJSON* workspace = cJSON_CreateObject();
-  char workspaceURI[URI_MAX];
-  getLocalURI(current_workspace_path, workspaceURI);
   cJSON_AddStringToObject(workspace, "uri", workspaceURI);
   cJSON_AddStringToObject(workspace, "name", basename(current_workspace_path));
   cJSON_AddItemToArray(workspace_array, workspace);
@@ -373,6 +386,7 @@ void LSP_initializeServer(LSP_Server* lsp, char* client_name, char* client_versi
   fprintf(stderr, "INIT: \n%s\n", init_text);
   free(init_text);
   cJSON_Delete(content);
+  pthread_mutex_unlock(&lsp->initDone);
 }
 
 
@@ -412,9 +426,7 @@ cJSON* LSP_getNotificationParams(cJSON* notification_body) {
   return param_obj;
 }
 
-LSP_Position LSP_pos(int lsp_row, int lsp_col) {
-  return (LSP_Position){.row = lsp_row, .column = lsp_col};
-}
+LSP_Position LSP_pos(int lsp_row, int lsp_col) { return (LSP_Position){.row = lsp_row, .column = lsp_col}; }
 
 LSP_Position LSP_getPositionFromJSON(cJSON* json) {
   return LSP_pos(cJSON_GetNumberValue(cJSON_GetObjectItem(json, "line")),
@@ -430,9 +442,7 @@ cJSON* LSP_getJSONPosition(LSP_Position pos) {
 }
 
 
-LSP_Range LSP_range(LSP_Position p1, LSP_Position p2) {
-  return (LSP_Range){.pos1 = p1, .pos2 = p2};
-}
+LSP_Range LSP_range(LSP_Position p1, LSP_Position p2) { return (LSP_Range){.pos1 = p1, .pos2 = p2}; }
 
 LSP_Range LSP_getRangeFromJSON(cJSON* json) {
   return LSP_range(LSP_getPositionFromJSON(cJSON_GetObjectItem(json, "start")),
@@ -1113,6 +1123,28 @@ void LSP_requestGoto(LSP_Server* lsp, char* file_name, LSP_Position pos, LSP_GOT
   goto_payload->goto_type = goto_type;
 
   LSP_addResponseContext(lsp, id, goto_method, file_name, goto_payload);
+
+  cJSON_Delete(request_content);
+}
+
+void LSP_requestFormatting(LSP_Server* lsp, char* file_name, LSP_FormattingOptions options) {
+  cJSON* request_content = cJSON_CreateObject();
+
+  cJSON* text_document = LSP_getJSONTextDocumentIdentifier(file_name);
+  cJSON_AddItemToObject(request_content, "textDocument", text_document);
+
+  cJSON* formatting_options = cJSON_CreateObject();
+  cJSON_AddNumberToObject(formatting_options, "tabSize", options.tabSize);
+  cJSON_AddBoolToObject(formatting_options, "insertSpaces", options.insertSpaces);
+  cJSON_AddBoolToObject(formatting_options, "trimTrailingWhitespace", options.trimTrailingWhitespace);
+  cJSON_AddBoolToObject(formatting_options, "insertFinalNewline", options.insertFinalNewline);
+  cJSON_AddBoolToObject(formatting_options, "trimFinalNewlines", options.trimFinalNewlines);
+
+  cJSON_AddItemToObject(request_content, "options", formatting_options);
+
+  LSP_PacketID id = LSP_sendPacketWithJSON(lsp, "textDocument/formatting", request_content, LSP_REQUEST);
+
+  LSP_addResponseContext(lsp, id, "textDocument/formatting", file_name, NULL);
 
   cJSON_Delete(request_content);
 }

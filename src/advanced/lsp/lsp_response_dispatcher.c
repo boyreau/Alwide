@@ -7,6 +7,7 @@
 #include "../../terminal/windows/edw.h"
 #include "../../terminal/windows/pow.h"
 #include "lsp-features/lsp_completion.h"
+#include "lsp-features/lsp_formatting.h"
 #include "lsp-features/lsp_goto.h"
 #include "lsp-features/lsp_hover.h"
 
@@ -41,6 +42,9 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, ModuleContext* data) {
 
   if (strcmp(context.method, "textDocument/completion") == 0) {
     receiveCompletionData(packet, file, &data->view_port, data->cursor);
+  }
+  else if (strcmp(context.method, "textDocument/formatting") == 0) {
+    receiveFormattingData(packet, file, data);
   }
   else if (strcmp(context.method, "textDocument/hover") == 0) {
     receiveHoverData(packet, file, &data->view_port, data->cursor, context.payload);

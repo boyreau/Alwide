@@ -299,7 +299,7 @@ bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_has
     if (m_event->bstate & BUTTON1_DOUBLE_CLICKED) {
       int clicked_item = context->edw_context.item_select_offset_y + (m_event->y - getbegy(context->edw_context.pow));
       if (clicked_item < item_count) {
-        LSP_executeCompletion(cursor, lsp_data->completions.completions.items + clicked_item, history_p,
+        executeLSPCompletion(cursor, lsp_data->completions.completions.items + clicked_item, history_p,
                               payload_state_change);
         gui_closePopup(context);
       }
@@ -331,14 +331,14 @@ bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_has
     case '\n':
     case KEY_ENTER:
       if (context->edw_context.item_selected < lsp_data->completions.completions.size) {
-        LSP_executeCompletion(cursor, lsp_data->completions.completions.items + context->edw_context.item_selected,
+        executeLSPCompletion(cursor, lsp_data->completions.completions.items + context->edw_context.item_selected,
                               history_p, payload_state_change);
       }
       gui_closePopup(context);
       return true;
     case KEY_TAB:
       if (context->edw_context.item_selected < lsp_data->completions.completions.size) {
-        LSP_executeCompletion(cursor, lsp_data->completions.completions.items + context->edw_context.item_selected,
+        executeLSPCompletion(cursor, lsp_data->completions.completions.items + context->edw_context.item_selected,
                               history_p, payload_state_change);
       }
       gui_closePopup(context);
