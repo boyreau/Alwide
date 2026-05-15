@@ -231,10 +231,8 @@ int LSP_sendPacket(LSP_Server* server, char* method, char* params, LSP_PACKET_TY
 
   char atSend[content_length + 200];
 
-  sprintf(atSend, "Content-Length: %d\r\n\r\n", content_length);
-  char head_length = strlen(atSend);
-
-  strcat(atSend, content_str);
+  snprintf(atSend, sizeof(atSend), "Content-Length: %d\r\n\r\n%s", content_length, content_str);
+  int head_length = strlen(atSend) - content_length;
 
   write(server->outpipefd[1], atSend, head_length + content_length);
 

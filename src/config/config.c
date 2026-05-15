@@ -5,10 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 bool configExist() {
   char path[PATH_MAX];
-  sprintf(path, "%s/%s", getenv("HOME"), CONFIG_PATH);
+  const char *home = getenv("HOME");
+  if (!home) return false;
+  snprintf(path, PATH_MAX, "%s/%s", home, CONFIG_PATH);
 
   FILE* f = fopen(path, "r");
   if (f == NULL)
@@ -19,40 +20,58 @@ bool configExist() {
 
 void touchConfig() {
   char command[PATH_MAX + 100];
-  sprintf(command, "mkdir -p ~/%s", CONFIG_FOLDER);
+  const char *home = getenv("HOME");
+  if (!home) return;
+  snprintf(command, sizeof(command), "mkdir -p \"%s/%s\"", home, CONFIG_FOLDER);
   system(command);
-  sprintf(command, "touch ~/%s", CONFIG_PATH);
+  snprintf(command, sizeof(command), "touch \"%s/%s\"", home, CONFIG_PATH);
   system(command);
 }
 
 cJSON* loadConfig() {
+  const char *home = getenv("HOME");
+  if (!home) return NULL;
+
   if (configExist() == false) {
     touchConfig();
 
     char path[PATH_MAX];
-    sprintf(path, "%s/%s", getenv("HOME"), CONFIG_PATH);
+    snprintf(path, PATH_MAX, "%s/%s", home, CONFIG_PATH);
 
     FILE* f = fopen(path, "w");
     if (f == NULL) {
       printf("ERROR opening config file.\n");
+      return NULL;
     }
-    fprintf(f, DEFAULT_CONFIG, getenv("HOME"));
+    fprintf(f, DEFAULT_CONFIG, home);
     fclose(f);
   }
 
   char path[PATH_MAX];
-  sprintf(path, "%s/%s", getenv("HOME"), CONFIG_PATH);
+  snprintf(path, PATH_MAX, "%s/%s", home, CONFIG_PATH);
 
   FILE* f = fopen(path, "rb");
+  if (f == NULL) return NULL;
+  
   fseek(f, 0, SEEK_END);
   long fsize = ftell(f);
   fseek(f, 0, SEEK_SET); /* same as rewind(f); */
 
+  if (fsize < 0) {
+    fclose(f);
+    return NULL;
+  }
+
   char* file_content = malloc(fsize + 1);
-  fread(file_content, fsize, 1, f);
+  if (!file_content) {
+    fclose(f);
+    return NULL;
+  }
+
+  size_t bytes_read = fread(file_content, 1, fsize, f);
   fclose(f);
 
-  file_content[fsize] = 0;
+  file_content[bytes_read] = 0;
 
   cJSON* json = cJSON_Parse(file_content);
 

@@ -110,24 +110,24 @@ bool getProgName(char* language, char* prog_name, char* args) {
   // return false;
 
   if (strcmp(language, "bash") == 0) {
-    strcpy(prog_name, "bash-language-server");
-    strcpy(args, "start");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "bash-language-server");
+    snprintf(args, LANGUAGE_ID_LENGTH, "start");
   }
   else if (strcmp(language, "c") == 0) {
-    strcpy(prog_name, "clangd");
-    strcpy(args, "");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "clangd");
+    snprintf(args, LANGUAGE_ID_LENGTH, "");
   }
   else if (strcmp(language, "python") == 0) {
-    strcpy(prog_name, "pylsp");
-    strcpy(args, "-v");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "pylsp");
+    snprintf(args, LANGUAGE_ID_LENGTH, "-v");
   }
   else if (strcmp(language, "markdown") == 0) {
-    strcpy(prog_name, "marksman");
-    strcpy(args, "");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "marksman");
+    snprintf(args, LANGUAGE_ID_LENGTH, "");
   }
   else if (strcmp(language, "cpp") == 0) {
-    strcpy(prog_name, "clangd");
-    strcpy(args, "");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "clangd");
+    snprintf(args, LANGUAGE_ID_LENGTH, "");
   }
   else {
     return false;
@@ -168,8 +168,8 @@ void* sendInit(void* args) {
 }
 
 bool loadNewLSPServer(LSP_Server* container, char* language) {
-  char prog_name[1000];
-  char args[1000];
+  char prog_name[LANGUAGE_ID_LENGTH];
+  char args[LANGUAGE_ID_LENGTH];
 
   if (getProgName(language, prog_name, args) == false) {
     return false;

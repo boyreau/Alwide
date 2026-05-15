@@ -84,8 +84,8 @@ void printToNcursesNCharFromString(WINDOW* w, char* str, int n) {
 
 
 char* whereis(char* prog) {
-  char command[15 + strlen(prog)];
-  sprintf(command, "whereis %s", prog);
+  char command[PATH_MAX + 20];
+  snprintf(command, sizeof(command), "whereis \"%s\"", prog);
 
   FILE* f = popen(command, "r");
   if (f == NULL) {
@@ -93,13 +93,21 @@ char* whereis(char* prog) {
   }
 
   char* path = malloc(PATH_MAX);
-  char tmp_shit[PATH_MAX];
-  int scan_res = fscanf(f, " %s %s ", tmp_shit, path);
-  if (scan_res != 2) {
-    free(path);
+  if (path == NULL) {
+    pclose(f);
     return NULL;
   }
-  fclose(f);
+  char tmp_shit[PATH_MAX];
+  char fmt[64];
+  // Limit fscanf to prevent buffer overflow, respecting PATH_MAX
+  snprintf(fmt, sizeof(fmt), " %%%ds %%%ds ", PATH_MAX - 1, PATH_MAX - 1);
+  int scan_res = fscanf(f, fmt, tmp_shit, path);
+  if (scan_res != 2) {
+    free(path);
+    pclose(f);
+    return NULL;
+  }
+  pclose(f);
 
   return path;
 }
@@ -164,39 +172,41 @@ bool getLanguageStringIDForFile(char* lang_id, IO_FileID io_file) {
 
   // extracting extension
   char* dot = strrchr(io_file.path_args, '.');
-  if (dot != NULL)
+  if (dot != NULL) {
     strncpy(lang_id, dot + 1, 99);
+    lang_id[99] = '\0';
+  }
 
   // ADD_NEW_LANGUAGE
 
   // c
   if (strcmp(lang_id, "h") == 0 || strcmp(lang_id, "c") == 0) {
-    strcpy(lang_id, "c");
+    snprintf(lang_id, 100, "c");
     return true;
   }
   // python
   if (strcmp(lang_id, "py") == 0) {
-    strcpy(lang_id, "python");
+    snprintf(lang_id, 100, "python");
     return true;
   }
   // markdown
   if (strcmp(lang_id, "md") == 0) {
-    strcpy(lang_id, "markdown");
+    snprintf(lang_id, 100, "markdown");
     return true;
   }
   // markdown_inline
   if (strcmp(lang_id, "markdown_inline") == 0) {
-    strcpy(lang_id, "markdown_inline");
+    snprintf(lang_id, 100, "markdown_inline");
     return true;
   }
   // java
   if (strcmp(lang_id, "java") == 0) {
-    strcpy(lang_id, "java");
+    snprintf(lang_id, 100, "java");
     return true;
   }
   // c++
   if (strcmp(lang_id, "cpp") == 0 || strcmp(lang_id, "cc") == 0) {
-    strcpy(lang_id, "cpp");
+    snprintf(lang_id, 100, "cpp");
     return true;
   }
   // c#

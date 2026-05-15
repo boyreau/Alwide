@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "advanced/lsp/lsp_client.h"
 #include "advanced/lsp/lsp_dispatcher.h"
@@ -11,10 +10,7 @@
 #include "advanced/tree-sitter/tree_manager.h"
 #include "config/config.h"
 #include "data-management/file_management.h"
-#include "data-management/state_control.h"
-#include "environnement/constants.h"
 #include "environnement/global-variables.h"
-#include "io-management/io_explorer.h"
 #include "io-management/workspace_settings.h"
 #include "terminal/highlight.h"
 #include "terminal/term_handler.h"
