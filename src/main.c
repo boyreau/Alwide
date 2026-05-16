@@ -79,6 +79,8 @@ int main(int file_count, char** args) {
     int c, hash;
     readNextInput(&ctx, &c, &hash);
 
+    //// ---- BEGIN background / delayed operations BLOCK ----
+
     // build module context from editor ctx
     ModuleContext module_ctx = buildModuleContext(&ctx);
 
@@ -90,6 +92,8 @@ int main(int file_count, char** args) {
       // !! WARNING !!: careful we may drop an input doing this jump. We consider this drop non important.
       continue;
     }
+
+    //// ---- END background / delayed operations BLOCK ----
 
     // if input is empty, execute nothing and read again
     if (hash == ERR) {
