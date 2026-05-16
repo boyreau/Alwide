@@ -23,4 +23,32 @@ int compareTextEdit(const void* e1_p, const void* e2_p) {
     return -1;
 
   return e1->range.pos1.column <= e2->range.pos1.column ? 1 : -1;
-}
+  }
+
+  int compareLSPPos(LSP_Position p1, LSP_Position p2) {
+  if (p1.row < p2.row)
+    return -1;
+  if (p1.row > p2.row)
+    return 1;
+  if (p1.column < p2.column)
+    return -1;
+  if (p1.column > p2.column)
+    return 1;
+  return 0;
+  }
+
+  LSP_Position calculateEndPos(LSP_Position start, const char* text) {
+  LSP_Position end = start;
+  if (!text)
+    return end;
+  for (int i = 0; text[i]; i++) {
+    if (text[i] == '\n') {
+      end.row++;
+      end.column = 0;
+    }
+    else {
+      end.column++;
+    }
+  }
+  return end;
+  }

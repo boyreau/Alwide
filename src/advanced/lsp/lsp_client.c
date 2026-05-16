@@ -45,9 +45,11 @@ bool LSP_openLSPServer(char* name, char* command_args, char* language, LSP_Serve
   server->request_id = 0;
   server->response_contexts = NULL;
   server->pending_packets = NULL;
-  pthread_mutex_init(&server->init_done, NULL);
-  pthread_mutex_lock(&server->init_done);
+  pthread_mutex_init(&server->initDone, NULL);
+  pthread_mutex_lock(&server->initDone);
   pthread_mutex_init(&server->pending_lock, NULL);
+  server->on_type_trigger_chars = NULL;
+  server->on_type_trigger_chars_count = 0;
 
   // printf("Starting server on path : %s\n", pathMemSafe);
 
@@ -116,8 +118,17 @@ void LSP_closeLSPServer(LSP_Server* server) {
   server->pending_packets = NULL;
   pthread_mutex_unlock(&server->pending_lock);
 
-  pthread_mutex_destroy(&server->init_done);
+  pthread_mutex_destroy(&server->initDone);
   pthread_mutex_destroy(&server->pending_lock);
+
+  if (server->on_type_trigger_chars != NULL) {
+    for (int i = 0; i < server->on_type_trigger_chars_count; i++) {
+      free(server->on_type_trigger_chars[i]);
+    }
+    free(server->on_type_trigger_chars);
+    server->on_type_trigger_chars = NULL;
+    server->on_type_trigger_chars_count = 0;
+  }
 }
 
 
@@ -279,7 +290,7 @@ static int _LSP_sendPacketInternal(LSP_Server* server, char* method, char* param
 
 int LSP_sendPacket(LSP_Server* server, char* method, char* params, LSP_PACKET_TYPE type) {
   if (strcmp(method, "initialize") != 0) {
-    if (pthread_mutex_trylock(&server->init_done) != 0) {
+    if (pthread_mutex_trylock(&server->initDone) != 0) {
       // Buffer packet
       pthread_mutex_lock(&server->pending_lock);
       LSP_PendingPacket* new_packet = malloc(sizeof(LSP_PendingPacket));
@@ -308,7 +319,7 @@ int LSP_sendPacket(LSP_Server* server, char* method, char* params, LSP_PACKET_TY
       return returned_id;
     }
     else {
-      pthread_mutex_unlock(&server->init_done);
+      pthread_mutex_unlock(&server->initDone);
     }
   }
 
@@ -414,6 +425,29 @@ void LSP_initializeServer(LSP_Server* lsp, char* client_name, char* client_versi
   cJSON_AddStringToObject(client_info, "name", client_name);
   cJSON_AddStringToObject(client_info, "version", client_version);
 
+  cJSON* capabilities = cJSON_AddObjectToObject(init_params, "capabilities");
+  cJSON* textDocument = cJSON_AddObjectToObject(capabilities, "textDocument");
+  
+  // Synchronization
+  cJSON* sync = cJSON_AddObjectToObject(textDocument, "synchronization");
+  cJSON_AddBoolToObject(sync, "dynamicRegistration", true);
+  cJSON_AddBoolToObject(sync, "willSave", true);
+  cJSON_AddBoolToObject(sync, "didSave", true);
+
+  // Completion
+  cJSON* completion = cJSON_AddObjectToObject(textDocument, "completion");
+  cJSON_AddBoolToObject(completion, "dynamicRegistration", true);
+  cJSON* completionItem = cJSON_AddObjectToObject(completion, "completionItem");
+  cJSON_AddBoolToObject(completionItem, "snippetSupport", false);
+
+  // Formatting
+  cJSON* formatting = cJSON_AddObjectToObject(textDocument, "formatting");
+  cJSON_AddBoolToObject(formatting, "dynamicRegistration", true);
+
+  // On-Type Formatting
+  cJSON* onType = cJSON_AddObjectToObject(textDocument, "onTypeFormatting");
+  cJSON_AddBoolToObject(onType, "dynamicRegistration", true);
+
   cJSON* workspace_array = cJSON_AddArrayToObject(init_params, "workspaceFolders");
 
   cJSON* workspace = cJSON_CreateObject();
@@ -437,11 +471,39 @@ void LSP_initializeServer(LSP_Server* lsp, char* client_name, char* client_versi
   // this assert will also check if the packet is a request.
   assert(tmp_id == LSP_getPacketID(content));
   lsp->init_result = LSP_extractPacketResult(content);
+
+  // Extract on-type trigger characters
+  cJSON* server_capabilities = cJSON_GetObjectItem(lsp->init_result, "capabilities");
+  if (server_capabilities) {
+    cJSON* onType = cJSON_GetObjectItem(server_capabilities, "documentOnTypeFormattingProvider");
+    if (onType) {
+      cJSON* first = cJSON_GetObjectItem(onType, "firstTriggerCharacter");
+      cJSON* more = cJSON_GetObjectItem(onType, "moreTriggerCharacter");
+      int count = (first ? 1 : 0) + (more ? cJSON_GetArraySize(more) : 0);
+      if (count > 0) {
+        lsp->on_type_trigger_chars = malloc(sizeof(char*) * count);
+        lsp->on_type_trigger_chars_count = 0;
+        if (first && cJSON_IsString(first)) {
+          lsp->on_type_trigger_chars[lsp->on_type_trigger_chars_count++] = strdup(first->valuestring);
+        }
+        if (more && cJSON_IsArray(more)) {
+          cJSON* item;
+          cJSON_ArrayForEach(item, more) {
+            if (cJSON_IsString(item)) {
+              lsp->on_type_trigger_chars[lsp->on_type_trigger_chars_count++] = strdup(item->valuestring);
+            }
+          }
+        }
+      }
+    }
+  }
+
   char* init_text = cJSON_Print(lsp->init_result);
   fprintf(stderr, "INIT: \n%s\n", init_text);
   free(init_text);
+
   cJSON_Delete(content);
-  pthread_mutex_unlock(&lsp->init_done);
+  pthread_mutex_unlock(&lsp->initDone);
 
   // Flush pending notifications
   pthread_mutex_lock(&lsp->pending_lock);
@@ -1214,6 +1276,32 @@ void LSP_requestFormatting(LSP_Server* lsp, char* file_name, LSP_FormattingOptio
   LSP_PacketID id = LSP_sendPacketWithJSON(lsp, "textDocument/formatting", request_content, LSP_REQUEST);
 
   LSP_addResponseContext(lsp, id, "textDocument/formatting", file_name, NULL);
+
+  cJSON_Delete(request_content);
+}
+
+void LSP_requestOnTypeFormatting(LSP_Server* lsp, char* file_name, LSP_Position pos, char* ch,
+                                 LSP_FormattingOptions options) {
+  cJSON* request_content = cJSON_CreateObject();
+
+  cJSON* text_document = LSP_getJSONTextDocumentIdentifier(file_name);
+  cJSON_AddItemToObject(request_content, "textDocument", text_document);
+
+  cJSON_AddItemToObject(request_content, "position", LSP_getJSONPosition(pos));
+  cJSON_AddStringToObject(request_content, "ch", ch);
+
+  cJSON* formatting_options = cJSON_CreateObject();
+  cJSON_AddNumberToObject(formatting_options, "tabSize", options.tabSize);
+  cJSON_AddBoolToObject(formatting_options, "insertSpaces", options.insertSpaces);
+  cJSON_AddBoolToObject(formatting_options, "trimTrailingWhitespace", options.trimTrailingWhitespace);
+  cJSON_AddBoolToObject(formatting_options, "insertFinalNewline", options.insertFinalNewline);
+  cJSON_AddBoolToObject(formatting_options, "trimFinalNewlines", options.trimFinalNewlines);
+
+  cJSON_AddItemToObject(request_content, "options", formatting_options);
+
+  LSP_PacketID id = LSP_sendPacketWithJSON(lsp, "textDocument/onTypeFormatting", request_content, LSP_REQUEST);
+
+  LSP_addResponseContext(lsp, id, "textDocument/onTypeFormatting", file_name, NULL);
 
   cJSON_Delete(request_content);
 }

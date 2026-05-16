@@ -55,55 +55,71 @@ void askFormatting(FileContainer* file) {
   LSP_requestFormatting(lsp, file->io_file.path_abs, options);
 }
 
-void executeLspFormatting(Cursor* cursor, LSP_TextEdit* edits, int edits_size, History** history_p,
-                           PayloadStateChange payload_state_change) {
-  // Sort edits from bottom to top to avoid offset issues
-  qsort(edits, edits_size, sizeof(LSP_TextEdit), compareTextEdit);
+void askOnTypeFormatting(FileContainer* file, char* ch, ModuleContext* data) {
+  if (!file->lsp_datas.is_enable) {
+    return;
+  }
+  LSP_Server* lsp = getLSPServerForLanguage(&lsp_servers, file->lsp_datas.lang_id);
+  if (lsp == NULL) {
+    return;
+  }
 
-  CursorDescriptor pos_to_follow = cursor_to_desc(*cursor);
-
-  for (int i = 0; i < edits_size; i++) {
-    LSP_Position edit_pos = edits[i].range.pos1;
-    LSP_Position edit_end = edits[i].range.pos2;
-
-    // Jump to the start of the edit to get 'before' state
-    *cursor = tryToReachAbsPosition(*cursor, edit_pos.row + 1, edit_pos.column);
-    CursorDescriptor before = cursor_to_desc(*cursor);
-
-    applyTextEdit(cursor, &edits[i], history_p, payload_state_change);
-
-    // Position after applyTextEdit (at the end of the inserted text)
-    CursorDescriptor after = cursor_to_desc(*cursor);
-
-    int row_delta = after.row - before.row;
-
-    // We only care if the edit was BEFORE or AT the position we follow
-    if (edit_pos.row + 1 < pos_to_follow.row ||
-        (edit_pos.row + 1 == pos_to_follow.row && edit_pos.column <= pos_to_follow.column)) {
-
-      // If the edit was on the same line as the following position
-      if (edit_pos.row + 1 == pos_to_follow.row) {
-        // If the edit ended before or at the following position on the same line
-        if (edit_end.row == edit_pos.row && edit_end.column <= pos_to_follow.column) {
-          if (row_delta == 0) {
-            pos_to_follow.column += (after.column - before.column);
-          }
-          else {
-            // Edit made it multi-line. Our following position is now relative to the NEW last line of the edit.
-            pos_to_follow.column = after.column + (pos_to_follow.column - edit_end.column);
-          }
-        }
-        else if (edit_end.row > edit_pos.row ||
-                 (edit_end.row == edit_pos.row && edit_end.column > pos_to_follow.column)) {
-          // Edit overlaps with the following position.
-          // In this case, we move the following position to the end of the edit.
-          pos_to_follow.column = after.column;
-        }
-      }
-      pos_to_follow.row += row_delta;
+  bool is_trigger = false;
+  for (int i = 0; i < lsp->on_type_trigger_chars_count; i++) {
+    if (strcmp(lsp->on_type_trigger_chars[i], ch) == 0) {
+      is_trigger = true;
+      break;
     }
   }
 
-  // Restore cursor to the followed position
-  *cursor = tryToReachAbsPosition(*cursor, pos_to_follow.row, pos_to_follow.column);
+  if (is_trigger) {
+    LSP_FormattingOptions options = {
+      .tabSize = TAB_SIZE,
+      .insertSpaces = !TAB_CHAR_USE,
+      .trimTrailingWhitespace = true,
+      .insertFinalNewline = true,
+      .trimFinalNewlines = true,
+    };
+
+    LSP_requestOnTypeFormatting(lsp, file->io_file.path_abs,
+                                LSP_pos(data->cursor->file_id.absolute_row - 1, data->cursor->line_id.absolute_column),
+                                ch, options);
+  }
+}
+
+void executeLspFormatting(Cursor* cursor, LSP_TextEdit* edits, int edits_size, History** history_p,
+                          PayloadStateChange payload_state_change) {
+  // Sort edits from bottom to top to avoid offset issues
+  qsort(edits, edits_size, sizeof(LSP_TextEdit), compareTextEdit);
+
+  // Tracker for the cursor position (0-based LSP)
+  LSP_Position tracker = {.row = cursor->file_id.absolute_row - 1, .column = cursor->line_id.absolute_column};
+
+  for (int i = 0; i < edits_size; i++) {
+    LSP_Position edit_start = edits[i].range.pos1;
+    LSP_Position edit_end = edits[i].range.pos2;
+    LSP_Position new_text_end = calculateEndPos(edit_start, edits[i].new_text);
+
+    // Apply the edit
+    applyTextEdit(cursor, &edits[i], history_p, payload_state_change);
+
+    // Adjust tracker
+    if (compareLSPPos(tracker, edit_end) >= 0) {
+      // Tracker is AFTER or AT the end of the original edit range
+      if (tracker.row == edit_end.row) {
+        // Tracker is on the same line as the end of the edit
+        tracker.column = new_text_end.column + (tracker.column - edit_end.column);
+      }
+      tracker.row += (new_text_end.row - edit_end.row);
+    }
+    else if (compareLSPPos(tracker, edit_start) > 0) {
+      // Tracker is INSIDE the edit range
+      // Move tracker to the end of the new text
+      tracker = new_text_end;
+    }
+    // Else: Tracker is BEFORE the edit, no shift needed
+  }
+
+  // Final restoration of the cursor
+  *cursor = tryToReachAbsPosition(*cursor, tracker.row + 1, tracker.column);
 }

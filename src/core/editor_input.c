@@ -76,6 +76,8 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
   LSP_Data* lsp_data = &fc->lsp_datas;
   CursorDescriptor tmp;
 
+  ModuleContext lsp_ctx = buildModuleContext(ctx);
+
   switch (hash) {
     case ONLY_REPAINT_INPUT:
       gui_updateGUI(&ctx->gui_context);
@@ -273,6 +275,7 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
                  (long*)&ctx->payload_state_change);
       setDesiredColumn(*cursor, desired_column);
+      askOnTypeFormatting(fc, "\n", &lsp_ctx);
       break;
     case H_KEY_DELETE:
       if (cursor_is_disabled(*select_cursor)) {
@@ -313,6 +316,7 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
                  (long*)&ctx->payload_state_change);
       setDesiredColumn(*cursor, desired_column);
+      askOnTypeFormatting(fc, "\t", &lsp_ctx);
       break;
     case CTRL('d'):
       if (cursor_is_disabled(*select_cursor) == true) {
@@ -343,7 +347,8 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       else {
         deleteSelectionWithState(history_frame, cursor, select_cursor, ctx->payload_state_change);
         tmp = cursor_to_desc(*cursor);
-        *cursor = insertCharInLineC(*cursor, readChar_U8FromInput(c));
+        Char_U8 u8 = readChar_U8FromInput(c);
+        *cursor = insertCharInLineC(*cursor, u8);
         setDesiredColumn(*cursor, desired_column);
         saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
                    (long*)&ctx->payload_state_change);
@@ -351,6 +356,7 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
           gui_closePopup(&ctx->gui_context);
         }
         askCompletion(&ctx->gui_context, cursor, screen_x, screen_y, lsp_data, false, false);
+        askOnTypeFormatting(fc, u8.t, &lsp_ctx);
       }
       break;
   }

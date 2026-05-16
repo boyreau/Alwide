@@ -12,5 +12,9 @@ void applyTextEdit(Cursor* cursor, LSP_TextEdit* text_edit, History** history_p,
 
 int compareTextEdit(const void* e1_p, const void* e2_p);
 
+int compareLSPPos(LSP_Position p1, LSP_Position p2);
+
+LSP_Position calculateEndPos(LSP_Position start, const char* text);
+
 
 #endif //ALWIDE_LSP_TOOLS_H

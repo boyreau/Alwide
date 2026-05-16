@@ -56,10 +56,15 @@ typedef struct {
   LSP_ResponseContext* response_contexts;
 
   // Internal wait
-  pthread_mutex_t init_done;
+  pthread_mutex_t initDone;
   LSP_PendingPacket* pending_packets;
   pthread_mutex_t pending_lock;
-} LSP_Server;
+
+  // Capabilities
+  char** on_type_trigger_chars;
+  int on_type_trigger_chars_count;
+  } LSP_Server;
+
 
 
 //////// ---------------- JSON TOOLS ---------------------
@@ -362,6 +367,7 @@ void LSP_requestCompletion(LSP_Server* lsp, char* file_name, LSP_Position pos);
 void LSP_requestHover(LSP_Server* lsp, char* file_name, LSP_Position pos);
 void LSP_requestGoto(LSP_Server* lsp, char* file_name, LSP_Position pos, LSP_GOTO_TYPE goto_type);
 void LSP_requestFormatting(LSP_Server* lsp, char* file_name, LSP_FormattingOptions options);
+void LSP_requestOnTypeFormatting(LSP_Server* lsp, char* file_name, LSP_Position pos, char* ch, LSP_FormattingOptions options);
 
 
 #endif // CLIENT_H
