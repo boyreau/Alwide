@@ -5,4 +5,4 @@
 
 void finalizeEditor(EditorContext* ctx);
 
-#endif //ALWIDE_CORE_DESTROY_H
+#endif // ALWIDE_CORE_DESTROY_H

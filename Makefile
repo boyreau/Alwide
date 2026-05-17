@@ -8,7 +8,7 @@ ifeq ($(shell expr $(CLANG_VERSION) \< $(MIN_CLANG_VERSION)), 1)
 $(error Clang version $(CLANG_VERSION) is too old. Please update to at least version $(MIN_CLANG_VERSION))
 endif
 
-CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -O3  # -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
+CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600  -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
 #CFLAGS=-g -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
 
 BUILD_DIR=build

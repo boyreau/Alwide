@@ -3,6 +3,7 @@
 #include <string.h>
 #include "../../../environnement/constants.h"
 #include "../../../environnement/global_variables.h"
+#include "../../../terminal/windows/edw.h"
 #include "../../../terminal/windows/pow.h"
 #include "lsp_tools.h"
 
@@ -28,6 +29,12 @@ void receiveCodeActionData(cJSON* packet, FileContainer* file, ModuleContext* da
   computed->code_actions_size = cJSON_GetArraySize(result);
   if (computed->code_actions_size == 0) {
     computed->code_actions = NULL;
+    // if there is no data we close the popup
+    if (computed->completions.completions.size == 0) {
+      if (data->view_port.gui->edw_context.pow_owner == COMPLETION) {
+        gui_closePopup(data->view_port.gui);
+      }
+    }
     return;
   }
 
@@ -36,10 +43,15 @@ void receiveCodeActionData(cJSON* packet, FileContainer* file, ModuleContext* da
     computed->code_actions[i] = LSP_getCodeActionFromJSON(cJSON_GetArrayItem(result, i));
   }
 
-  // 3. Open the selection popup near the cursor
-  ViewPort view_port = viewPortOf(data->view_port.gui, &file->screen_x, &file->screen_y);
-  gui_showGenericPopupWithTextAnchor(&view_port, data->cursor, computed->code_actions_size + 2, 45, CODE_ACTION);
-  gui_updateEDW(data->view_port.gui);
+  // 3. Update UI if COMPLETION popup is active, or open it if it's a direct code action request
+  if (data->view_port.gui->edw_context.pow_owner == COMPLETION && data->view_port.gui->edw_context.show_pow) {
+      gui_updateEDW(data->view_port.gui);
+  } else {
+      ViewPort view_port = viewPortOf(data->view_port.gui, &file->screen_x, &file->screen_y);
+      // We use COMPLETION owner for the unified list
+      gui_showGenericPopupWithTextAnchor(&view_port, data->cursor, computed->code_actions_size + 2, 45, COMPLETION);
+      gui_updateEDW(data->view_port.gui);
+  }
 }
 
 /**

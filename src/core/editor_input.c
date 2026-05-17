@@ -8,8 +8,8 @@
 #include <sys/ttydefaults.h>
 #include <time.h>
 
-#include "../advanced/lsp/lsp-features/lsp_completion.h"
 #include "../advanced/lsp/lsp-features/lsp_code_action.h"
+#include "../advanced/lsp/lsp-features/lsp_completion.h"
 #include "../advanced/lsp/lsp-features/lsp_formatting.h"
 #include "../advanced/lsp/lsp-features/lsp_signature_help.h"
 #include "../advanced/lsp/lsp_dispatcher.h"
@@ -108,6 +108,10 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       break;
     case H_KEY_LEFT:
       if (cursor_is_disabled(*select_cursor)) {
+        if (areChar_U8Equals(getCharAtCursor(*cursor), readChar_U8FromCharArray("(")) &&
+            ctx->gui_context.edw_context.pow_owner == SIGNATURE_HELP) {
+          gui_closePopup(&ctx->gui_context);
+        }
         *cursor = moveLeft(*cursor);
       }
       setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
@@ -188,9 +192,6 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       break;
     case CTRL('R'):
       askFormatting(fc);
-      break;
-    case CTRL('f'):
-      askCodeAction(fc, cursor);
       break;
 
     case H_KEY_BEGIN:

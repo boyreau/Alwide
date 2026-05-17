@@ -8,6 +8,7 @@
 #include "../../../terminal/windows/edw.h"
 #include "../../../terminal/windows/pow.h"
 #include "lsp_signature_help.h"
+#include "lsp_code_action.h"
 #include "lsp_tools.h"
 
 
@@ -116,7 +117,30 @@ void askCompletion(GUIContext* gui_context, FileContainer* fc, bool reset, bool 
     }
     if (reset) {
       LSP_destroyCompletionList(&fc->lsp_datas.computed->completions);
+      // Clean previous actions too
+      for (int i = 0; i < fc->lsp_datas.computed->code_actions_size; i++) {
+        LSP_destroyCodeAction(fc->lsp_datas.computed->code_actions + i);
+      }
+      free(fc->lsp_datas.computed->code_actions);
+      fc->lsp_datas.computed->code_actions = NULL;
+      fc->lsp_datas.computed->code_actions_size = 0;
     }
+
+    // Smart Assist: Also request Code Actions if there are diagnostics on this line
+    LSP_ComputedData* computed = fc->lsp_datas.computed;
+    int lsp_row = cursor_row(fc->cursor) - 1;
+    bool has_diag = false;
+    for (int i = 0; i < computed->diagnostics_size; i++) {
+        if (computed->diagnostics[i].range.pos1.row <= lsp_row && 
+            computed->diagnostics[i].range.pos2.row >= lsp_row) {
+            has_diag = true;
+            break;
+        }
+    }
+    if (has_diag) {
+        askCodeAction(fc, &fc->cursor);
+    }
+
     LSP_requestCompletion(getLSPServerForLanguage(&lsp_servers, fc->lsp_datas.lang_id), fc->lsp_datas.path_abs,
                           LSP_pos_from_cursor(cursor_row(fc->cursor), cursor_col(fc->cursor)));
     if (gui_context->edw_context.pow_owner != COMPLETION) {
@@ -133,8 +157,9 @@ void receiveCompletionData(cJSON* packet, FileContainer* file, ViewPort* view_po
   LSP_destroyCompletionList(&file->lsp_datas.computed->completions);
   LSP_getCompletionListFromJSON(LSP_getPacketResult(packet), &file->lsp_datas.computed->completions);
 
-  // if there is no hover data we close the popup
-  if (file->lsp_datas.computed->completions.completions.size == 0) {
+  // if there is no data we close the popup
+  if (file->lsp_datas.computed->completions.completions.size == 0 &&
+      file->lsp_datas.computed->code_actions_size == 0) {
     if (view_port->gui->edw_context.pow_owner == COMPLETION) {
       gui_closePopup(view_port->gui);
     }
