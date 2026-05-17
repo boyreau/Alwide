@@ -38,12 +38,13 @@ void receiveCodeActionData(cJSON* packet, FileContainer* file, ModuleContext* da
 
   // Update UI if COMPLETION popup is active, or open it if it's a direct code action request
   if (data->view_port.gui->edw_context.pow_owner == COMPLETION && data->view_port.gui->edw_context.show_pow) {
-      gui_updateEDW(data->view_port.gui);
-  } else {
-      ViewPort view_port = viewPortOf(data->view_port.gui, &file->screen_x, &file->screen_y);
-      // We use COMPLETION owner for the unified list
-      gui_showGenericPopupWithTextAnchor(&view_port, data->cursor, computed->code_actions.size + 2, 45, COMPLETION);
-      gui_updateEDW(data->view_port.gui);
+    gui_updateEDW(data->view_port.gui);
+  }
+  else {
+    ViewPort view_port = viewPortOf(data->view_port.gui, &file->screen_x, &file->screen_y);
+    // We use COMPLETION owner for the unified list
+    gui_showGenericPopupWithTextAnchor(&view_port, data->cursor, computed->code_actions.size + 2, 45, COMPLETION);
+    gui_updateEDW(data->view_port.gui);
   }
 }
 

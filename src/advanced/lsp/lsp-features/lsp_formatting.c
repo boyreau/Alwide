@@ -86,4 +86,3 @@ void askOnTypeFormatting(FileContainer* file, char* ch, ModuleContext* data) {
                                 ch, options);
   }
 }
-

@@ -16,15 +16,13 @@ void LSP_highlightCurrentFile(LSP_Data* lsp_datas, Cursor cursor, WindowHighligh
   for (int i = 0; i < lsp_datas->computed->diagnostics.size; i++) {
     LSP_Diagnostic* d = &lsp_datas->computed->diagnostics.items[i];
     Cursor begin_cursor =
-      tryToReachAbsPosition(cursor, LSP_0_row_to_1_row(d->range.pos1.row),
-                            d->range.pos1.column + 1);
+      tryToReachAbsPosition(cursor, LSP_0_row_to_1_row(d->range.pos1.row), d->range.pos1.column + 1);
     Cursor end_cursor = LSP_tryToReachCursorForLSPPosition(cursor, d->range.pos2);
 
     attr_t attr = A_UNDERLINE;
     NCURSES_PAIRS_T color = COLOR_RED;
 
-    whd_insertDescriptor(highlight_descriptor, begin_cursor, end_cursor, color, attr, 0, false,
-                         (LineMarker)d->severity,
+    whd_insertDescriptor(highlight_descriptor, begin_cursor, end_cursor, color, attr, 0, false, (LineMarker)d->severity,
                          d);
   }
 

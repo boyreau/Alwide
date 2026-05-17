@@ -5,16 +5,16 @@
 
 void readPublishDiagnostic(cJSON* params, LSP_ComputedData* computed_data) {
   cJSON* diagnostics_item = cJSON_GetObjectItem(params, "diagnostics");
-  
+
   // Clean previous diagnostics
   LSP_destroyDiagnosticList(&computed_data->diagnostics);
 
   computed_data->diagnostics.size = cJSON_GetArraySize(diagnostics_item);
   if (computed_data->diagnostics.size > 0) {
-      computed_data->diagnostics.items = malloc(sizeof(LSP_Diagnostic) * computed_data->diagnostics.size);
-      for (int i = 0; i < computed_data->diagnostics.size; i++) {
-        computed_data->diagnostics.items[i] = LSP_getDiagnosticFromJSON(cJSON_GetArrayItem(diagnostics_item, i));
-      }
+    computed_data->diagnostics.items = malloc(sizeof(LSP_Diagnostic) * computed_data->diagnostics.size);
+    for (int i = 0; i < computed_data->diagnostics.size; i++) {
+      computed_data->diagnostics.items[i] = LSP_getDiagnosticFromJSON(cJSON_GetArrayItem(diagnostics_item, i));
+    }
   }
 }
 

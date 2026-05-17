@@ -59,7 +59,7 @@ void executeLSPCompletion(Cursor* cursor, LSP_CompletionItem* item, History** hi
   // Combine main text_edit and additionalTextEdits into a single array for applyTextEditsArray
   int total_edits_count = 1 + item->additionalTextEditsSize;
   LSP_TextEdit* all_edits = malloc(sizeof(LSP_TextEdit) * total_edits_count);
-  
+
   all_edits[0] = item->text_edit;
   for (int i = 0; i < item->additionalTextEditsSize; i++) {
     all_edits[i + 1] = item->additionalTextEdits[i];
@@ -74,8 +74,7 @@ void executeLSPCompletion(Cursor* cursor, LSP_CompletionItem* item, History** hi
 
 static bool checkLineHasDiagnostics(LSP_ComputedData* computed, int row) {
   for (int i = 0; i < computed->diagnostics.size; i++) {
-    if (computed->diagnostics.items[i].range.pos1.row <= row &&
-        computed->diagnostics.items[i].range.pos2.row >= row) {
+    if (computed->diagnostics.items[i].range.pos1.row <= row && computed->diagnostics.items[i].range.pos2.row >= row) {
       return true;
     }
   }
@@ -134,8 +133,7 @@ void receiveCompletionData(cJSON* packet, FileContainer* file, ViewPort* view_po
   LSP_getCompletionListFromJSON(LSP_getPacketResult(packet), &file->lsp_datas.computed->completions);
 
   // if there is no data we close the popup
-  if (file->lsp_datas.computed->completions.completions.size == 0 &&
-      file->lsp_datas.computed->code_actions.size == 0) {
+  if (file->lsp_datas.computed->completions.completions.size == 0 && file->lsp_datas.computed->code_actions.size == 0) {
     if (view_port->gui->edw_context.pow_owner == COMPLETION) {
       gui_closePopup(view_port->gui);
     }

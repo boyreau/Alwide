@@ -145,7 +145,6 @@ bool adaptSignatureHelpOnDelete(Cursor cursor, Cursor select_cursor, LSP_Data* l
       if (areChar_U8Equals(u8, readChar_U8FromCharArray("("))) {
         gui_closePopup(&ctx->gui_context);
       }
-
     }
   }
 

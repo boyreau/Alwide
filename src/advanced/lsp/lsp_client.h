@@ -204,7 +204,7 @@ void LSP_destroyWorkspaceEdit(LSP_WorkspaceEdit* workspace_edit);
 typedef struct {
   char title[200];
   char command[100];
-  cJSON* arguments; 
+  cJSON* arguments;
 } LSP_Command;
 
 typedef struct {
@@ -441,7 +441,7 @@ void LSP_requestOnTypeFormatting(LSP_Server* lsp, char* file_name, LSP_Position 
                                  LSP_FormattingOptions options);
 void LSP_requestSignatureHelp(LSP_Server* lsp, char* file_name, LSP_Position pos);
 
-void LSP_requestCodeAction(LSP_Server* lsp, char* file_name, LSP_Range range, LSP_Diagnostic* diagnostics, int diagnostics_count);
+void LSP_requestCodeAction(LSP_Server* lsp, char* file_name, LSP_Range range, LSP_Diagnostic* diagnostics,
+                           int diagnostics_count);
 
 #endif // CLIENT_H
-

@@ -74,8 +74,9 @@ void closeFile(FileContainer** files, int* file_count, int* current_file, bool* 
           (*file_count - *current_file - 1) * sizeof(FileContainer));
 
   // Change vars
-  if (*current_file != 0)
+  if (*current_file != 0) {
     (*current_file)--;
+  }
   (*file_count)--;
 
   // realloc files to avoid excess of mem.
@@ -137,8 +138,9 @@ void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file,
 
 
 bool isFileContainerEmpty(FileContainer* container) {
-  if (container->io_file.status != NONE)
+  if (container->io_file.status != NONE) {
     return false;
+  }
 
   return container->cursor.file_id.absolute_row == 1 && container->cursor.line_id.absolute_column == 0 &&
     cursor_eq(container->cursor, moveRight(container->cursor));
@@ -172,8 +174,7 @@ void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files)
   }
 }
 
-FilesState filesStateOf(FileContainer** files, int* size, int* current_file_index,
-                                        bool* refresh_local_vars) {
+FilesState filesStateOf(FileContainer** files, int* size, int* current_file_index, bool* refresh_local_vars) {
   return (FilesState){
     .files = files, .size = size, .current_file_index = current_file_index, .refresh_local_vars = refresh_local_vars};
 }
@@ -482,8 +483,9 @@ void setSelectCursorOn(Cursor cursor, Cursor* select_cursor) {
 }
 
 void setSelectCursorOff(Cursor* cursor, Cursor* select_cursor, SELECT_OFF_STYLE style) {
-  if (cursor_is_disabled(*select_cursor) == true)
+  if (cursor_is_disabled(*select_cursor) == true) {
     return;
+  }
 
 
   if (style == SELECT_OFF_RIGHT && cursor_le(*cursor, *select_cursor)) {

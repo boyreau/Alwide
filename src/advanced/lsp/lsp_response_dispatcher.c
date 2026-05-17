@@ -6,12 +6,12 @@
 #include "../../terminal/term_handler.h"
 #include "../../terminal/windows/edw.h"
 #include "../../terminal/windows/pow.h"
+#include "lsp-features/lsp_code_action.h"
 #include "lsp-features/lsp_completion.h"
 #include "lsp-features/lsp_formatting.h"
 #include "lsp-features/lsp_goto.h"
 #include "lsp-features/lsp_hover.h"
 #include "lsp-features/lsp_signature_help.h"
-#include "lsp-features/lsp_code_action.h"
 
 
 void responseDispatcher(cJSON* packet, LSP_Server* lsp, ModuleContext* data) {
@@ -59,7 +59,7 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, ModuleContext* data) {
     receiveCodeActionData(packet, file, data);
   }
   else if (strcmp(context.method, "workspace/executeCommand") == 0) {
-    // Command execution response received. 
+    // Command execution response received.
     // Usually, the server sends a workspace/applyEdit request separately.
     // We just acknowledge the response here.
     fprintf(stderr, "LSP : Command executed successfully.\n");

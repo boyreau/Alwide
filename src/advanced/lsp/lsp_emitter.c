@@ -26,8 +26,10 @@ void onStateChangeLSP(Action action, LSP_Data* data, Cursor* cursor) {
   cJSON* range = LSP_getJSONRange(lsp_range);
   cJSON_AddItemToObject(change, "range", range);
   // Add the 'text' field to the change
-  Cursor begin = tryToReachAbsPosition(*cursor, LSP_0_row_to_1_row(action_change.start_point.row), action_change.start_point.column);
-  Cursor end = tryToReachAbsPosition(*cursor, LSP_0_row_to_1_row(action_change.new_end_point.row), action_change.new_end_point.column);
+  Cursor begin =
+    tryToReachAbsPosition(*cursor, LSP_0_row_to_1_row(action_change.start_point.row), action_change.start_point.column);
+  Cursor end = tryToReachAbsPosition(*cursor, LSP_0_row_to_1_row(action_change.new_end_point.row),
+                                     action_change.new_end_point.column);
   char* new_text = dumpSelection(begin, end);
   cJSON_AddStringToObject(change, "text", new_text);
   free(new_text);

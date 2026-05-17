@@ -89,8 +89,9 @@ void saveAction(History** history_p, Action action,
   *history_p = history;
 
 
-  if (onEachStateChange != NULL)
+  if (onEachStateChange != NULL) {
     onEachStateChange(action, cursor, payload);
+  }
 }
 
 Cursor doReverseAction(Action* action_p, Cursor cursor,
@@ -107,15 +108,17 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
         cursor = insertNewLineInLineC(tmp);
         destroyAction(action);
         *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
-        if (onEachStateChange != NULL)
+        if (onEachStateChange != NULL) {
           onEachStateChange(*action_p, &cursor, payload);
+        }
         return cursor;
       }
       cursor = insertCharInLineC(tmp, readChar_U8FromInput(action.unique_ch));
       destroyAction(action);
       *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
-      if (onEachStateChange != NULL)
+      if (onEachStateChange != NULL) {
         onEachStateChange(*action_p, &cursor, payload);
+      }
       return cursor;
     case DELETE:
       tmp.file_id = tryToReachAbsRow(cursor.file_id, action.cur.row);
@@ -123,8 +126,9 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
       cursor = insertCharArrayAtCursor(tmp, action.ch);
       destroyAction(action);
       *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
-      if (onEachStateChange != NULL)
+      if (onEachStateChange != NULL) {
         onEachStateChange(*action_p, &cursor, payload);
+      }
       return cursor;
     case INSERT:
       tmp.file_id = tryToReachAbsRow(cursor.file_id, action.cur.row);
@@ -135,8 +139,9 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
       destroyAction(action);
       *action_p = createDeleteAction(tmp, cursor_to_desc(tmp_end));
       deleteSelection(&tmp, &tmp_end);
-      if (onEachStateChange != NULL)
+      if (onEachStateChange != NULL) {
         onEachStateChange(*action_p, &tmp, payload);
+      }
       return tmp;
     case ACTION_NONE:
       return cursor;
@@ -333,8 +338,9 @@ void loadCurrentStateControl(History* root, History** current_state, IO_FileID i
   char scan_separtor;
   while (true) {
     char isCurrentState;
-    if (fscanf(f, "%c", &isCurrentState) == EOF)
+    if (fscanf(f, "%c", &isCurrentState) == EOF) {
       break;
+    }
 
     Action action;
     action.ch = NULL;
