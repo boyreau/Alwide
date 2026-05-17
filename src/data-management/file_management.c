@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "../environnement/constants.h"
-#include "../environnement/global-variables.h"
+#include "../environnement/global_variables.h"
 #include "../io-management/viewport_history.h"
 #include "../terminal/term_handler.h"
 

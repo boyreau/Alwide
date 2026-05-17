@@ -8,7 +8,7 @@
 #include "../advanced/tree-sitter/tree_manager.h"
 #include "../data-management/file_management.h"
 #include "../environnement/constants.h"
-#include "../environnement/global-variables.h"
+#include "../environnement/global_variables.h"
 #include "../io-management/io_explorer.h"
 #include "../io-management/workspace_settings.h"
 #include "../terminal/highlight.h"

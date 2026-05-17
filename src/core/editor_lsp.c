@@ -3,8 +3,10 @@
 #include <ncurses.h>
 #include <unistd.h>
 
+#include "../advanced/lsp/lsp-features/lsp_completion.h"
+#include "../advanced/lsp/lsp-features/lsp_signature_help.h"
 #include "../advanced/lsp/lsp_client.h"
-#include "../environnement/global-variables.h"
+#include "../environnement/global_variables.h"
 #include "../utils/key_management.h"
 #include "../utils/tools.h"
 
@@ -39,4 +41,12 @@ void waitForLspResponse(EditorContext* ctx, int timeout_ms) {
     handleLspServers(&m_ctx, &dummy_c, &dummy_hash);
     usleep(10000); // 10ms
   }
+}
+
+void askOnCharTypeLspInfos(EditorContext* ctx, int c, FileContainer* fc, Cursor* cursor) {
+  bool hasAsked = askSignatureHelpOnChar(ctx, c, fc, cursor); // priority 1
+  if (hasAsked) {
+    return;
+  }
+  askCompletion(&ctx->gui_context, fc, false, false); // priority 2
 }

@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-#include "../../../environnement/global-variables.h"
+#include "../../../environnement/global_variables.h"
 #include "../../../io-management/viewport_history.h"
 #include "../../../terminal/windows/edw.h"
 #include "../../../terminal/windows/pow.h"

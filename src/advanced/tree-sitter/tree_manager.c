@@ -9,7 +9,7 @@
 
 #include "../../../lib/tree-sitter/lib/include/tree_sitter/api.h"
 #include "../../environnement/constants.h"
-#include "../../environnement/global-variables.h"
+#include "../../environnement/global_variables.h"
 #include "../../terminal/highlight.h"
 #include "../../utils/tools.h"
 #include "../tree-sitter/tree_query.h"

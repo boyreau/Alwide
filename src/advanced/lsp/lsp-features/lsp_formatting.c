@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../../../environnement/constants.h"
-#include "../../../environnement/global-variables.h"
+#include "../../../environnement/global_variables.h"
 #include "../../../terminal/windows/edw.h"
 #include "../lsp_handler.h"
 #include "lsp_completion.h"

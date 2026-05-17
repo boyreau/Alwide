@@ -2,7 +2,7 @@
 
 #include <time.h>
 
-#include "../environnement/global-variables.h"
+#include "../environnement/global_variables.h"
 
 
 void initDefaultContext(int file_count, EditorContext* ctx) {

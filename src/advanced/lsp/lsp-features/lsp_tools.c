@@ -1,7 +1,7 @@
 #include "lsp_tools.h"
 
-#include "../../../environnement/global-variables.h"
 #include "../../../data-management/file_management.h"
+#include "../../../environnement/global_variables.h"
 
 void applyTextEdit(Cursor* cursor, LSP_TextEdit* text_edit, History** history_p,
                    PayloadStateChange payload_state_change) {

@@ -7,7 +7,7 @@
 
 #include "../data-management/file_management.h"
 #include "../environnement/constants.h"
-#include "../environnement/global-variables.h"
+#include "../environnement/global_variables.h"
 #include "../utils/key_management.h"
 #include "term_handler.h"
 #include "windows/edw.h"

@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "../../../environnement/global-variables.h"
+#include "../../../environnement/global_variables.h"
 #include "../../../terminal/windows/edw.h"
 #include "../../../terminal/windows/pow.h"
 #include "../../../utils/tools.h"

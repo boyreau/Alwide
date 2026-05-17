@@ -6,7 +6,7 @@
 #include "advanced/tree-sitter/tree_manager.h"
 #include "config/config.h"
 #include "data-management/file_management.h"
-#include "environnement/global-variables.h"
+#include "environnement/global_variables.h"
 #include "io-management/workspace_settings.h"
 #include "terminal/highlight.h"
 #include "terminal/term_handler.h"

@@ -13,7 +13,7 @@
 #include "../advanced/lsp/lsp-features/lsp_signature_help.h"
 #include "../advanced/lsp/lsp_dispatcher.h"
 #include "../data-management/state_control.h"
-#include "../environnement/global-variables.h"
+#include "../environnement/global_variables.h"
 #include "../io-management/io_manager.h"
 #include "../terminal/click_handler.h"
 #include "../terminal/windows/few.h"
@@ -62,13 +62,6 @@ void readNextInput(EditorContext* ctx, int* out_c, int* out_hash) {
   *out_hash = hash;
 }
 
-void askOnCharTypeInfo(EditorContext* ctx, int c, FileContainer* fc, Cursor* cursor) {
-  bool hasAsked = askSignatureHelpOnChar(ctx, c, fc, cursor); // priority 1
-  if (hasAsked) {
-    return;
-  }
-  askCompletion(&ctx->gui_context, fc, false, false); // priority 2
-}
 
 EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
   FileContainer* fc = &ctx->files[ctx->current_file_index];
@@ -385,7 +378,7 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
           gui_closePopup(&ctx->gui_context);
         }
         askOnTypeFormatting(fc, u8.t, &lsp_ctx);
-        askOnCharTypeInfo(ctx, c, fc, cursor);
+        askOnCharTypeLspInfos(ctx, c, fc, cursor);
       }
       break;
   }

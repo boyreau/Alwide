@@ -1,6 +1,6 @@
 #include "lsp_emitter.h"
 
-#include "../../environnement/global-variables.h"
+#include "../../environnement/global_variables.h"
 
 int global_version = 2;
 

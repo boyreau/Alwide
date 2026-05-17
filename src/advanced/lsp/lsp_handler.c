@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-#include "../../environnement/global-variables.h"
+#include "../../environnement/global_variables.h"
 #include "../../utils/tools.h"
 
 
