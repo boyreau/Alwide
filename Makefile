@@ -8,11 +8,11 @@ ifeq ($(shell expr $(CLANG_VERSION) \< $(MIN_CLANG_VERSION)), 1)
 $(error Clang version $(CLANG_VERSION) is too old. Please update to at least version $(MIN_CLANG_VERSION))
 endif
 
-CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600  -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
-#CFLAGS=-g -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
+#CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -O3
+CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -fsanitize=address
 
 BUILD_DIR=build
-executable= al # lsp_test #test_line.o test_file.o  test_line test_file  # utils/debug.o
+executable=al # lsp_test test_line test_file
 
 # C sources files
 SRC_MODULES= \
@@ -117,7 +117,7 @@ test_file: src/test_file.c $(OBJECTS) $(RUST_MODULES)
 	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
 
 al: src/main.c $(OBJECTS) $(RUST_MODULES)
-	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS) #utils/debug.o
+	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
 
 lsp_test: src/lsp_test.c $(OBJECTS) $(RUST_MODULES)
 	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
@@ -133,5 +133,3 @@ clean_all: clean
 # /bin/al
 install:
 	make && mkdir -p ~/.config/al && cp -r ./assets/* ~/.config/al && ./generate_config.sh && sudo cp al /bin/al
-
-# find . -type d -name "target" -exec rm -rf {} + # Remove target folders
