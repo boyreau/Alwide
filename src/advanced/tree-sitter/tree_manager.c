@@ -301,9 +301,9 @@ char* getNodeContent(TSNode node, Cursor* cursor) {
 
 int fillWithNodeContent(TSNode node, Cursor* cursor, char* content, int length) {
   uint32_t content_length = ts_node_end_byte(node) - ts_node_start_byte(node);
-  length = min(length, content_length + 1);
+  int to_read = min(length - 1, content_length);
   TSPoint start_point = ts_node_start_point(node);
-  readNBytesAtPosition(cursor, start_point.row, start_point.column, content, length);
-  content[content_length] = '\0';
-  return length;
+  readNBytesAtPosition(cursor, start_point.row, start_point.column, content, to_read);
+  content[to_read] = '\0';
+  return to_read;
 }
