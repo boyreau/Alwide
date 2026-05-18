@@ -7,8 +7,8 @@
 #include <string.h>
 
 #include "../environnement/constants.h"
-#include "../environnement/global-variables.h"
-#include "../io_management/viewport_history.h"
+#include "../environnement/global_variables.h"
+#include "../io-management/viewport_history.h"
 #include "../terminal/term_handler.h"
 
 
@@ -56,7 +56,7 @@ void openNewFile(char* file_path, FileContainer** files, int* file_count, int* c
     char* dump = dumpSelection(tryToReachAbsPosition((*files)[*file_count - 1].cursor, 1, 0),
                                tryToReachAbsPosition((*files)[*file_count - 1].cursor, INT_MAX, INT_MAX));
     LSP_notifyLspFileDidOpen(getLSPServerForLanguage(&lsp_servers, (*files)[*file_count - 1].lsp_datas.lang_id),
-                             (*files)[*file_count - 1].io_file.path_args, dump);
+                             (*files)[*file_count - 1].io_file.path_abs, dump);
     free(dump);
   }
 
@@ -74,8 +74,9 @@ void closeFile(FileContainer** files, int* file_count, int* current_file, bool* 
           (*file_count - *current_file - 1) * sizeof(FileContainer));
 
   // Change vars
-  if (*current_file != 0)
+  if (*current_file != 0) {
     (*current_file)--;
+  }
   (*file_count)--;
 
   // realloc files to avoid excess of mem.
@@ -137,8 +138,9 @@ void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file,
 
 
 bool isFileContainerEmpty(FileContainer* container) {
-  if (container->io_file.status != NONE)
+  if (container->io_file.status != NONE) {
     return false;
+  }
 
   return container->cursor.file_id.absolute_row == 1 && container->cursor.line_id.absolute_column == 0 &&
     cursor_eq(container->cursor, moveRight(container->cursor));
@@ -157,7 +159,7 @@ void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files)
       char* dump = dumpSelection(tryToReachAbsPosition((*files)[i].cursor, 1, 0),
                                  tryToReachAbsPosition((*files)[i].cursor, INT_MAX, INT_MAX));
       LSP_notifyLspFileDidOpen(getLSPServerForLanguage(&lsp_servers, (*files)[i].lsp_datas.lang_id),
-                               (*files)[i].io_file.path_args, dump);
+                               (*files)[i].io_file.path_abs, dump);
       free(dump);
     }
   }
@@ -167,13 +169,12 @@ void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files)
     setupFileContainer("", *files);
     if ((*files)[0].lsp_datas.is_enable) {
       LSP_notifyLspFileDidOpen(getLSPServerForLanguage(&lsp_servers, (*files)[0].lsp_datas.lang_id),
-                               (*files)[0].io_file.path_args, "");
+                               (*files)[0].io_file.path_abs, "");
     }
   }
 }
 
-FilesState filesStateOf(FileContainer** files, int* size, int* current_file_index,
-                                        bool* refresh_local_vars) {
+FilesState filesStateOf(FileContainer** files, int* size, int* current_file_index, bool* refresh_local_vars) {
   return (FilesState){
     .files = files, .size = size, .current_file_index = current_file_index, .refresh_local_vars = refresh_local_vars};
 }
@@ -482,8 +483,9 @@ void setSelectCursorOn(Cursor cursor, Cursor* select_cursor) {
 }
 
 void setSelectCursorOff(Cursor* cursor, Cursor* select_cursor, SELECT_OFF_STYLE style) {
-  if (cursor_is_disabled(*select_cursor) == true)
+  if (cursor_is_disabled(*select_cursor) == true) {
     return;
+  }
 
 
   if (style == SELECT_OFF_RIGHT && cursor_le(*cursor, *select_cursor)) {

@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-#include "../../environnement/global-variables.h"
+#include "../../environnement/global_variables.h"
 #include "../../utils/tools.h"
 
 
@@ -34,21 +34,20 @@ void destroyLspDatas(LSP_Data* lsp_datas) {
 }
 
 void LSP_destroyComputedData(LSP_ComputedData* lsp_payload) {
-  if (!lsp_payload) {
-    return;
-  }
-
   // free diagnostics
-  for (int i = 0; i < lsp_payload->diagnostics_size; i++) {
-    LSP_destroyDiagnostic(lsp_payload->diagnostics + i);
-  }
-  free(lsp_payload->diagnostics);
+  LSP_destroyDiagnosticList(&lsp_payload->diagnostics);
 
-  // free completionList
+  // free completions
   LSP_destroyCompletionList(&lsp_payload->completions);
 
   // free hoverlist
   LSP_destroyHover(&lsp_payload->hover);
+
+  // free signature help
+  LSP_destroySignatureHelp(&lsp_payload->signature_help);
+
+  // free code actions
+  LSP_destroyCodeActionList(&lsp_payload->code_actions);
 
   // free definition-like lists
   LSP_destroyLocationArray(&lsp_payload->gotos);
@@ -58,18 +57,26 @@ void LSP_initComputedData(LSP_ComputedData* payload) {
   // TODO create LSP_init***** to avoid initializing every fields of every fields...
 
   // init diagnostics
-  payload->diagnostics = NULL;
-  payload->diagnostics_size = 0;
+  LSP_initDiagnosticList(&payload->diagnostics);
 
   // init completions
   payload->completions.completions.items = NULL;
   payload->completions.completions.size = 0;
   payload->completions.isIncomplete = false;
 
+  // init code actions
+  LSP_initCodeActionList(&payload->code_actions);
+
   // init hover
   payload->hover.size = 0;
   payload->hover.contents = NULL;
   payload->hover.is_range = false;
+
+  // init signature help
+  payload->signature_help.signatures = NULL;
+  payload->signature_help.signatures_size = 0;
+  payload->signature_help.activeSignature = -1;
+  payload->signature_help.activeParameter = -1;
 
   // init definition-like lists
   payload->gotos.items = NULL;
@@ -110,24 +117,24 @@ bool getProgName(char* language, char* prog_name, char* args) {
   // return false;
 
   if (strcmp(language, "bash") == 0) {
-    strcpy(prog_name, "bash-language-server");
-    strcpy(args, "start");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "bash-language-server");
+    snprintf(args, LANGUAGE_ID_LENGTH, "start");
   }
   else if (strcmp(language, "c") == 0) {
-    strcpy(prog_name, "clangd");
-    strcpy(args, "");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "clangd");
+    snprintf(args, LANGUAGE_ID_LENGTH, "");
   }
   else if (strcmp(language, "python") == 0) {
-    strcpy(prog_name, "pylsp");
-    strcpy(args, "-v");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "pylsp");
+    snprintf(args, LANGUAGE_ID_LENGTH, "-v");
   }
   else if (strcmp(language, "markdown") == 0) {
-    strcpy(prog_name, "marksman");
-    strcpy(args, "");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "marksman");
+    snprintf(args, LANGUAGE_ID_LENGTH, "");
   }
   else if (strcmp(language, "cpp") == 0) {
-    strcpy(prog_name, "clangd");
-    strcpy(args, "");
+    snprintf(prog_name, LANGUAGE_ID_LENGTH, "clangd");
+    snprintf(args, LANGUAGE_ID_LENGTH, "");
   }
   else {
     return false;
@@ -168,8 +175,8 @@ void* sendInit(void* args) {
 }
 
 bool loadNewLSPServer(LSP_Server* container, char* language) {
-  char prog_name[1000];
-  char args[1000];
+  char prog_name[LANGUAGE_ID_LENGTH];
+  char args[LANGUAGE_ID_LENGTH];
 
   if (getProgName(language, prog_name, args) == false) {
     return false;

@@ -35,6 +35,16 @@ struct _LSP_ResponseContext {
 
 typedef struct _LSP_ResponseContext LSP_ResponseContext;
 
+struct _LSP_PendingPacket {
+  char* method;
+  char* params;
+  LSP_PACKET_TYPE type;
+  LSP_PacketID id;
+  struct _LSP_PendingPacket* next;
+};
+
+typedef struct _LSP_PendingPacket LSP_PendingPacket;
+
 typedef struct {
   char name[LANGUAGE_ID_LENGTH];
   char language[LANGUAGE_ID_LENGTH];
@@ -44,6 +54,15 @@ typedef struct {
   cJSON* init_result;
   LSP_PacketID request_id;
   LSP_ResponseContext* response_contexts;
+
+  // Internal wait
+  pthread_mutex_t initDone;
+  LSP_PendingPacket* pending_packets;
+  pthread_mutex_t pending_lock;
+
+  // Capabilities
+  char** on_type_trigger_chars;
+  int on_type_trigger_chars_count;
 } LSP_Server;
 
 
@@ -109,7 +128,6 @@ typedef struct {
 } LSP_Range;
 
 
-
 typedef struct {
   LSP_Position pos;
   LSP_GOTO_TYPE goto_type;
@@ -167,14 +185,44 @@ LSP_TextEdit LSP_getTextEditFromJSON(cJSON* json);
 void LSP_destroyTextEdit(LSP_TextEdit text_edit);
 
 typedef struct {
-  LSP_TextDocumentIdentifier file_name;
-  LSP_TextEdit edits[1];
+  LSP_TextDocumentIdentifier text_document;
+  LSP_TextEdit* edits;
+  int edits_count;
 } LSP_TextDocumentEdit;
 
-LSP_TextDocumentEdit LSP_getTextDocumentEditOf(char* file_name, LSP_Range range, char* new_text);
-cJSON* LSP_getJSONTextDocumentEdit(char* file_name, LSP_Range range, char* new_text);
 LSP_TextDocumentEdit LSP_getTextDocumentEditFromJSON(cJSON* json);
-void LSP_destroyTextDocumentEdit(LSP_TextDocumentEdit text_document_edit);
+void LSP_destroyTextDocumentEdit(LSP_TextDocumentEdit* text_document_edit);
+
+typedef struct {
+  LSP_TextDocumentEdit* document_changes;
+  int document_changes_count;
+} LSP_WorkspaceEdit;
+
+LSP_WorkspaceEdit LSP_getWorkspaceEditFromJSON(cJSON* json);
+void LSP_destroyWorkspaceEdit(LSP_WorkspaceEdit* workspace_edit);
+
+typedef struct {
+  char title[200];
+  char command[100];
+  cJSON* arguments;
+} LSP_Command;
+
+typedef struct {
+  char title[200];
+  char kind[50];
+  bool isPreferred;
+  LSP_WorkspaceEdit edit;
+  LSP_Command command;
+  bool has_edit;
+  bool has_command;
+} LSP_CodeAction;
+
+LSP_CodeAction LSP_getCodeActionFromJSON(cJSON* json);
+void LSP_destroyCodeAction(LSP_CodeAction* code_action);
+
+void LSP_sendResponse(LSP_Server* server, LSP_PacketID id, cJSON* result);
+
+void LSP_requestExecuteCommand(LSP_Server* lsp, char* file_name, LSP_Command* command);
 
 typedef struct {
   LSP_TextDocumentIdentifier file_name;
@@ -230,6 +278,22 @@ LSP_Diagnostic LSP_getDiagnosticOf(LSP_Range range);
 cJSON* LSP_getJSONDiagnostic(LSP_Range range);
 LSP_Diagnostic LSP_getDiagnosticFromJSON(cJSON* json);
 void LSP_destroyDiagnostic(LSP_Diagnostic* diagnostic);
+
+typedef struct {
+  LSP_Diagnostic* items;
+  int size;
+} LSP_DiagnosticList;
+
+void LSP_initDiagnosticList(LSP_DiagnosticList* list);
+void LSP_destroyDiagnosticList(LSP_DiagnosticList* list);
+
+typedef struct {
+  LSP_CodeAction* items;
+  int size;
+} LSP_CodeActionList;
+
+void LSP_initCodeActionList(LSP_CodeActionList* list);
+void LSP_destroyCodeActionList(LSP_CodeActionList* list);
 
 
 typedef enum {
@@ -308,17 +372,49 @@ typedef struct MarkedString {
   LSP_DocumentationType documentationType;
 } LSP_MarkedString;
 
-typedef struct Hover {
+typedef struct {
   LSP_MarkedString* contents;
   int size;
   bool is_range;
   LSP_Range range;
 } LSP_Hover;
 
+typedef struct {
+  char label[MESSAGE_LENGTH];
+  int start;
+  int end;
+  char documentation[MESSAGE_LENGTH];
+} LSP_ParameterInformation;
+
+typedef struct {
+  char label[MESSAGE_LENGTH];
+  char documentation[MESSAGE_LENGTH];
+  LSP_ParameterInformation* parameters;
+  int parameters_size;
+  int activeParameter;
+} LSP_SignatureInformation;
+
+typedef struct {
+  LSP_SignatureInformation* signatures;
+  int signatures_size;
+  int activeSignature;
+  int activeParameter;
+} LSP_SignatureHelp;
+
+typedef struct {
+  int tabSize;
+  bool insertSpaces;
+  bool trimTrailingWhitespace;
+  bool insertFinalNewline;
+  bool trimFinalNewlines;
+} LSP_FormattingOptions;
 
 void LSP_getHoverFromJSON(cJSON* json, LSP_Hover* hover_list);
 void LSP_getMarkedStringFromJSON(cJSON* json, LSP_MarkedString* item);
 void LSP_destroyHover(LSP_Hover* hover_list);
+
+void LSP_getSignatureHelpFromJSON(cJSON* json, LSP_SignatureHelp* help);
+void LSP_destroySignatureHelp(LSP_SignatureHelp* help);
 
 
 //// -------- Receive Functions --------
@@ -340,5 +436,12 @@ void LSP_notifyLspFileDidChange(LSP_Server* lsp, char* file_name, cJSON* array_o
 void LSP_requestCompletion(LSP_Server* lsp, char* file_name, LSP_Position pos);
 void LSP_requestHover(LSP_Server* lsp, char* file_name, LSP_Position pos);
 void LSP_requestGoto(LSP_Server* lsp, char* file_name, LSP_Position pos, LSP_GOTO_TYPE goto_type);
+void LSP_requestFormatting(LSP_Server* lsp, char* file_name, LSP_FormattingOptions options);
+void LSP_requestOnTypeFormatting(LSP_Server* lsp, char* file_name, LSP_Position pos, char* ch,
+                                 LSP_FormattingOptions options);
+void LSP_requestSignatureHelp(LSP_Server* lsp, char* file_name, LSP_Position pos);
+
+void LSP_requestCodeAction(LSP_Server* lsp, char* file_name, LSP_Range range, LSP_Diagnostic* diagnostics,
+                           int diagnostics_count);
 
 #endif // CLIENT_H

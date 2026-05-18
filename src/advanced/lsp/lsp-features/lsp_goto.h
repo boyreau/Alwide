@@ -2,9 +2,9 @@
 #define WISHWIM_LSP_GOTO_H
 #include "../lsp_dispatcher.h"
 
-void receiveGotoData(cJSON* packet, LSP_Server* lsp, FileContainer* file, DispatcherPayload* data,
+void receiveGotoData(cJSON* packet, LSP_Server* lsp, FileContainer* file, ModuleContext* data,
                      LSP_LocationArray* location_array, char* method, void* payload);
 
-void jumpToLocation(DispatcherPayload* data, LSP_Location location);
+void jumpToLocation(ModuleContext* data, LSP_Location location);
 
 #endif //WISHWIM_LSP_GOTO_H

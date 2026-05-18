@@ -3,15 +3,16 @@
 #include <stdbool.h>
 
 #include "../../environnement/constants.h"
-#include "../../io_management/io_manager.h"
+#include "../../io-management/io_manager.h"
 #include "lsp_client.h"
 
 
 typedef struct {
-  LSP_Diagnostic* diagnostics;
-  int diagnostics_size;
+  LSP_DiagnosticList diagnostics;
   LSP_CompletionList completions;
   LSP_Hover hover;
+  LSP_SignatureHelp signature_help;
+  LSP_CodeActionList code_actions;
   // used by the TUI when multiple choice happens to let choose the user.
   LSP_LocationArray gotos;
   LSP_GOTO_TYPE goto_type;

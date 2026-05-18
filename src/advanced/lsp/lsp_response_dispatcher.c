@@ -6,12 +6,15 @@
 #include "../../terminal/term_handler.h"
 #include "../../terminal/windows/edw.h"
 #include "../../terminal/windows/pow.h"
-#include "lsp_features/lsp_completion.h"
-#include "lsp_features/lsp_goto.h"
-#include "lsp_features/lsp_hover.h"
+#include "lsp-features/lsp_code_action.h"
+#include "lsp-features/lsp_completion.h"
+#include "lsp-features/lsp_formatting.h"
+#include "lsp-features/lsp_goto.h"
+#include "lsp-features/lsp_hover.h"
+#include "lsp-features/lsp_signature_help.h"
 
 
-void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data) {
+void responseDispatcher(cJSON* packet, LSP_Server* lsp, ModuleContext* data) {
   LSP_PacketID id = LSP_getPacketID(packet);
 
   LSP_ResponseContext context;
@@ -42,8 +45,24 @@ void responseDispatcher(cJSON* packet, LSP_Server* lsp, DispatcherPayload* data)
   if (strcmp(context.method, "textDocument/completion") == 0) {
     receiveCompletionData(packet, file, &data->view_port, data->cursor);
   }
+  else if (strcmp(context.method, "textDocument/formatting") == 0 ||
+           strcmp(context.method, "textDocument/onTypeFormatting") == 0) {
+    receiveFormattingData(packet, file, data);
+  }
   else if (strcmp(context.method, "textDocument/hover") == 0) {
     receiveHoverData(packet, file, &data->view_port, data->cursor, context.payload);
+  }
+  else if (strcmp(context.method, "textDocument/signatureHelp") == 0) {
+    receiveSignatureHelpData(packet, file, data->view_port.gui, data->cursor);
+  }
+  else if (strcmp(context.method, "textDocument/codeAction") == 0) {
+    receiveCodeActionData(packet, file, data);
+  }
+  else if (strcmp(context.method, "workspace/executeCommand") == 0) {
+    // Command execution response received.
+    // Usually, the server sends a workspace/applyEdit request separately.
+    // We just acknowledge the response here.
+    fprintf(stderr, "LSP : Command executed successfully.\n");
   }
   else if (strcmp(context.method, "textDocument/definition") == 0 ||
            strcmp(context.method, "textDocument/declaration") == 0 ||

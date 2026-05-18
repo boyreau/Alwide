@@ -1,20 +1,17 @@
 #ifndef CLICK_HANDLER_H
 #define CLICK_HANDLER_H
 
+#include "../core/editor_context.h"
 #include "../data-management/file_management.h"
 #include "../data-management/file_structure.h"
-#include "../io_management/io_explorer.h"
+#include "../io-management/io_explorer.h"
 #include "term_handler.h"
 
 #include "../advanced/lsp/lsp_dispatcher.h"
 
 bool isClickInsideWindow(WINDOW* w, MEVENT* m_event);
 
-void handleClick(GUIContext* gui_context, FileContainer** files, int* file_count, int* current_file_index,
-                 ExplorerFolder* pwd, Cursor* cursor, Cursor* select_cursor, int* desired_column, int* screen_x,
-                 int* screen_y, bool* refresh_local_vars, MEVENT* m_event, int* peek_c, bool* mouse_drag,
-                 time_val* last_time_mouse_drag, time_val* t_date, clock_t* t_clock, int* c,
-                 WindowHighlightDescriptor* highlight_descriptor);
+void handleClick(EditorContext* ctx, int* c);
 
 ////// -------------- CLICK FUNCTIONS --------------
 

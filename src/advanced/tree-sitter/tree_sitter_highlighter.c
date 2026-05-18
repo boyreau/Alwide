@@ -6,7 +6,7 @@
 
 #include "../../../lib/tree-sitter/lib/src/tree.h"
 #include "../../environnement/constants.h"
-#include "../../environnement/global-variables.h"
+#include "../../environnement/global_variables.h"
 #include "tree_query.h"
 
 

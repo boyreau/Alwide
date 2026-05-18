@@ -1,12 +1,12 @@
 #include "lsp_goto.h"
+#include <stdlib.h>
+#include <string.h>
 #include "../../../terminal/term_handler.h"
 #include "../../../terminal/windows/edw.h"
 #include "../../../terminal/windows/pow.h"
-#include "../lsp_features/lsp_completion.h"
-#include <stdlib.h>
-#include <string.h>
+#include "../lsp-features/lsp_completion.h"
 
-void jumpToLocation(DispatcherPayload* data, LSP_Location location) {
+void jumpToLocation(ModuleContext* data, LSP_Location location) {
   openNewFile(location.file_name.file_name, data->files_state.files, data->files_state.size,
               data->files_state.current_file_index, &data->view_port.gui->ofw_context.refresh_ofw,
               data->files_state.refresh_local_vars);
@@ -32,7 +32,7 @@ bool LSP_isPositionInRange(LSP_Position lsp_pos, LSP_Range lsp_range) {
   return true;
 }
 
-void receiveGotoData(cJSON* packet, LSP_Server* lsp, FileContainer* file, DispatcherPayload* data,
+void receiveGotoData(cJSON* packet, LSP_Server* lsp, FileContainer* file, ModuleContext* data,
                      LSP_LocationArray* location_array, char* method, void* payload) {
   GotoContext* goto_payload = (GotoContext*)payload;
   LSP_destroyLocationArray(location_array);

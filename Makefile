@@ -1,9 +1,18 @@
-CC=clang-18
-CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -O3  # -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
-#CFLAGS=-g -fsanitize=address # -lncurses # -Wall -Wextra -Werror -gdwarf-4
+CC=clang
+
+# Check Clang version
+CLANG_VERSION := $(shell $(CC) --version | sed -n 's/.*version \([0-9]*\).*/\1/p')
+MIN_CLANG_VERSION := 18
+
+ifeq ($(shell expr $(CLANG_VERSION) \< $(MIN_CLANG_VERSION)), 1)
+$(error Clang version $(CLANG_VERSION) is too old. Please update to at least version $(MIN_CLANG_VERSION))
+endif
+
+#CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -O3
+CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -fsanitize=address
 
 BUILD_DIR=build
-executable= al # lsp_test #test_line.o test_file.o  test_line test_file  # utils/debug.o
+executable=al # lsp_test test_line test_file
 
 # C sources files
 SRC_MODULES= \
@@ -12,13 +21,13 @@ SRC_MODULES= \
 	src/data-management/file_structure.c \
 	src/data-management/file_management.c \
 	src/utils/tools.c \
-	src/io_management/io_manager.c \
+	src/io-management/io_manager.c \
 	src/utils/key_management.c \
 	src/utils/clipboard_manager.c \
-	src/io_management/viewport_history.c \
+	src/io-management/viewport_history.c \
 	src/data-management/state_control.c \
 	src/terminal/term_handler.c \
-	src/io_management/io_explorer.c \
+	src/io-management/io_explorer.c \
 	src/advanced/lsp/lsp_client.c \
 	src/advanced/tree-sitter/tree_manager.c \
 	src/advanced/tree-sitter/tree_query.c \
@@ -31,16 +40,28 @@ SRC_MODULES= \
 	src/terminal/windows/ofw.c \
 	src/terminal/windows/pow.c \
 	src/config/config.c \
-	src/io_management/workspace_settings.c \
+	src/io-management/workspace_settings.c \
 	src/advanced/lsp/lsp_handler.c \
 	src/advanced/lsp/lsp_notification_dispatcher.c \
 	src/advanced/lsp/lsp_response_dispatcher.c \
 	src/advanced/lsp/lsp_highlighter.c \
-	src/advanced/lsp/lsp_features/lsp_completion.c \
-	src/advanced/lsp/lsp_features/lsp_goto.c \
-	src/advanced/lsp/lsp_features/lsp_hover.c \
+	src/advanced/lsp/lsp-features/lsp_completion.c \
+	src/advanced/lsp/lsp-features/lsp_formatting.c \
+	src/advanced/lsp/lsp-features/lsp_goto.c \
+	src/advanced/lsp/lsp-features/lsp_hover.c \
+	src/advanced/lsp/lsp-features/lsp_signature_help.c \
+	src/advanced/lsp/lsp-features/lsp_code_action.c \
+	src/advanced/lsp/lsp-features/lsp_tools.c \
 	src/advanced/lsp/lsp_dispatcher.c \
-	src/advanced/lsp/lsp_emitter.c
+	src/advanced/lsp/lsp_emitter.c \
+	src/core/editor_context.c \
+	src/core/editor_init.c \
+	src/core/editor_state.c \
+	src/core/editor_render.c \
+	src/core/editor_lsp.c \
+	src/core/editor_input.c \
+	src/core/editor_destroy.c \
+	src/environnement/setup.c
 
 # C Library sources
 LIB_C_MODULES= \
@@ -96,7 +117,7 @@ test_file: src/test_file.c $(OBJECTS) $(RUST_MODULES)
 	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
 
 al: src/main.c $(OBJECTS) $(RUST_MODULES)
-	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS) #utils/debug.o
+	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
 
 lsp_test: src/lsp_test.c $(OBJECTS) $(RUST_MODULES)
 	$(CC) $(CFLAGS) $^ -o $@ $(SHARED_LIBS)
@@ -112,5 +133,3 @@ clean_all: clean
 # /bin/al
 install:
 	make && mkdir -p ~/.config/al && cp -r ./assets/* ~/.config/al && ./generate_config.sh && sudo cp al /bin/al
-
-# find . -type d -name "target" -exec rm -rf {} + # Remove target folders

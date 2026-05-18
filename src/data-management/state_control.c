@@ -89,8 +89,9 @@ void saveAction(History** history_p, Action action,
   *history_p = history;
 
 
-  if (onEachStateChange != NULL)
+  if (onEachStateChange != NULL) {
     onEachStateChange(action, cursor, payload);
+  }
 }
 
 Cursor doReverseAction(Action* action_p, Cursor cursor,
@@ -107,15 +108,17 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
         cursor = insertNewLineInLineC(tmp);
         destroyAction(action);
         *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
-        if (onEachStateChange != NULL)
+        if (onEachStateChange != NULL) {
           onEachStateChange(*action_p, &cursor, payload);
+        }
         return cursor;
       }
       cursor = insertCharInLineC(tmp, readChar_U8FromInput(action.unique_ch));
       destroyAction(action);
       *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
-      if (onEachStateChange != NULL)
+      if (onEachStateChange != NULL) {
         onEachStateChange(*action_p, &cursor, payload);
+      }
       return cursor;
     case DELETE:
       tmp.file_id = tryToReachAbsRow(cursor.file_id, action.cur.row);
@@ -123,8 +126,9 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
       cursor = insertCharArrayAtCursor(tmp, action.ch);
       destroyAction(action);
       *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
-      if (onEachStateChange != NULL)
+      if (onEachStateChange != NULL) {
         onEachStateChange(*action_p, &cursor, payload);
+      }
       return cursor;
     case INSERT:
       tmp.file_id = tryToReachAbsRow(cursor.file_id, action.cur.row);
@@ -135,8 +139,9 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
       destroyAction(action);
       *action_p = createDeleteAction(tmp, cursor_to_desc(tmp_end));
       deleteSelection(&tmp, &tmp_end);
-      if (onEachStateChange != NULL)
+      if (onEachStateChange != NULL) {
         onEachStateChange(*action_p, &tmp, payload);
+      }
       return tmp;
     case ACTION_NONE:
       return cursor;
@@ -245,16 +250,16 @@ void destroyEndOfHistory(History* history) {
 
 
 void createTmpDir() {
-  char command[20 + strlen(FILE_STATE_PATH)];
-  sprintf(command, "mkdir %s -p", FILE_STATE_PATH);
+  char command[PATH_MAX];
+  snprintf(command, sizeof(command), "mkdir -p \"%s\"", FILE_STATE_PATH);
   system(command);
 }
 
 void saveCurrentStateControl(History root, History* current_state, char* fileName) {
   createTmpDir();
 
-  char fileStateControl[strlen(FILE_STATE_PATH) + 60 /*size of the hash*/ + 1];
-  sprintf(fileStateControl, "%s%llu", FILE_STATE_PATH, hashFileName(fileName));
+  char fileStateControl[PATH_MAX];
+  snprintf(fileStateControl, sizeof(fileStateControl), "%s%llu", FILE_STATE_PATH, hashFileName(fileName));
 
 
   FILE* f = fopen(fileStateControl, "w");
@@ -265,7 +270,7 @@ void saveCurrentStateControl(History root, History* current_state, char* fileNam
 
   struct stat attr;
   stat(fileName, &attr);
-  fprintf(f, "%ld\n", attr.st_mtime);
+  fprintf(f, "%ld\n", (long)attr.st_mtime);
 
   History* current = root.next;
   while (current != NULL) {
@@ -306,8 +311,8 @@ void loadCurrentStateControl(History* root, History** current_state, IO_FileID i
     return;
   }
 
-  char fileStateControl[strlen(FILE_STATE_PATH) + 60 /*size of the hash*/ + 1];
-  sprintf(fileStateControl, "%s%llu", FILE_STATE_PATH, hashFileName(io_file.path_abs));
+  char fileStateControl[PATH_MAX];
+  snprintf(fileStateControl, sizeof(fileStateControl), "%s%llu", FILE_STATE_PATH, hashFileName(io_file.path_abs));
 
   FILE* f = fopen(fileStateControl, "r");
   if (f == NULL) {
@@ -317,10 +322,13 @@ void loadCurrentStateControl(History* root, History** current_state, IO_FileID i
   struct stat attr;
   stat(io_file.path_abs, &attr);
 
-  struct timespec loaded;
-  fscanf(f, "%ld\n", &loaded);
+  long loaded_sec;
+  if (fscanf(f, "%ld\n", &loaded_sec) != 1) {
+    fclose(f);
+    return;
+  }
 
-  if (loaded.tv_sec != attr.st_mtim.tv_sec) {
+  if (loaded_sec != (long)attr.st_mtime) {
     fclose(f);
     return;
   }
@@ -330,8 +338,9 @@ void loadCurrentStateControl(History* root, History** current_state, IO_FileID i
   char scan_separtor;
   while (true) {
     char isCurrentState;
-    if (fscanf(f, "%c", &isCurrentState) == EOF)
+    if (fscanf(f, "%c", &isCurrentState) == EOF) {
       break;
+    }
 
     Action action;
     action.ch = NULL;

@@ -40,8 +40,15 @@ void gui_initNCurses(GUIContext* gui_context) {
   noecho();
   curs_set(0);
   // Mouse setup
-  mouseinterval(0);
-  mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
+  // Setting mouseinterval to 1 is a workaround for a bug in some ncurses versions (like 6.6)
+  // where mouseinterval(0) causes mouse events to be delayed until the next input.
+  // see https://github.com/termux/termux-packages/issues/28372
+  // and https://lists.gnu.org/archive/html/bug-ncurses/2026-04/msg00009.html
+  mouseinterval(1);
+  mousemask(BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON2_PRESSED | BUTTON2_RELEASED | BUTTON3_PRESSED |
+                BUTTON3_RELEASED | BUTTON4_PRESSED | BUTTON5_PRESSED | BUTTON_SHIFT | BUTTON_CTRL | BUTTON_ALT |
+                REPORT_MOUSE_POSITION,
+            NULL);
   timeout(100);
   printf("\033[?1003h\033[5 q"); // enable mouse tracking and beam cursor
   fflush(stdout);

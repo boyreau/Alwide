@@ -57,8 +57,7 @@ bool isFileContainerEmpty(FileContainer* container);
 
 void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files);
 
-FilesState filesStateOf(FileContainer** files, int* size, int* current_file_index,
-                                        bool* refresh_local_vars);
+FilesState filesStateOf(FileContainer** files, int* size, int* current_file_index, bool* refresh_local_vars);
 
 
 ////// -------------- CURSOR ACTIONS --------------

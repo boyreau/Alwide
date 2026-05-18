@@ -9,7 +9,7 @@
 
 #include "../../../lib/tree-sitter/lib/include/tree_sitter/api.h"
 #include "../../environnement/constants.h"
-#include "../../environnement/global-variables.h"
+#include "../../environnement/global_variables.h"
 #include "../../terminal/highlight.h"
 #include "../../utils/tools.h"
 #include "../tree-sitter/tree_query.h"
@@ -133,7 +133,7 @@ void getTSLanguageFromString(const TSLanguage** lang, char* language) {
 
 bool loadNewParser(ParserContainer* container, char* language) {
   // Set file name
-  strcpy(container->lang_id, language);
+  snprintf(container->lang_id, sizeof(container->lang_id), "%s", language);
 
   // Getting TSLanguage
   getTSLanguageFromString(&container->lang, language);
@@ -148,7 +148,7 @@ bool loadNewParser(ParserContainer* container, char* language) {
 
   char path[PATH_MAX];
   // Loading Theme
-  sprintf(path, "%s/theme", load_path);
+  snprintf(path, sizeof(path), "%s/theme", load_path);
 
   bool load_result = getThemeFromFile(path, &container->theme_list);
   if (load_result == false) {
@@ -158,7 +158,7 @@ bool loadNewParser(ParserContainer* container, char* language) {
   }
 
   // Queries
-  sprintf(path, "%s/queries/highlights-%s.scm", load_path, container->lang_id);
+  snprintf(path, sizeof(path), "%s/queries/highlights-%s.scm", load_path, container->lang_id);
 
   uint32_t error_offset;
   TSQueryError error_type;
