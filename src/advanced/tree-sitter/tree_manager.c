@@ -1,7 +1,6 @@
 #include "tree_manager.h"
 
 #include <assert.h>
-#include <bits/time.h>
 #include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -183,13 +182,10 @@ bool loadNewParser(ParserContainer* container, char* language) {
 }
 
 
-void setFileHighlightDatas(TS_Data* data, IO_FileID io_file) {
-  bool did_lang_was_found = getLanguageStringIDForFile(data->lang_id, io_file);
+void setFileHighlightDatas(TS_Data* data, ft_LanguageFeature* feature) {
+  snprintf(data->lang_id, sizeof(data->lang_id), "%s", feature->id);
 
-  ParserContainer* parser = NULL;
-  if (did_lang_was_found == true) {
-    parser = getParserForLanguage(&parsers, data->lang_id);
-  }
+  ParserContainer* parser = getParserForLanguage(&parsers, data->lang_id);
 
   data->is_active = parser != NULL;
   data->tree = NULL;

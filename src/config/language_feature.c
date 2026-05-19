@@ -8,6 +8,8 @@
 #include "../utils/tools.h"
 #include "config.h"
 
+// TODO create a structure that merge pointer and size a list (with init and destroy) and move this constant to global_variables.h
+// and move the declaration to main.c as other global variable.
 ft_LanguageFeature* language_features = NULL;
 int language_features_count = 0;
 

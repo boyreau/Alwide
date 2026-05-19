@@ -101,11 +101,13 @@ void setupFileContainer(char* path, FileContainer* container) {
   container->history_root = malloc(sizeof(History));
   container->history_frame = container->history_root;
 
-  container->feature = ft_getFeatureById(container->lsp_datas.lang_id);
+  // TODO extract  this logic and dispatch the method in the right module.
+  char lang_id[LANG_ID_LENGTH];
+  getLanguageStringIDForFile(lang_id, container->io_file);
+  container->feature = ft_getFeatureById(lang_id);
 
-  // TODO use container->feature in both following function instead of re-checking already done detection.
-  setFileHighlightDatas(&container->highlight_data, container->io_file);
-  setLspDatas(&container->lsp_datas, container->io_file);
+  setFileHighlightDatas(&container->highlight_data, container->feature);
+  setLspDatas(&container->lsp_datas, container->io_file, container->feature);
 
   // TODO prefer pass the ft_Tabulation pointer instead of attributes
   container->cursor =

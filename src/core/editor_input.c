@@ -342,6 +342,7 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
     case KEY_TAB:
       deleteSelectionWithState(history_frame, cursor, select_cursor, ctx->payload_state_change);
       tmp = cursor_to_desc(*cursor);
+      // TODO refactor this method out of the switch in this file.
       if (!fc->feature->tabulation.use_space) {
         *cursor = insertCharInLineC(*cursor, readChar_U8FromInput('\t'));
       }
@@ -378,6 +379,7 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       gui_closePopup(&ctx->gui_context);
       break;
     default:
+      // TODO extract this ifelse in another function in this file.
       if (iscntrl(c)) {
         printf("Unsupported touch %d", c);
       }
@@ -385,7 +387,8 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
         deleteSelectionWithState(history_frame, cursor, select_cursor, ctx->payload_state_change);
         tmp = cursor_to_desc(*cursor);
         Char_U8 u8 = readChar_U8FromInput(c);
-        
+
+        // TODO ugly refactor.
         if (!ft_handleAutoPairs(fc, u8, history_frame, ctx->payload_state_change)) {
           *cursor = insertCharInLineC(*cursor, u8);
           setDesiredColumn(*cursor, desired_column);

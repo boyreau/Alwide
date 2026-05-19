@@ -10,13 +10,11 @@
 #include "../../utils/tools.h"
 
 
-void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file) {
-  bool did_lang_was_found = getLanguageStringIDForFile(lsp_data->lang_id, io_file);
+void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file, ft_LanguageFeature* feature) {
+  snprintf(lsp_data->lang_id, sizeof(lsp_data->lang_id), "%s", feature->id);
 
-  LSP_Server* lsp_server = NULL;
-  if (did_lang_was_found == true) {
-    lsp_server = getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id);
-  }
+  LSP_Server* lsp_server = getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id);
+
   lsp_data->is_enable = lsp_server != NULL;
   lsp_data->computed = NULL;
   strncpy(lsp_data->path_abs, io_file.path_abs, PATH_MAX - 1);
