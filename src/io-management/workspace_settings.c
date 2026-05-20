@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include <sys/ttydefaults.h>
-#include "../utils/constants.h"
+#include "../environnement/constants.h"
 
 
 void getWorkspaceSettingsForCurrentDir(WorkspaceSettings* settings, FileContainer* files, int file_count,
@@ -34,10 +34,12 @@ void destroyWorkspaceSettings(WorkspaceSettings* settings) {
 }
 
 void touchDirSettingsFolder() {
+  const char *home = getenv("HOME");
+  if (!home) return;
   char command[PATH_MAX + 100];
-  sprintf(command, "mkdir -p ~/%s", CONFIG_FOLDER);
+  snprintf(command, sizeof(command), "mkdir -p \"%s/%s\"", home, CONFIG_FOLDER);
   system(command);
-  sprintf(command, "mkdir -p ~/%s/%s", CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME);
+  snprintf(command, sizeof(command), "mkdir -p \"%s/%s/%s\"", home, CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME);
   system(command);
 }
 
@@ -47,9 +49,12 @@ void saveWorkspaceSettings(char* dir_path, WorkspaceSettings* settings) {
   char abs_dir_path[PATH_MAX];
   realpath(dir_path, abs_dir_path);
 
-  int hash_dir_path = hashFileName(abs_dir_path);
+  unsigned long long hash_dir_path = hashFileName(abs_dir_path);
 
-  sprintf(abs_dir_path, "%s/%s/%s/%d", getenv("HOME"), CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
+  const char *home = getenv("HOME");
+  if (!home) return;
+
+  snprintf(abs_dir_path, sizeof(abs_dir_path), "%s/%s/%s/%llu", home, CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
 
   FILE* f = fopen(abs_dir_path, "w");
   if (f == NULL) {
@@ -72,9 +77,12 @@ bool loadWorkspaceSettings(char* dir_path, WorkspaceSettings* settings) {
   char abs_dir_path[PATH_MAX];
   realpath(dir_path, abs_dir_path);
 
-  int hash_dir_path = hashFileName(abs_dir_path);
+  unsigned long long hash_dir_path = hashFileName(abs_dir_path);
 
-  sprintf(abs_dir_path, "%s/%s/%s/%d", getenv("HOME"), CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
+  const char *home = getenv("HOME");
+  if (!home) return false;
+
+  snprintf(abs_dir_path, sizeof(abs_dir_path), "%s/%s/%s/%llu", home, CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
 
   FILE* f = fopen(abs_dir_path, "r");
   if (f == NULL) {
@@ -175,10 +183,10 @@ void setupWorkspace(WorkspaceSettings* loaded_settings, int* file_count, char***
 
         // File Opened Window state.
         if (loaded_settings->showing_opened_file_window == true) {
-          gui_context->ofw_height = OPENED_FILE_WINDOW_HEIGHT;
+          gui_context->ofw_context.ofw_height = OPENED_FILE_WINDOW_HEIGHT;
         }
         else {
-          gui_context->ofw_height = 0;
+          gui_context->ofw_context.ofw_height = 0;
         }
 
         // File Explorer Window state.

@@ -1,6 +1,6 @@
 ;From nvim-treesitter/nvim-treesitter
-(atx_heading (inline) @function)
-(setext_heading (paragraph) @function)
+(atx_heading (inline) @string.strong)
+(setext_heading (paragraph) @string.strong)
 
 [
   (atx_h1_marker)
@@ -20,13 +20,13 @@
 
 [
   (fenced_code_block_delimiter)
-  ] @number
+] @number
 
 (code_fence_content) @none
 
 [
   (link_destination)
-  ] @string
+] @string
 
 [
   (link_label)
@@ -48,7 +48,7 @@
 
 [
   (backslash_escape)
-] @number
+] @string.strong
 
 (language) @type
 

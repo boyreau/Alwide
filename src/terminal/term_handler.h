@@ -3,80 +3,56 @@
 #include <ncurses.h>
 #include <wchar.h>
 
-
 #include "../data-management/file_management.h"
 #include "../data-management/file_structure.h"
-#include "../io_management/io_explorer.h"
+#include "../io-management/io_explorer.h"
 #include "highlight.h"
-
-/* Unix call, use 'man wcwidth' to see explication. */
-int wcwidth(const wint_t wc);
+#include "windows/gui_entities.h"
 
 
 ////// -------------- WINDOWS MANAGEMENTS --------------
 
-typedef struct {
-  // Init GUI vars
-  WINDOW* ftw;      // File Text Window
-  WINDOW* lnw;      // Line Number Window
-  WINDOW* ofw;      // Opened Files Window
-  WINDOW* few;      // File Explorer Window
-  bool refresh_edw; // Need to reprint editor window
-  bool refresh_ofw; // Need to reprint opened file window
-  bool refresh_few; // Need to reprint file explorer window
-  WINDOW* focus_w;  // Used to set the window where start mouse drag
+void gui_initGUIContext(GUIContext* gui_context);
 
-  // EDW Datas
+void gui_initNCurses(GUIContext* gui_context);
 
-  // OFW Datas
-  int current_file_offset;
-  int ofw_height; // Height of Opened Files Window. 0 => Disabled on start.   OPENED_FILE_WINDOW_HEIGHT => Enabled on
-                  // start.
+void gui_setFocus(GUIContext* gui_context, WINDOW* w);
 
-  // Few Datas
-  int few_width; // File explorer width
-  int saved_few_width;
-  int few_x_offset; /* TODO unused */
-  int few_y_offset; // Y Scroll state of File Explorer Window
-  int few_selected_line;
-} GUIContext;
-
-
-void initGUIContext(GUIContext* gui_context);
-
-void initNCurses(GUIContext* gui_context);
+void gui_resetFocus(GUIContext* gui_context);
 
 ////// -------------- PRINT FUNCTIONS --------------
 
-void printChar_U8ToNcurses(WINDOW* w, Char_U8 ch);
+void gui_repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_descriptor, ExplorerFolder* explorer,
+                FileContainer* files, int file_count, int current_file);
 
-void printEditor(GUIContext* gui_context, Cursor cursor, Cursor select_cursor, int screen_x, int screen_y,
-                 WindowHighlightDescriptor* highlight_descriptor);
+void gui_printChar_U8ToNcurses(WINDOW* w, Char_U8 ch);
 
-void printOpenedFile(GUIContext* gui_context, FileContainer* files, int file_count, int current_file);
+LineMarker gui_getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
+                                   void** diagnostic);
 
-void printFileExplorer(GUIContext* gui_context, ExplorerFolder* pwd);
+void gui_updateEDW(GUIContext* gui_context);
 
+void gui_updateFEW(GUIContext* gui_context);
 
-////// -------------- RESIZE FUNCTIONS --------------
+void gui_updateOFW(GUIContext* gui_context);
 
-void resizeEditorWindows(GUIContext* gui_context, int lnw_new_width);
+void gui_updateGUI(GUIContext* gui_context);
 
-void resizeOpenedFileWindow(GUIContext* gui_context);
-
-void switchShowFew(GUIContext* gui_context);
+bool gui_doesGUINeedRepaint(GUIContext* gui_context);
 
 ////// -------------- UTILS FUNCTIONS --------------
 
-void moveScreenToMatchCursor(WINDOW* w, Cursor cursor, int* screen_x, int* screen_y);
+void moveScreenToMatchCursor(GUIContext* context, Cursor cursor, int* screen_x, int* screen_y, int tab_size);
 
-void centerCursorOnScreen(WINDOW* w, Cursor cursor, int* screen_x, int* screen_y);
+void centerCursorOnScreen(GUIContext* context, Cursor cursor, int* screen_x, int* screen_y, int tab_size);
 
-int getScreenXForCursor(Cursor cursor, int screen_x);
+int getScreenXForCursor(Cursor cursor, int screen_x, int tab_size);
 
-LineIdentifier getLineIdForScreenX(LineIdentifier line_id, int screen_x, int x_click);
+LineIdentifier getLineIdForScreenX(LineIdentifier line_id, int screen_x, int x_click, int tab_size);
 
 void setDesiredColumn(Cursor cursor, int* desired_column);
+
+void printToWindow(WINDOW* w, char* ch, int length, int offset_x, int offset_y, int line_length, int max_line_number, int tab_size);
 
 
 #endif // NCURSES_HANDLER_H

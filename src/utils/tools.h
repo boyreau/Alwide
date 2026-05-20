@@ -1,13 +1,15 @@
-//
-// Created by arnaud on 31/03/24.
-//
-
 #ifndef TOOLS_H
 #define TOOLS_H
-#include <ncurses.h>
-#include <stdlib.h>
 
-#include "../io_management/io_manager.h"
+#include <linux/limits.h>
+#include <ncurses.h>
+#include <stdint.h>
+#include <sys/types.h>
+
+#include "../advanced/lsp/lsp_client.h"
+#include "../io-management/io_manager.h"
+
+#define URI_MAX (PATH_MAX * 3 + 8)
 
 typedef struct {
   const char* content;
@@ -39,12 +41,28 @@ void getLocalURI(char* realive_abs_path, char* uri);
 
 bool isDir(char* path);
 
-bool getLanguageStringIDForFile(char* lang, IO_FileID io_file);
-
 int hashString(unsigned char* str);
 
 char* loadFullFile(const char* path, long* length);
 
 int mkdir_p(const char* path, mode_t mode);
+
+void countStringFrame(char* ch, int length, int* current_row, int* current_column, int* screen_max_width, int tab_size);
+
+char* trim(char* ch);
+
+void decodeURI(const char* src, char* dest, size_t dest_size);
+
+void encodeURI(const char* src, char* dest, size_t dest_size);
+
+CursorDescriptor positionToCursorDescriptor(LSP_Position position);
+
+// Strictly 0-based LSP position constructor
+// Convert from WishWim (1-based row, 0-based col) to LSP (0-based row, 0-based col)
+LSP_Position LSP_pos_from_cursor(int ww_row, int ww_col);
+LSP_Range LSP_range_from_cursor(int r1, int c1, int r2, int c2);
+Cursor LSP_tryToReachCursorForLSPPosition(Cursor cursor, LSP_Position position);
+int LSP_0_row_to_1_row(int lsp_row);
+
 
 #endif // TOOLS_H

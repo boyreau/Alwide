@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../../utils/constants.h"
+#include "../../environnement/constants.h"
 
 void printQueryLoadError(uint32_t error_offset, TSQueryError error_type) {
   switch (error_type) {
@@ -164,7 +164,13 @@ bool executeCurrentPredicate(ProcessPredicatePayload* payload) {
     }
     String capture_name;
     String string_value;
+    if (predicates_peekType(payload->stream) != TSQueryPredicateStepTypeString) {
+      return false;
+    }
     predicates_consumeString(payload->stream, payload->query, &capture_name);
+    if (predicates_peekType(payload->stream) != TSQueryPredicateStepTypeString) {
+      return false;
+    }
     predicates_consumeString(payload->stream, payload->query, &string_value);
     cJSON_AddItemToObject(payload->predicate_result, capture_name.content, cJSON_CreateString(string_value.content));
     return true;
@@ -189,6 +195,7 @@ bool arePredicatesMatching(Cursor* tmp, TSQuery* query, TSQueryMatch qmatch, con
 
   while (predicates_hasNext(&stream)) {
     if (executeCurrentPredicate(&payload) == false) {
+      cJSON_Delete(payload.predicate_result);
       return false;
     }
     predicates_consumeEND(&stream);
@@ -199,7 +206,7 @@ bool arePredicatesMatching(Cursor* tmp, TSQuery* query, TSQueryMatch qmatch, con
 }
 
 bool extractInjectionDataFromCapture(Cursor* cursor, TSQuery* query, TSQueryMatch* qmatch,
-                                      InjectionDescriptor* injection, const char* override_lang_id) {
+                                     InjectionDescriptor* injection, const char* override_lang_id) {
   injection_init(injection);
   if (override_lang_id != NULL) {
     strncpy(injection->lang_id, override_lang_id, LANG_ID_LENGTH - 1);
@@ -229,10 +236,6 @@ void extractInjectionData(Cursor* tmp, TSQuery* query, InjectionDescriptor* inje
     override_lang_id = cJSON_GetStringValue(lang_item);
   }
   extractInjectionDataFromCapture(tmp, query, &_qmatch, injection, override_lang_id);
-
-  if (injection_isActive(injection)) {
-    injection_print(injection, tmp);
-  }
 }
 
 bool TSQueryCursorNextMatchWithPredicates(Cursor* tmp, TSQuery* query, TSQueryCursor* qcursor, TSQueryMatch* qmatch,
@@ -242,7 +245,7 @@ bool TSQueryCursorNextMatchWithPredicates(Cursor* tmp, TSQuery* query, TSQueryCu
   while (ts_query_cursor_next_match(qcursor, &_qmatch)) {
     uint32_t length;
     const TSQueryPredicateStep* predicates = ts_query_predicates_for_pattern(query, _qmatch.pattern_index, &length);
-    cJSON* predicate_result = NULL;
+    cJSON* predicate_result = NULL; // contain additional data used for #set!
 
     // Pattern don't contain any predicates. We can send it.  OR  If predicates matching send it.
     if (length == 0 || arePredicatesMatching(tmp, query, _qmatch, predicates, length, regex_map, &predicate_result)) {

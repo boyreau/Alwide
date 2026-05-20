@@ -196,11 +196,13 @@ LineNode* destroyCurrentLineNode(LineNode* node) {
  * other  => Number of Char_U8 moved to next node.
  */
 int slideFromLineNodeToNextLineNodeAfterIndex(LineNode* node, int index) {
-  if (node->next == NULL)
+  if (node->next == NULL) {
     return -1;
+  }
 
-  if (node->next->element_number == MAX_ELEMENT_NODE)
+  if (node->next->element_number == MAX_ELEMENT_NODE) {
     return -1;
+  }
 
   if (node->next->current_max_element_number != MAX_ELEMENT_NODE &&
       node->element_number - index + 1 > node->next->current_max_element_number - node->next->element_number) {
@@ -242,11 +244,13 @@ int slideFromLineNodeToNextLineNodeAfterIndex(LineNode* node, int index) {
  * other  => Number of Char_U8 moved to previous node.
  */
 int slideFromLineNodeToPreviousLineNodeBeforeIndex(LineNode* node, int index) {
-  if (node->prev == NULL)
+  if (node->prev == NULL) {
     return -1;
+  }
 
-  if (node->prev->element_number == MAX_ELEMENT_NODE)
+  if (node->prev->element_number == MAX_ELEMENT_NODE) {
     return -1;
+  }
 
 
   if (node->prev->current_max_element_number != MAX_ELEMENT_NODE &&
@@ -268,8 +272,9 @@ int slideFromLineNodeToPreviousLineNodeBeforeIndex(LineNode* node, int index) {
           node->prev->element_number, node->prev->current_max_element_number - node->prev->element_number);
 #endif
 
-  if (index == 0)
+  if (index == 0) {
     return 0;
+  }
 
   int moved = min(index, node->prev->current_max_element_number - node->prev->element_number);
   // fprintf(stderr, "Moved :
@@ -630,8 +635,9 @@ int getAbsoluteLineIndex(LineIdentifier id) {
 
 bool isEmptyLine(LineNode* line) {
   while (line != NULL) {
-    if (line->element_number != 0)
+    if (line->element_number != 0) {
       return false;
+    }
     line = line->next;
   }
   return true;
@@ -651,8 +657,9 @@ void printLineNode(LineNode* line) {
 }
 
 LineIdentifier tryToReachAbsColumn(LineIdentifier line_id, int abs_column) {
-  if (line_id.absolute_column == abs_column)
+  if (line_id.absolute_column == abs_column) {
     return line_id;
+  }
 
   line_id = moduloLineIdentifier(line_id);
 
@@ -663,8 +670,9 @@ LineIdentifier tryToReachAbsColumn(LineIdentifier line_id, int abs_column) {
 
   while (line_id.absolute_column + line_id.line->element_number < abs_column) {
     first = true;
-    if (line_id.line->next == NULL)
+    if (line_id.line->next == NULL) {
       break;
+    }
     line_id.absolute_column += line_id.line->element_number - line_id.relative_column;
     line_id.line = line_id.line->next;
     line_id.relative_column = 0;
@@ -673,8 +681,9 @@ LineIdentifier tryToReachAbsColumn(LineIdentifier line_id, int abs_column) {
   while (abs_column < line_id.absolute_column) {
     assert(first == false);
     assert(line_id.relative_column == 0);
-    if (line_id.line->prev == NULL)
+    if (line_id.line->prev == NULL) {
       break;
+    }
     line_id.absolute_column -= line_id.line->prev->element_number;
     line_id.line = line_id.line->prev;
     line_id.relative_column = 0; // no needed.
@@ -818,8 +827,9 @@ void initEmptyFileNode(FileNode* file) {
   file->current_max_element_number = 0;
   file->element_number = 0;
   file->byte_count = 0;
-  for (int i = 0; i < MAX_ELEMENT_NODE; i++)
+  for (int i = 0; i < MAX_ELEMENT_NODE; i++) {
     file->lines_byte_count[i] = 0;
+  }
 }
 
 Cursor initNewWrittableFile() {
@@ -837,8 +847,9 @@ Cursor initNewWrittableFile() {
  * length == -1 => mean that length is
  */
 void rebindFileNode(FileNode* file, int start, int length) {
-  if (length == -1)
+  if (length == -1) {
     length = file->element_number - start;
+  }
   assert(start + length <= file->element_number);
   assert(start >= 0);
   for (int i = start; i < start + length; i++) {
@@ -926,11 +937,13 @@ FileNode* destroyCurrentFileNode(FileNode* file) {
  * other  => Number of Char_U8 moved to next node.
  */
 int slideFromFileNodeToNextFileNodeAfterIndex(FileNode* file, int row) {
-  if (file->next == NULL)
+  if (file->next == NULL) {
     return -1;
+  }
 
-  if (file->next->element_number == MAX_ELEMENT_NODE)
+  if (file->next->element_number == MAX_ELEMENT_NODE) {
     return -1;
+  }
 
   if (file->next->current_max_element_number != MAX_ELEMENT_NODE &&
       file->element_number - row + 1 > file->next->current_max_element_number - file->next->element_number) {
@@ -980,11 +993,13 @@ int slideFromFileNodeToNextFileNodeAfterIndex(FileNode* file, int row) {
  * other  => Number of Char_U8 moved to previous node.
  */
 int slideFromFileNodeToPreviousFileNodeBeforeIndex(FileNode* file, int row) {
-  if (file->prev == NULL)
+  if (file->prev == NULL) {
     return -1;
+  }
 
-  if (file->prev->element_number == MAX_ELEMENT_NODE)
+  if (file->prev->element_number == MAX_ELEMENT_NODE) {
     return -1;
+  }
 
 
   if (file->prev->current_max_element_number != MAX_ELEMENT_NODE &&
@@ -1010,8 +1025,9 @@ int slideFromFileNodeToPreviousFileNodeBeforeIndex(FileNode* file, int row) {
           file->prev->element_number, file->prev->current_max_element_number - file->prev->element_number);
 #endif
 
-  if (row == 0)
+  if (row == 0) {
     return 0;
+  }
 
   int moved = min(row, file->prev->current_max_element_number - file->prev->element_number);
   assert(file->prev->element_number + moved <= MAX_ELEMENT_NODE);
@@ -1358,8 +1374,9 @@ bool checkFileIntegrity(FileNode* file) {
       LineNode* line = file->lines + i;
       if (line != NULL) {
         // assert(line->prev == NULL);
-        if (line->prev != NULL)
+        if (line->prev != NULL) {
           return false;
+        }
       }
       while (line != NULL) {
         if (line->next != NULL) {
@@ -1373,12 +1390,14 @@ bool checkFileIntegrity(FileNode* file) {
             fprintf(stderr, "=> %d : ", line->element_number);
             printLineNode(line);
             fprintf(stderr, " -> ");
-            if (line->next != NULL)
+            if (line->next != NULL) {
               for (int j = 0; j < line->element_number; j++) {
                 printChar_U8(stderr, line->ch[j]);
               }
-            else
+            }
+            else {
               fprintf(stderr, "None");
+            }
             fprintf(stderr, "\r\n");
             // assert(line->next->prev == line);
             return false;
@@ -1389,8 +1408,9 @@ bool checkFileIntegrity(FileNode* file) {
     }
     if (file->next != NULL) {
       // assert(file->next->prev == file);
-      if (file->next->prev != file)
+      if (file->next->prev != file) {
         return false;
+      }
     }
     file = file->next;
   }
@@ -1506,8 +1526,9 @@ bool checkByteCountIntegrity(FileNode* file) {
 
 bool isEmptyFile(FileNode* file) {
   while (file != NULL) {
-    if (file->element_number != 0)
+    if (file->element_number != 0) {
       return false;
+    }
     file = file->next;
   }
   return true;
@@ -1535,16 +1556,18 @@ FileIdentifier tryToReachAbsRow(FileIdentifier file_id, int abs_row) {
 
   while (file_id.absolute_row + file_id.file->element_number < abs_row) {
     first = true;
-    if (file_id.file->next == NULL)
+    if (file_id.file->next == NULL) {
       break;
+    }
     file_id.absolute_row += file_id.file->element_number;
     file_id.file = file_id.file->next;
   }
 
   while (abs_row < file_id.absolute_row) {
     assert(first == false);
-    if (file_id.file->prev == NULL)
+    if (file_id.file->prev == NULL) {
       break;
+    }
     file_id.absolute_row -= file_id.file->prev->element_number;
     file_id.file = file_id.file->prev;
   }
@@ -1893,8 +1916,9 @@ Cursor insertNewLineInLineC(Cursor cursor) {
     }
   }
 
-  if (newLine->next != NULL) // Really important because newLine may have changed.
+  if (newLine->next != NULL) { // Really important because newLine may have changed.
     newLine->next->prev = newLine;
+  }
 
   LineIdentifier newLineId = moduloLineIdentifierR(newLine, 0);
   return cursorOf(newFileIdForNewLine, newLineId);
@@ -1925,8 +1949,9 @@ Cursor concatNeighbordsLinesC(Cursor cursor) {
     FileIdentifier newLineId = removeLineInFile(file_id);
     LineIdentifier lastNode = getLastLineNode(getLineForFileIdentifier(newLineId));
 
-    if (getLineForFileIdentifier(newLineId)->next != NULL)
+    if (getLineForFileIdentifier(newLineId)->next != NULL) {
       assert(lastNode.line != NULL);
+    }
 
     return cursorOf(newLineId, lastNode);
   }
@@ -1938,8 +1963,9 @@ Cursor concatNeighbordsLinesC(Cursor cursor) {
   initEmptyLineNode(newNode);
   newNode->ch = line_id.line->ch;
   newNode->next = line_id.line->next;
-  if (newNode->next != NULL)
+  if (newNode->next != NULL) {
     newNode->next->prev = newNode;
+  }
   newNode->fixed = false;
   newNode->element_number = line_id.line->element_number;
   newNode->current_max_element_number = line_id.line->current_max_element_number;
@@ -1965,8 +1991,9 @@ Cursor concatNeighbordsLinesC(Cursor cursor) {
     lastNode.line->element_number = newNode->element_number;
     lastNode.line->current_max_element_number = newNode->current_max_element_number;
     lastNode.line->byte_count = newNode->byte_count;
-    if (lastNode.line->next != NULL)
+    if (lastNode.line->next != NULL) {
       lastNode.line->next->prev = lastNode.line;
+    }
     free(newNode);
   }
   else {
@@ -2031,7 +2058,7 @@ Cursor supprCharAtCursor_internal(Cursor cursor) {
 }
 
 Cursor bulkDelete(Cursor cursor, Cursor select_cursor) {
-  if (isCursorPreviousThanOther(select_cursor, cursor)) {
+  if (cursor_le(select_cursor, cursor)) {
     Cursor tmp = select_cursor;
     select_cursor = cursor;
     cursor = tmp;
@@ -2076,63 +2103,123 @@ Cursor bulkDelete(Cursor cursor, Cursor select_cursor) {
 
 
 Cursor tryToReachAbsPosition(Cursor cursor, int row, int column) {
-  if (row <= 0)
+  if (row <= 0) {
     row = 1;
+  }
   FileIdentifier new_file_id = tryToReachAbsRow(cursor.file_id, row);
   LineIdentifier new_line_id =
     tryToReachAbsColumn(moduloLineIdentifierR(getLineForFileIdentifier(new_file_id), 0), column);
   return cursorOf(new_file_id, new_line_id);
 }
 
-Char_U8 getCharAtCursor(Cursor cursor) { return getCharForLineIdentifier(cursor.line_id); }
-
-
-bool isCursorPreviousThanOther(Cursor cursor, Cursor other) {
-  if (cursor.file_id.absolute_row < other.file_id.absolute_row)
-    return true;
-  if (cursor.file_id.absolute_row > other.file_id.absolute_row)
-    return false;
-  assert(cursor.file_id.absolute_row == other.file_id.absolute_row);
-
-  return cursor.line_id.absolute_column <= other.line_id.absolute_column;
-}
-
-bool isCursorStrictPreviousThanOther(Cursor cursor, Cursor other) {
-  if (cursor.file_id.absolute_row < other.file_id.absolute_row)
-    return true;
-  if (cursor.file_id.absolute_row > other.file_id.absolute_row)
-    return false;
-  assert(cursor.file_id.absolute_row == other.file_id.absolute_row);
-
-  return cursor.line_id.absolute_column < other.line_id.absolute_column;
-}
-
-bool isCursorBetweenOthers(Cursor cursor, Cursor cur1, Cursor cur2) {
-  if (isCursorPreviousThanOther(cur1, cur2) == false) {
-    Cursor tmp = cur1;
-    cur1 = cur2;
-    cur2 = tmp;
+Char_U8 getCharAtCursor(Cursor cursor) {
+  if (cursor_col(cursor) == 0) {
+    return readChar_U8FromCharArray("\n");
   }
-
-  int row = cursor.file_id.absolute_row;
-  int column = cursor.line_id.absolute_column;
-
-  int row_start = cur1.file_id.absolute_row;
-  int column_start = cur1.line_id.absolute_column;
-
-  int row_end = cur2.file_id.absolute_row;
-  int column_end = cur2.line_id.absolute_column;
-
-
-  return (row_start < row || (row_start == row && column_start < column)) &&
-    (row < row_end || (row == row_end && column <= column_end));
+  return getCharForLineIdentifier(cursor.line_id);
 }
 
+// --- Cursor Operations ---
 
-bool areCursorEqual(Cursor cur1, Cursor cur2) {
-  return cur1.file_id.absolute_row == cur2.file_id.absolute_row &&
-    cur1.line_id.absolute_column == cur2.line_id.absolute_column;
+int cursor_cmp(Cursor c1, Cursor c2) {
+  if (c1.file_id.absolute_row < c2.file_id.absolute_row) {
+    return -1;
+  }
+  if (c1.file_id.absolute_row > c2.file_id.absolute_row) {
+    return 1;
+  }
+  if (c1.line_id.absolute_column < c2.line_id.absolute_column) {
+    return -1;
+  }
+  if (c1.line_id.absolute_column > c2.line_id.absolute_column) {
+    return 1;
+  }
+  return 0;
 }
+
+bool cursor_eq(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) == 0; }
+bool cursor_ne(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) != 0; }
+bool cursor_lt(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) < 0; }
+bool cursor_le(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) <= 0; }
+bool cursor_gt(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) > 0; }
+bool cursor_ge(Cursor c1, Cursor c2) { return cursor_cmp(c1, c2) >= 0; }
+
+bool cursor_is_between(Cursor c, Cursor cur1, Cursor cur2) {
+  Cursor start = cursor_min(cur1, cur2);
+  Cursor end = cursor_max(cur1, cur2);
+  return cursor_ge(c, start) && cursor_le(c, end);
+}
+
+bool cursor_is_inside(Cursor c, Cursor cur1, Cursor cur2) {
+  Cursor start = cursor_min(cur1, cur2);
+  Cursor end = cursor_max(cur1, cur2);
+  return cursor_lt(start, c) && cursor_le(c, end);
+}
+
+// --- CursorDescriptor Operations ---
+
+int cursor_desc_cmp(CursorDescriptor c1, CursorDescriptor c2) {
+  if (c1.row < c2.row) {
+    return -1;
+  }
+  if (c1.row > c2.row) {
+    return 1;
+  }
+  if (c1.column < c2.column) {
+    return -1;
+  }
+  if (c1.column > c2.column) {
+    return 1;
+  }
+  return 0;
+}
+
+bool cursor_desc_eq(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) == 0; }
+bool cursor_desc_ne(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) != 0; }
+bool cursor_desc_lt(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) < 0; }
+bool cursor_desc_le(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) <= 0; }
+bool cursor_desc_gt(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) > 0; }
+bool cursor_desc_ge(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_cmp(c1, c2) >= 0; }
+
+bool cursor_desc_is_between(CursorDescriptor cd, CursorDescriptor cur1, CursorDescriptor cur2) {
+  CursorDescriptor start = cursor_desc_min(cur1, cur2);
+  CursorDescriptor end = cursor_desc_max(cur1, cur2);
+  return cursor_desc_ge(cd, start) && cursor_desc_le(cd, end);
+}
+
+// --- Status ---
+
+bool cursor_is_disabled(Cursor c) { return c.file_id.absolute_row == -1; }
+bool cursor_desc_is_disabled(CursorDescriptor cd) { return cd.row == -1; }
+Cursor cursor_disable(Cursor c) {
+  c.file_id.absolute_row = -1;
+  return c;
+}
+
+int cursor_row(Cursor c) { return c.file_id.absolute_row; }
+int cursor_col(Cursor c) { return c.line_id.absolute_column; }
+
+// --- Utilities ---
+
+Cursor cursor_min(Cursor c1, Cursor c2) { return cursor_le(c1, c2) ? c1 : c2; }
+Cursor cursor_max(Cursor c1, Cursor c2) { return cursor_ge(c1, c2) ? c1 : c2; }
+
+CursorDescriptor cursor_desc_min(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_le(c1, c2) ? c1 : c2; }
+CursorDescriptor cursor_desc_max(CursorDescriptor c1, CursorDescriptor c2) { return cursor_desc_ge(c1, c2) ? c1 : c2; }
+
+// --- Conversion ---
+
+CursorDescriptor cursor_to_desc(Cursor cursor) {
+  CursorDescriptor descriptor;
+  descriptor.row = cursor.file_id.absolute_row;
+  descriptor.column = cursor.line_id.absolute_column;
+  return descriptor;
+}
+
+Cursor desc_to_cursor(Cursor base, CursorDescriptor descriptor) {
+  return tryToReachAbsPosition(base, descriptor.row, descriptor.column);
+}
+
 
 unsigned int getIndexForCursor(Cursor cursor) {
   cursor = moduloCursor(cursor);

@@ -2,16 +2,11 @@
 [
   (code_span)
   (link_title)
-] @string
+] @comment
 
-[
-  (emphasis_delimiter)
-  (code_span_delimiter)
-] @punctuation.delimiter
+(emphasis) @string.italic
 
-(emphasis) @string
-
-(strong_emphasis) @string
+(strong_emphasis) @string.strong
 
 [
   (link_destination)
@@ -27,7 +22,13 @@
 [
   (backslash_escape)
   (hard_line_break)
-] @string
+] @string.strong
+
+[
+  (emphasis_delimiter)
+  (code_span_delimiter)
+] @keyword
+
 
 (image ["!" "[" "]" "(" ")"] @number)
 (inline_link ["[" "]" "(" ")"] @number)

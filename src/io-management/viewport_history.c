@@ -8,8 +8,10 @@
 #include "io_manager.h"
 
 void createConfigDir() {
-  char command[20 + strlen(FILE_HISTORY_PATH) + strlen(getenv("HOME"))];
-  sprintf(command, "mkdir %s%s -p", getenv("HOME"), FILE_HISTORY_PATH);
+  const char *home = getenv("HOME");
+  if (!home) return;
+  char command[PATH_MAX];
+  snprintf(command, sizeof(command), "mkdir -p \"%s%s\"", home, FILE_HISTORY_PATH);
   system(command);
 }
 
@@ -17,9 +19,16 @@ void createConfigDir() {
 void getLastFilePosition(char* fileName, int* row, int* column, int* screen_x, int* screen_y) {
   createConfigDir();
 
-  int path_len = 60 /* Size of str can contain int */ + strlen(getenv("HOME")) + strlen(FILE_HISTORY_PATH);
+  const char *home = getenv("HOME");
+  if (!home) {
+    *row = 1;
+    *column = 0;
+    return;
+  }
+
+  int path_len = 200 /* Size of str can contain int */ + strlen(home) + strlen(FILE_HISTORY_PATH);
   char path[path_len + 10];
-  sprintf(path, "%s%s%lld", getenv("HOME"), FILE_HISTORY_PATH, hashFileName(fileName));
+  snprintf(path, sizeof(path), "%s%s%llu", home, FILE_HISTORY_PATH, hashFileName(fileName));
 
   FILE* f = fopen(path, "r");
 
@@ -37,9 +46,12 @@ void getLastFilePosition(char* fileName, int* row, int* column, int* screen_x, i
 void setlastFilePosition(char* fileName, int row, int column, int screen_x, int screen_y) {
   createConfigDir();
 
-  int path_len = 20 /* Size of str can contain int */ + strlen(getenv("HOME")) + strlen(FILE_HISTORY_PATH);
+  const char *home = getenv("HOME");
+  if (!home) return;
+
+  int path_len = 20 /* Size of str can contain int */ + strlen(home) + strlen(FILE_HISTORY_PATH);
   char path[path_len + 10];
-  sprintf(path, "%s%s%lld", getenv("HOME"), FILE_HISTORY_PATH, hashFileName(fileName));
+  snprintf(path, sizeof(path), "%s%s%llu", home, FILE_HISTORY_PATH, hashFileName(fileName));
 
   FILE* f = fopen(path, "w");
 
@@ -70,4 +82,8 @@ void fetchSavedCursorPosition(IO_FileID file, Cursor* cursor, int* screen_x, int
 
     // TODO may check for screen_x and screen_y to be not too far from code.
   }
+}
+
+ViewPort viewPortOf(GUIContext* context, int* screen_x, int* screen_y) {
+  return (ViewPort){.gui = context, .screen_x = screen_x, .screen_y = screen_y};
 }

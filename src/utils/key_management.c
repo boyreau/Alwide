@@ -2,6 +2,7 @@
 
 #include "key_management.h"
 
+#include "../environnement/constants.h"
 #include "tools.h"
 
 time_val lastPress = 0;
@@ -48,6 +49,10 @@ void printEventList(MEVENT* event) {
 
 // Hard to implement bc there are different behaviour depend on mouse or touchpad is used.
 void detectComplexMouseEvents(MEVENT* event) {
+  printEventList(event);
+  if (event->bstate != NO_EVENT_MOUSE) {
+    fprintf(stderr, "\n");
+  }
   time_val current_time = timeInMilliseconds();
 
   // fprintf(stderr, "BEGIN > id: %d, pos: (%d, %d, %d), masks: ", event->id, event->x, event->y, event->z);
@@ -127,7 +132,7 @@ void detectComplexMouseEvents(MEVENT* event) {
     tmp_event.x = event->x;
     tmp_event.y = event->y;
     tmp_event.z = event->z;
-    ungetmouse(&tmp_event);
+    // ungetmouse(&tmp_event);
     // fprintf(stderr, "Emitting :");
     // printEventList(&tmp_event);
     // fprintf(stderr, "\n");
@@ -139,7 +144,7 @@ void detectComplexMouseEvents(MEVENT* event) {
     tmp_event.x = event->x;
     tmp_event.y = event->y;
     tmp_event.z = event->z;
-    ungetmouse(&tmp_event);
+    // ungetmouse(&tmp_event);
     // fprintf(stderr, "Emitting :");
     // printEventList(&tmp_event);
     // fprintf(stderr, "\n");

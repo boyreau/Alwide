@@ -2,15 +2,32 @@
 #define LSP_HANDLER_H
 #include <stdbool.h>
 
-#include "../../io_management/io_manager.h"
-#include "../../utils/constants.h"
+#include "../../environnement/constants.h"
+#include "../../io-management/io_manager.h"
 #include "lsp_client.h"
+#include "../../config/language_feature.h"
+
+
+typedef struct {
+  LSP_DiagnosticList diagnostics;
+  LSP_CompletionList completions;
+  LSP_Hover hover;
+  LSP_SignatureHelp signature_help;
+  LSP_CodeActionList code_actions;
+  // used by the TUI when multiple choice happens to let choose the user.
+  LSP_LocationArray gotos;
+  LSP_GOTO_TYPE goto_type;
+} LSP_ComputedData;
+
+void LSP_initComputedData(LSP_ComputedData* payload);
 
 
 typedef struct {
   char lang_id[LANG_ID_LENGTH];
   bool is_enable;
-} LSP_Datas;
+  LSP_ComputedData* computed;
+  char path_abs[PATH_MAX];
+} LSP_Data;
 
 struct _LSPServerLinkedList_Cell {
   LSP_Server lsp_server;
@@ -25,7 +42,11 @@ typedef struct {
 } LSPServerLinkedList;
 
 
-void setLspDatas(LSP_Datas* lsp_datas, IO_FileID io_file);
+void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file, ft_LanguageFeature* feature);
+
+void destroyLspDatas(LSP_Data* lsp_datas);
+
+void LSP_destroyComputedData(LSP_ComputedData* lsp_payload);
 
 
 //// ------------ UTILS ------------

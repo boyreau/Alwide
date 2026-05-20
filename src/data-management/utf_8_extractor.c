@@ -5,10 +5,7 @@
 #include <unistd.h>
 #include <wchar.h>
 
-#include "../utils/constants.h"
-
-/* Unix call, use 'man wcwidth' to see explication. */
-int wcwidth(const wint_t wc);
+#include "../environnement/constants.h"
 
 /**
  * Print the Char_U8 to the file.
@@ -192,9 +189,9 @@ void testUnitUtf8Extractor() {
 }
 
 
-int charPrintSize(Char_U8 ch) {
+int charPrintSize(Char_U8 ch, int tab_size) {
   if (ch.t[0] == '\t') {
-    return TAB_SIZE;
+    return tab_size;
   }
 
   if (sizeChar_U8(ch) == 1) // If char is ascii avoid convert and call wcwidth we can instant return size 1. Will not

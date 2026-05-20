@@ -38,12 +38,17 @@ void discoverFolder(ExplorerFolder* folder) {
       if (strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0 && strcmp(dir->d_name, ".git") != 0 &&
           strcmp(dir->d_name, ".idea") != 0) {
         char abs_path[PATH_MAX];
-        sprintf(abs_path, "%s/%s", folder->path, dir->d_name);
+        snprintf(abs_path, sizeof(abs_path), "%s/%s", folder->path, dir->d_name);
         if (dir->d_type == DT_DIR) {
           // Dir
           // reallocate for one new element.
           folder->folder_count++;
-          folder->folders = realloc(folder->folders, sizeof(ExplorerFolder) * folder->folder_count);
+          ExplorerFolder* new_folders = realloc(folder->folders, sizeof(ExplorerFolder) * folder->folder_count);
+          if (new_folders == NULL) {
+             folder->folder_count--;
+             continue; 
+          }
+          folder->folders = new_folders;
           // insert in alphabet order
           int i = 0;
           for (; i < folder->folder_count - 1; i++) {

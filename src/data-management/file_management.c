@@ -1,4 +1,5 @@
 #include "file_management.h"
+#include "../config/language_feature.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -6,10 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../io_management/viewport_history.h"
+#include "../environnement/global_variables.h"
+#include "../io-management/viewport_history.h"
 #include "../terminal/term_handler.h"
-#include "../utils/constants.h"
-#include "../utils/global-variables.h"
 
 
 ////// -------------- FILE CONTAINER --------------
@@ -24,6 +24,7 @@ void destroyFileContainer(FileContainer* container) {
   destroyEndOfHistory(container->history_root);
   free(container->history_root);
   ts_tree_delete(container->highlight_data.tree);
+  destroyLspDatas(&container->lsp_datas);
 }
 
 void openNewFile(char* file_path, FileContainer** files, int* file_count, int* current_file, bool* refresh_ofw,
@@ -54,16 +55,15 @@ void openNewFile(char* file_path, FileContainer** files, int* file_count, int* c
   if ((*files)[*file_count - 1].lsp_datas.is_enable) {
     char* dump = dumpSelection(tryToReachAbsPosition((*files)[*file_count - 1].cursor, 1, 0),
                                tryToReachAbsPosition((*files)[*file_count - 1].cursor, INT_MAX, INT_MAX));
-    LSP_notifyLspFileDidOpen(*getLSPServerForLanguage(&lsp_servers, (*files)[*file_count - 1].lsp_datas.lang_id),
-                             (*files)[*file_count - 1].io_file.path_args, dump);
+    LSP_notifyLspFileDidOpen(getLSPServerForLanguage(&lsp_servers, (*files)[*file_count - 1].lsp_datas.lang_id),
+                             (*files)[*file_count - 1].io_file.path_abs, dump);
     free(dump);
   }
 
   *current_file = *file_count - 1;
 }
 
-void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_ofw, bool* refresh_edw,
-               bool* refresh_local_vars) {
+void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_local_vars) {
   if (*file_count == 1) // Always need to keep one file.
   {
     return;
@@ -74,20 +74,19 @@ void closeFile(FileContainer** files, int* file_count, int* current_file, bool* 
           (*file_count - *current_file - 1) * sizeof(FileContainer));
 
   // Change vars
-  if (*current_file != 0)
+  if (*current_file != 0) {
     (*current_file)--;
+  }
   (*file_count)--;
 
   // realloc files to avoid excess of mem.
   *files = realloc(*files, *file_count * sizeof(FileContainer));
-  *refresh_ofw = true;
-  *refresh_edw = true;
   *refresh_local_vars = true;
 }
 
-Cursor createRoot(IO_FileID file) {
+Cursor createRoot(IO_FileID file, ft_Tabulation* tab) {
   if (file.status == EXIST) {
-    return initWrittableFileFromFile(file.path_abs);
+    return initWrittableFileFromFile(file.path_abs, tab);
   }
   return initNewWrittableFile();
 }
@@ -101,25 +100,27 @@ void setupFileContainer(char* path, FileContainer* container) {
   container->history_root = malloc(sizeof(History));
   container->history_frame = container->history_root;
 
-  container->cursor = createRoot(container->io_file);
-  container->old_cur = container->cursor;
-  container->select_cursor = disableCursor(container->cursor);
+  container->feature = ft_getFeatureForFile(container->io_file.path_abs);
+
+  setFileHighlightDatas(&container->highlight_data, container->feature);
+  setLspDatas(&container->lsp_datas, container->io_file, container->feature);
+
+  container->cursor = createRoot(container->io_file, ft_tab(container->feature));
+  container->select_cursor = cursor_disable(container->cursor);
   setDesiredColumn(container->cursor, &container->desired_column);
 
   container->root = container->cursor.file_id.file;
   assert(container->root->prev == NULL);
   fetchSavedCursorPosition(container->io_file, &container->cursor, &container->screen_x, &container->screen_y);
+  container->old_cur = container->cursor; // set the old_cursor after
   loadCurrentStateControl(container->history_root, &container->history_frame, container->io_file);
-
-  setFileHighlightDatas(&container->highlight_data, container->io_file);
-  setLspDatas(&container->lsp_datas, container->io_file);
 }
 
 
 void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file, FileNode*** root, Cursor** cursor,
                     Cursor** select_cursor, Cursor** old_cur, int** desired_column, int** screen_x, int** screen_y,
                     int** old_screen_x, int** old_screen_y, History*** history_root, History*** history_frame,
-                    FileHighlightDatas** highlight_data) {
+                    TS_Data** highlight_data, LSP_Data** lsp_datas, ft_LanguageFeature** feature) {
   *io_file = &files[current_file].io_file;               // Describe the IO file on OS
   *root = &files[current_file].root;                     // The root of the File object
   *cursor = &files[current_file].cursor;                 // The current cursor for the root File
@@ -128,21 +129,24 @@ void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file,
   *desired_column = &files[current_file].desired_column; // Used on line change to try to reach column
   *screen_x = &files[current_file].screen_x; // The x coord of the top left corner of the current viewport of the file
   *screen_y = &files[current_file].screen_y; // The y coord of the top left corner of the current viewport of the file
-  *old_screen_x = &files[current_file].old_screen_x;   // old screen_x used to flag screen_x changes
-  *old_screen_y = &files[current_file].old_screen_y;   // old screen_y used to flag screen_y changes
-  *history_root = &files[current_file].history_root;   // Root of History object for the current File
-  *history_frame = &files[current_file].history_frame; // Current node of the History. Before -> Undo, After -> Redo.
-  *highlight_data = &files[current_file].highlight_data;
-  **old_screen_y = -1;
+  *old_screen_x = &files[current_file].old_screen_x;     // old screen_x used to flag screen_x changes
+  *old_screen_y = &files[current_file].old_screen_y;     // old screen_y used to flag screen_y changes
+  *history_root = &files[current_file].history_root;     // Root of History object for the current File
+  *history_frame = &files[current_file].history_frame;   // Current node of the History. Before -> Undo, After -> Redo.
+  *highlight_data = &files[current_file].highlight_data; // Object which represent the highlight data of the current file.
+  **old_screen_y = -1;                                   // Reset old_screen_y to force a viewport diff on next render.
+  *lsp_datas = &files[current_file].lsp_datas;           // Object which contains all the data of the active LSP server.
+  *feature = files[current_file].feature;                // Language feature config detected for this file (tabs, pairs, LSP, comments).
 }
 
 
 bool isFileContainerEmpty(FileContainer* container) {
-  if (container->io_file.status != NONE)
+  if (container->io_file.status != NONE) {
     return false;
+  }
 
   return container->cursor.file_id.absolute_row == 1 && container->cursor.line_id.absolute_column == 0 &&
-    areCursorEqual(container->cursor, moveRight(container->cursor));
+    cursor_eq(container->cursor, moveRight(container->cursor));
 }
 
 void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files) {
@@ -157,8 +161,8 @@ void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files)
     if ((*files)[i].lsp_datas.is_enable) {
       char* dump = dumpSelection(tryToReachAbsPosition((*files)[i].cursor, 1, 0),
                                  tryToReachAbsPosition((*files)[i].cursor, INT_MAX, INT_MAX));
-      LSP_notifyLspFileDidOpen(*getLSPServerForLanguage(&lsp_servers, (*files)[i].lsp_datas.lang_id),
-                               (*files)[i].io_file.path_args, dump);
+      LSP_notifyLspFileDidOpen(getLSPServerForLanguage(&lsp_servers, (*files)[i].lsp_datas.lang_id),
+                               (*files)[i].io_file.path_abs, dump);
       free(dump);
     }
   }
@@ -167,10 +171,15 @@ void setupOpenedFiles(int* file_count, char** file_names, FileContainer** files)
     *file_count = 1;
     setupFileContainer("", *files);
     if ((*files)[0].lsp_datas.is_enable) {
-      LSP_notifyLspFileDidOpen(*getLSPServerForLanguage(&lsp_servers, (*files)[0].lsp_datas.lang_id),
-                               (*files)[0].io_file.path_args, "");
+      LSP_notifyLspFileDidOpen(getLSPServerForLanguage(&lsp_servers, (*files)[0].lsp_datas.lang_id),
+                               (*files)[0].io_file.path_abs, "");
     }
   }
+}
+
+FilesState filesStateOf(FileContainer** files, int* size, int* current_file_index, bool* refresh_local_vars) {
+  return (FilesState){
+    .files = files, .size = size, .current_file_index = current_file_index, .refresh_local_vars = refresh_local_vars};
 }
 
 //// -------------- CURSOR MANAGEMENT --------------
@@ -303,7 +312,7 @@ Cursor moveToNextWord(Cursor cursor) {
     cursor = tmp_cur;
   }
 
-  if (areCursorEqual(old_cur, cursor)) {
+  if (cursor_eq(old_cur, cursor)) {
     return moveRight(cursor);
   }
 
@@ -326,14 +335,14 @@ Cursor moveToPreviousWord(Cursor cursor) {
     cursor = moveLeft(cursor);
   }
 
-  if (areCursorEqual(old_cur, cursor)) {
+  if (cursor_eq(old_cur, cursor)) {
     return moveLeft(cursor);
   }
 
   return cursor;
 }
 
-Cursor insertCharArrayAtCursor(Cursor cursor, char* chs) {
+Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, ft_Tabulation* tab) {
   // Duplicated search in project DUP_SCAN.
 
   int index = 0;
@@ -355,13 +364,13 @@ Cursor insertCharArrayAtCursor(Cursor cursor, char* chs) {
         // printf("Tab\r\n");
 #endif
         Char_U8 ch;
-        if (TAB_CHAR_USE) {
+        if (!tab->use_space) {
           ch.t[0] = '\t';
           cursor = insertCharInLineC(cursor, ch);
         }
         else {
           ch.t[0] = ' ';
-          for (int i = 0; i < TAB_SIZE; i++) {
+          for (int i = 0; i < tab->size; i++) {
             cursor = insertCharInLineC(cursor, ch);
           }
         }
@@ -388,6 +397,15 @@ Cursor insertCharArrayAtCursor(Cursor cursor, char* chs) {
   return cursor;
 }
 
+Cursor insertCharArrayAtCursorWithState(History** history_p, Cursor cursor, char* chs,
+                                       PayloadStateChange payload_state_change, ft_Tabulation* tab) {
+  Cursor tmp = cursor;
+  cursor = insertCharArrayAtCursor(cursor, chs, tab);
+  saveAction(history_p, createInsertAction(tmp, cursor_to_desc(cursor)), globalOnStageChange, &cursor,
+             &payload_state_change);
+
+  return cursor;
+}
 
 Cursor byteCursorToCursor(Cursor cursor, int row, int byte_column) {
   row += 1;
@@ -397,7 +415,7 @@ Cursor byteCursorToCursor(Cursor cursor, int row, int byte_column) {
   while (byte_count < byte_column) {
     Cursor old_cur = cursor;
     cursor = moveRight(cursor);
-    if (old_cur.file_id.absolute_row != cursor.file_id.absolute_row || areCursorEqual(old_cur, cursor)) {
+    if (old_cur.file_id.absolute_row != cursor.file_id.absolute_row || cursor_eq(old_cur, cursor)) {
       return old_cur;
     }
     byte_count += sizeChar_U8(getCharAtCursor(cursor));
@@ -419,17 +437,15 @@ Cursor goToBegin(Cursor cursor) {
 ////// -------------- SELECTION MANAGEMENT --------------
 
 
-bool isCursorDisabled(Cursor cursor) { return cursor.file_id.absolute_row == -1; }
-
 int utf8CharBetween2Cursor(Cursor cur1, Cursor cur2) {
-  if (isCursorPreviousThanOther(cur2, cur1)) {
+  if (cursor_le(cur2, cur1)) {
     Cursor tmp = cur1;
     cur1 = cur2;
     cur2 = tmp;
   }
 
   int count = 0;
-  while (isCursorPreviousThanOther(cur1, cur2)) {
+  while (cursor_le(cur1, cur2)) {
     cur1 = moveRight(cur1);
     count++;
   }
@@ -437,7 +453,7 @@ int utf8CharBetween2Cursor(Cursor cur1, Cursor cur2) {
 }
 
 unsigned int byteBetween2Cursor(Cursor cur1, Cursor cur2) {
-  if (isCursorPreviousThanOther(cur2, cur1)) {
+  if (cursor_le(cur2, cur1)) {
     Cursor tmp = cur1;
     cur1 = cur2;
     cur2 = tmp;
@@ -445,7 +461,7 @@ unsigned int byteBetween2Cursor(Cursor cur1, Cursor cur2) {
 
   Cursor it = cur1;
   int byte_between_2_cursor = 0;
-  while (isCursorStrictPreviousThanOther(it, cur2)) {
+  while (cursor_lt(it, cur2)) {
     Cursor tmp = it;
     it = moveRight(it);
 
@@ -458,44 +474,40 @@ unsigned int byteBetween2Cursor(Cursor cur1, Cursor cur2) {
     }
   }
 
-  assert(areCursorEqual(it, cur2));
+  assert(cursor_eq(it, cur2));
 
   return byte_between_2_cursor;
 }
 
-Cursor disableCursor(Cursor cursor) {
-  cursor.file_id.absolute_row = -1;
-  return cursor;
-}
-
 void setSelectCursorOn(Cursor cursor, Cursor* select_cursor) {
-  if (isCursorDisabled(*select_cursor) == true) {
+  if (cursor_is_disabled(*select_cursor) == true) {
     *select_cursor = cursor;
   }
 }
 
 void setSelectCursorOff(Cursor* cursor, Cursor* select_cursor, SELECT_OFF_STYLE style) {
-  if (isCursorDisabled(*select_cursor) == true)
+  if (cursor_is_disabled(*select_cursor) == true) {
     return;
+  }
 
 
-  if (style == SELECT_OFF_RIGHT && isCursorPreviousThanOther(*cursor, *select_cursor)) {
+  if (style == SELECT_OFF_RIGHT && cursor_le(*cursor, *select_cursor)) {
     Cursor tmp = *cursor;
     *cursor = *select_cursor;
     *select_cursor = tmp;
   }
-  else if (style == SELECT_OFF_LEFT && isCursorPreviousThanOther(*select_cursor, *cursor)) {
+  else if (style == SELECT_OFF_LEFT && cursor_le(*select_cursor, *cursor)) {
     Cursor tmp = *cursor;
     *cursor = *select_cursor;
     *select_cursor = tmp;
   }
 
-  *select_cursor = disableCursor(*select_cursor);
+  *select_cursor = cursor_disable(*select_cursor);
 }
 
 
 void selectWord(Cursor* cursor, Cursor* select_cursor) {
-  if (cursor->line_id.absolute_column != 0 && isAWordLetter(getCharForLineIdentifier(cursor->line_id)) == true) {
+  if (cursor_col(*cursor) != 0 && isAWordLetter(getCharForLineIdentifier(cursor->line_id)) == true) {
     *cursor = moveToPreviousWord(*cursor);
   }
   setSelectCursorOn(*cursor, select_cursor);
@@ -504,8 +516,8 @@ void selectWord(Cursor* cursor, Cursor* select_cursor) {
 
 void selectLine(Cursor* cursor, Cursor* select_cursor) {
   Cursor tmp = cursorOf(cursor->file_id, moduloLineIdentifierR(getLineForFileIdentifier(cursor->file_id), 0));
-  select_cursor->file_id = tryToReachAbsRow(cursor->file_id, cursor->file_id.absolute_row + 1);
-  if (select_cursor->file_id.absolute_row == cursor->file_id.absolute_row) {
+  select_cursor->file_id = tryToReachAbsRow(cursor->file_id, cursor_row(*cursor) + 1);
+  if (cursor_row(*select_cursor) == cursor_row(*cursor)) {
     tmp = moveLeft(tmp);
     select_cursor->line_id = getLastLineNode(getLineForFileIdentifier(cursor->file_id));
   }
@@ -517,32 +529,33 @@ void selectLine(Cursor* cursor, Cursor* select_cursor) {
 }
 
 void deleteSelection(Cursor* cursor, Cursor* select_cursor) {
-  if (isCursorDisabled(*select_cursor) == true) {
+  if (cursor_is_disabled(*select_cursor) == true) {
     return;
   }
 
-  if (isCursorPreviousThanOther(*select_cursor, *cursor)) {
+  if (cursor_le(*select_cursor, *cursor)) {
     Cursor tmp = *select_cursor;
     *select_cursor = *cursor;
     *cursor = tmp;
   }
 
-  assert(isCursorPreviousThanOther(*cursor, *select_cursor));
+  assert(cursor_le(*cursor, *select_cursor));
 
   *cursor = bulkDelete(*cursor, *select_cursor);
 
-  *select_cursor = disableCursor(*select_cursor);
+  *select_cursor = cursor_disable(*select_cursor);
 }
 
 void deleteSelectionWithState(History** history_p, Cursor* cursor, Cursor* select_cursor,
                               PayloadStateChange payload_state_change) {
-  saveAction(history_p, createDeleteAction(*cursor, *select_cursor), onStateChangeTS, (long*)&payload_state_change);
+  saveAction(history_p, createDeleteAction(*cursor, cursor_to_desc(*select_cursor)), globalOnStageChange, cursor,
+             (void*)&payload_state_change);
   deleteSelection(cursor, select_cursor);
 }
 
 
 char* dumpSelection(Cursor cur1, Cursor cur2) {
-  if (isCursorPreviousThanOther(cur2, cur1)) {
+  if (cursor_le(cur2, cur1)) {
     Cursor tmp = cur1;
     cur1 = cur2;
     cur2 = tmp;
@@ -565,7 +578,7 @@ char* dumpSelection(Cursor cur1, Cursor cur2) {
 
   Cursor it = cur1;
   int index = 0;
-  while (isCursorStrictPreviousThanOther(it, cur2)) {
+  while (cursor_lt(it, cur2)) {
     it = moveRight(it);
 
     if (hasElementBeforeLine(it.line_id) == true) {
@@ -585,4 +598,19 @@ char* dumpSelection(Cursor cur1, Cursor cur2) {
   dump[index] = '\0';
 
   return dump;
+}
+
+
+bool isAfterAWord(Cursor* cursor) {
+  if (!hasElementBeforeLine(cursor->line_id)) {
+    return false;
+  }
+  Char_U8 u8 = getCharAtCursor(*cursor);
+  if (isAWordLetter(u8)) {
+    return true;
+  }
+  if (u8.t[0] == '.') {
+    return true;
+  }
+  return false;
 }

@@ -6,478 +6,149 @@
 #include "../data-management/file_management.h"
 #include "term_handler.h"
 
-#include "../utils/constants.h"
+#include <limits.h>
+#include <math.h>
+
+#include "../environnement/constants.h"
 #include "highlight.h"
+#include "windows/edw.h"
+#include "windows/few.h"
+#include "windows/ofw.h"
 
 
 ////// -------------- WINDOWS MANAGEMENTS --------------
 
 
-void initGUIContext(GUIContext* gui_context) {
-  // Init GUI vars
-  gui_context->ftw = NULL;         // File Text Window
-  gui_context->lnw = NULL;         // Line Number Window
-  gui_context->ofw = NULL;         // Opened Files Window
-  gui_context->few = NULL;         // File Explorer Window
-  gui_context->refresh_edw = true; // Need to reprint editor window
-  gui_context->refresh_ofw = true; // Need to reprint opened file window
-  gui_context->refresh_few = true; // Need to reprint file explorer window
-  gui_context->focus_w = NULL;     // Used to set the window where start mouse drag
+void gui_initGUIContext(GUIContext* gui_context) {
+  gui_context->focus_w = NULL; // Used to set the window where start mouse drag
 
-  // EDW Datas
-
-  // OFW Datas
-  gui_context->current_file_offset = 0;
-  // Height of Opened Files Window. 0 => Disabled on start.   OPENED_FILE_WINDOW_HEIGHT => Enabled on start.
-  gui_context->ofw_height = 0;
-
-  // Few Datas
-  gui_context->few_width = 0; // File explorer width
-  gui_context->saved_few_width = FILE_EXPLORER_WIDTH;
-  gui_context->few_x_offset = 0; /* TODO unused */
-  gui_context->few_y_offset = 0; // Y Scroll state of File Explorer Window
-  gui_context->few_selected_line = -1;
+  gui_initEDWContext(&gui_context->edw_context);
+  gui_initFEWContext(&gui_context->few_context);
+  gui_initOFWContext(&gui_context->ofw_context);
 }
 
-void initNCurses(GUIContext* gui_context) {
+void gui_initNCurses(GUIContext* gui_context) {
+  set_escdelay(25);
   // Init ncurses
   initscr();
-  gui_context->ftw = newwin(0, 0, gui_context->ofw_height, gui_context->few_width);
-  gui_context->lnw = newwin(0, 0, 0, gui_context->few_width);
-  gui_context->ofw = newwin(gui_context->ofw_height, 0, 0, gui_context->few_width);
+  gui_resizeFEW(gui_context, -1);
+  gui_resizeEDW(gui_context, -1);
+  gui_resizeOFW(gui_context);
   // Keyboard setup
   raw();
   keypad(stdscr, TRUE);
   noecho();
   curs_set(0);
   // Mouse setup
-  mouseinterval(0);
-  mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
+  // Setting mouseinterval to 1 is a workaround for a bug in some ncurses versions (like 6.6)
+  // where mouseinterval(0) causes mouse events to be delayed until the next input.
+  // see https://github.com/termux/termux-packages/issues/28372
+  // and https://lists.gnu.org/archive/html/bug-ncurses/2026-04/msg00009.html
+  mouseinterval(1);
+  mousemask(BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON2_PRESSED | BUTTON2_RELEASED | BUTTON3_PRESSED |
+                BUTTON3_RELEASED | BUTTON4_PRESSED | BUTTON5_PRESSED | BUTTON_SHIFT | BUTTON_CTRL | BUTTON_ALT |
+                REPORT_MOUSE_POSITION,
+            NULL);
   timeout(100);
-  printf("\033[?1003h"); // enable mouse tracking
+  printf("\033[?1003h\033[5 q"); // enable mouse tracking and beam cursor
   fflush(stdout);
   // Color setup
   start_color();
   // Default color.
-  init_color(COLOR_HOVER, 390, 390, 390);
-  init_pair(DEFAULT_COLOR_PAIR, COLOR_WHITE, COLOR_BLACK);
-  init_pair(DEFAULT_COLOR_HOVER_PAIR, COLOR_WHITE, COLOR_HOVER);
-  init_pair(ERROR_COLOR_PAIR, COLOR_RED, COLOR_BLACK);
-  init_pair(ERROR_COLOR_HOVER_PAIR, COLOR_RED, COLOR_HOVER);
+  init_extended_color(BG_COLOR_DEFAULT, 50, 50, 50);
+  init_extended_color(BG_COLOR_HOVER, 200, 200, 200);
+  init_extended_color(BG_COLOR_POPUP, 100, 100, 100);
+  init_extended_color(COLOR_CYAN, 100, 700, 650);
+
+  init_extended_pair(DEFAULT_COLOR_PAIR, COLOR_WHITE, BG_COLOR_DEFAULT);
+  init_extended_pair(DEFAULT_COLOR_HOVER_PAIR, COLOR_WHITE, BG_COLOR_HOVER);
+
+  init_extended_pair(ERROR_COLOR_PAIR, COLOR_RED, BG_COLOR_POPUP);
+  init_extended_pair(ERROR_COLOR_HOVER_PAIR, COLOR_RED, BG_COLOR_HOVER);
+
+  init_extended_pair(WARNING_COLOR_PAIR, COLOR_YELLOW, BG_COLOR_POPUP);
+  init_extended_pair(WARNING_COLOR_HOVER_PAIR, COLOR_YELLOW, BG_COLOR_HOVER);
+
+  init_extended_pair(INFO_COLOR_PAIR, COLOR_CYAN, BG_COLOR_POPUP);
+  init_extended_pair(INFO_COLOR_HOVER_PAIR, COLOR_CYAN, BG_COLOR_HOVER);
 }
 
+void gui_setFocus(GUIContext* gui_context, WINDOW* w) { gui_context->focus_w = w; }
+
+void gui_resetFocus(GUIContext* gui_context) { gui_context->focus_w = NULL; }
 
 ////// -------------- PRINT FUNCTIONS --------------
 
 
-void printChar_U8ToNcurses(WINDOW* w, Char_U8 ch) {
+void gui_repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_descriptor, ExplorerFolder* explorer,
+                FileContainer* files, int file_count, int current_file) {
+  wnoutrefresh(stdscr);
+  gui_repaintEDW(&gui_context->edw_context, files[current_file].cursor, files[current_file].select_cursor,
+                 files[current_file].screen_x, files[current_file].screen_y, highlight_descriptor,
+                 files[current_file].lsp_datas.computed, ft_tab_size(files[current_file].feature));
+  gui_repaintFEW(&gui_context->few_context, explorer);
+  gui_repaintOFW(&gui_context->ofw_context, files, file_count, current_file);
+  doupdate();
+}
+
+
+void gui_printChar_U8ToNcurses(WINDOW* w, Char_U8 ch) {
   int size = sizeChar_U8(ch);
   for (int i = 0; i < size; i++) {
     wprintw(w, "%c", ch.t[i]);
   }
 }
 
-void printEditor_printLineNumber(GUIContext* gui_context, Cursor cursor, int screen_y, FileIdentifier file_cur,
-                                 int row) {
-  char line_number[40];
-  sprintf(line_number, "%d", file_cur.absolute_row);
-  int lineNumberSize = strlen(line_number);
 
-  if (file_cur.absolute_row != cursor.file_id.absolute_row) {
-    wattron(gui_context->lnw, A_DIM);
-  }
-  else {
-    wattron(gui_context->lnw, A_BOLD);
+LineMarker gui_getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
+                                   void** diagnostic) {
+  LineMarker marker = LINE_MARKER_NONE;
+  if (diagnostic != NULL) {
+    *diagnostic = NULL;
   }
 
-  wmove(gui_context->lnw, row - screen_y, 0);
-  for (int i = 0; i < getmaxx(gui_context->lnw) - lineNumberSize - 1; i++) {
-    wprintw(gui_context->lnw, " ");
-  }
-  wprintw(gui_context->lnw, "%s", line_number);
-  if (file_cur.absolute_row == cursor.file_id.absolute_row) {
-    wprintw(gui_context->lnw, "🭳");
-  }
-  else {
-    wprintw(gui_context->lnw, "🭵");
-  }
+  while (whd_offset < highlight_descriptor->size &&
+         highlight_descriptor->descriptors[whd_offset].begin.abs_row <= row) {
 
-  if (file_cur.absolute_row != cursor.file_id.absolute_row) {
-    wattroff(gui_context->lnw, A_DIM);
-  }
-  else {
-    wattroff(gui_context->lnw, A_BOLD);
-  }
-}
-
-void printEditor_printFileContent(GUIContext* gui_context, Cursor cursor, Cursor select_cursor, int screen_x,
-                                  WindowHighlightDescriptor* highlight_descriptor, FileIdentifier file_cur,
-                                  const int column_count, int* whd_offset) {
-  LineIdentifier begin_screen_line_cur =
-    tryToReachAbsColumn(moduloLineIdentifierR(getLineForFileIdentifier(file_cur), 0), screen_x);
-  LineIdentifier end_screen_line_cur = tryToReachAbsColumn(begin_screen_line_cur, screen_x + column_count - 3);
-
-  int column = screen_x;
-  while (end_screen_line_cur.absolute_column >= screen_x &&
-         begin_screen_line_cur.absolute_column <= end_screen_line_cur.absolute_column &&
-         screen_x + column_count - 3 >= column) {
-    Char_U8 ch = getCharForLineIdentifier(begin_screen_line_cur);
-    Cursor ch_cursor = cursorOf(file_cur, begin_screen_line_cur);
-
-    int size = charPrintSize(ch);
-    // If the char is detected as not printable char.
-    if (size <= 0) {
-      ch = readChar_U8FromCharArray("�");
-      size = 1;
-    }
-
-    // If a char of size 2 is at the end of the line replace it by '_' to avoid line overflow.
-    if (size >= 2 && screen_x + column_count - 4 < column) {
-      ch = readChar_U8FromCharArray("_");
-      // size = 1;
-    }
-
-    // determine if the char is selected or not.
-    bool selected_style =
-      isCursorDisabled(select_cursor) == false && isCursorBetweenOthers(ch_cursor, select_cursor, cursor);
-
-    // get current highlight.
-    TextPartHighlightDescriptor* current_highlight =
-      whd_tphd_forCursorWithOffsetIndex(highlight_descriptor, ch_cursor, whd_offset);
-
-
-    // default style
-    attr_t attr = A_NORMAL;
-    NCURSES_PAIRS_T color = DEFAULT_COLOR_PAIR;
-
-    // override default style if a textPartHighlight was found.
-    if (current_highlight != NULL) {
-      attr = current_highlight->attributes;
-      color = current_highlight->color;
-    }
-
-    // add the offset if the current text is selected
-    if (selected_style) {
-      color += COLOR_HOVER_OFFSET;
-    }
-
-    // setting the char attribute.
-    wattr_set(gui_context->ftw, attr, color, 0);
-
-    if (ch.t[0] == '\t') {
-      Char_U8 space = readChar_U8FromInput(' ');
-      for (int i = 0; i < TAB_SIZE; i++) {
-        printChar_U8ToNcurses(gui_context->ftw, space);
-      }
-    }
-    else {
-      printChar_U8ToNcurses(gui_context->ftw, ch);
-    }
-
-    // move to next column
-    begin_screen_line_cur.relative_column++;
-    begin_screen_line_cur.absolute_column++;
-    column += size;
-  }
-
-  // show empty line selected.
-  if (begin_screen_line_cur.absolute_column == end_screen_line_cur.absolute_column &&
-      hasElementAfterLine(end_screen_line_cur) == false) {
-    if (isCursorDisabled(select_cursor) == false &&
-        isCursorBetweenOthers(cursorOf(file_cur, begin_screen_line_cur), select_cursor, cursor)) {
-      // if line selected
-      wattr_set(gui_context->ftw, A_NORMAL, DEFAULT_COLOR_HOVER_PAIR, 0);
-      wprintw(gui_context->ftw, " ");
-      wattr_set(gui_context->ftw, A_NORMAL, 0, NULL);
-    }
-  }
-
-  // If the line is not fully display show '>'
-  if (hasElementAfterLine(end_screen_line_cur)) {
-    wattr_set(gui_context->ftw, A_BOLD | A_UNDERLINE | A_DIM, DEFAULT_COLOR_PAIR, 0);
-    wprintw(gui_context->ftw, ">");
-  }
-
-  wprintw(gui_context->ftw, "\n");
-}
-
-void printEditor_printCursor(GUIContext* gui_context, Cursor cursor, int screen_x, int screen_y,
-                             WindowHighlightDescriptor* highlight_descriptor, const int line_count,
-                             const int column_count) {
-  // Check if cursor is in the screen and print it if needed.
-  if (cursor.file_id.absolute_row >= screen_y && cursor.file_id.absolute_row < screen_y + line_count &&
-      cursor.line_id.absolute_column >= screen_x - 1 && cursor.line_id.absolute_column <= screen_x + column_count - 3) {
-    int x = getScreenXForCursor(cursor, screen_x);
-    wmove(gui_context->ftw, cursor.file_id.absolute_row - screen_y, x);
-
-    TextPartHighlightDescriptor* current_highlight = NULL;
-
-    char size = 1;
-    if (hasElementAfterLine(cursor.line_id) == true) {
-      // Check the size of the the char which is under cursor.
-      Cursor tmp = moveRight(cursor);
-      size = charPrintSize(getCharForLineIdentifier(tmp.line_id));
-      int unused = 0;
-      current_highlight = whd_tphd_forCursorWithOffsetIndex(highlight_descriptor, tmp, &unused);
-    }
-    else {
-      int unused = 0;
-      current_highlight = whd_tphd_forCursorWithOffsetIndex(highlight_descriptor, cursor, &unused);
-    }
-
-
-    attr_t attr = A_STANDOUT;
-    NCURSES_PAIRS_T color = DEFAULT_COLOR_PAIR;
-
-    if (current_highlight != NULL) {
-      attr |= current_highlight->attributes;
-      color = current_highlight->color;
-    }
-
-    wchgat(gui_context->ftw, size, attr, color, NULL);
-  }
-}
-
-void printEditor(GUIContext* gui_context, Cursor cursor, Cursor select_cursor, int screen_x, int screen_y,
-                 WindowHighlightDescriptor* highlight_descriptor) {
-  wmove(gui_context->ftw, 0, 0);
-  FileIdentifier file_cur = cursor.file_id;
-
-  const int line_count = getmaxy(gui_context->ftw);
-  const int column_count = getmaxx(gui_context->ftw);
-
-
-  // ===============  FOR EACH LINE  ===============
-  int whd_offset = 0;
-  for (int row = screen_y; row < screen_y + line_count; row++) {
-    // getting the row to print.
-    file_cur = tryToReachAbsRow(file_cur, row);
-
-    // if the row is couldn't be reached skip it.
-    if (file_cur.absolute_row != row) {
-      // show empty line number.
-      wmove(gui_context->lnw, row - screen_y, 0);
-      for (int i = 0; i < getmaxx(gui_context->lnw); i++) {
-        wprintw(gui_context->lnw, " ");
-      }
-
-      // show ~ as content in file text window
-      wattr_set(gui_context->ftw, A_NORMAL, DEFAULT_COLOR_PAIR, NULL);
-      wprintw(gui_context->ftw, "~\n");
-
-      continue;
-    }
-
-    // ===============  Print line number  ===============
-    printEditor_printLineNumber(gui_context, cursor, screen_y, file_cur, row);
-
-
-    // ===============  Print File Content  ===============
-
-    printEditor_printFileContent(gui_context, cursor, select_cursor, screen_x, highlight_descriptor, file_cur,
-                                 column_count, &whd_offset);
-  }
-
-  // ===============  Print Cursor  ===============
-  printEditor_printCursor(gui_context, cursor, screen_x, screen_y, highlight_descriptor, line_count, column_count);
-  // box(ofw, 0, 0);
-}
-
-void printOpenedFile(GUIContext* gui_context, FileContainer* files, int file_count, int current_file) {
-  // The current position of the cursor for the first line.
-  wmove(gui_context->ofw, 0, 0);
-  int current_offset = getbegx(gui_context->ofw);
-  if (gui_context->current_file_offset != 0) {
-    current_offset += strlen("< | ");
-    wattron(gui_context->ofw, A_DIM);
-    wprintw(gui_context->ofw, "< | ");
-    wattroff(gui_context->ofw, A_DIM);
-  }
-  // Move to the top left corner.
-  for (int i = gui_context->current_file_offset; i < file_count; i++) {
-    // Style file names.
-    if (i == current_file)
-      wattron(gui_context->ofw, A_BOLD);
-    else
-      wattron(gui_context->ofw, A_DIM);
-    // Print file name
-    char* file_name = basename(files[i].io_file.path_args);
-    current_offset += strlen(file_name);
-    wprintw(gui_context->ofw, "%s", file_name);
-    // Style file names.
-    if (i == current_file)
-      wattroff(gui_context->ofw, A_BOLD);
-    else
-      wattroff(gui_context->ofw, A_DIM);
-    // Print file name separator
-    if (i < file_count - 1) {
-      wprintw(gui_context->ofw, FILE_NAME_SEPARATOR);
-      current_offset += strlen(FILE_NAME_SEPARATOR);
-    }
-    // If the file names overflow the line, print the move right text.
-    if (current_offset + strlen(FILE_NAME_SEPARATOR) > COLS) {
-      wmove(gui_context->ofw, 0, COLS - getbegx(gui_context->ofw) - strlen("... | >"));
-      wattron(gui_context->ofw, A_DIM);
-      wprintw(gui_context->ofw, "... | >");
-      wattroff(gui_context->ofw, A_DIM);
-      // assert((i < argc && i < max_opened_file + 1) == false);
-      break;
-    }
-  }
-  // To erase the end of the line to avoid garbage on scroll to right.
-  for (int i = current_offset; i < COLS; i++) {
-    wprintw(gui_context->ofw, " ");
-  }
-  // Print the bottom line.
-  wmove(gui_context->ofw, 1, 0);
-  for (int i = 0; i < COLS; i++) {
-    wprintw(gui_context->ofw, "🭸");
-  }
-}
-
-
-void internalPrintExplorerRec(ExplorerFolder* folder, WINDOW* few, int* few_x_offset, int* few_y_offset,
-                              int tree_offset_rec, int* selected_line) {
-  // Don't print if not in window.
-  if (getcury(few) + 1 >= getmaxy(few))
-    return;
-
-  if (folder->open && folder->discovered == false) {
-    discoverFolder(folder);
-  }
-
-  (*selected_line)--;
-  if (*few_y_offset == 0) {
-    // Print current folder name
-
-    if (*selected_line == 0) {
-      wattron(few, A_STANDOUT);
-    }
-
-    for (int i = 0; i < tree_offset_rec && i < getmaxx(few); i++) {
-      printToNcursesNCharFromString(few, " ", getmaxx(few) - (getcurx(few) + 1));
-    }
-
-    // Print decoration of folder. The decoration describe if the folder is open or not.
-    if (folder->open)
-      printToNcursesNCharFromString(few, "⌄", getmaxx(few) - (getcurx(few) + 1));
-    else
-      printToNcursesNCharFromString(few, "›", getmaxx(few) - (getcurx(few) + 1));
-
-    printToNcursesNCharFromString(few, "📁", getmaxx(few) - (getcurx(few) + 1));
-    printToNcursesNCharFromString(few, basename(folder->path), getmaxx(few) - (getcurx(few) + 1));
-    if (*selected_line == 0) {
-      for (int j = getcurx(few) + 1; j < getmaxx(few); j++) {
-        printToNcursesNCharFromString(few, " ", getmaxx(few) - (getcurx(few) + 1));
-      }
-      wattroff(few, A_STANDOUT);
-    }
-    wprintw(few, "\n");
-  }
-  else {
-    (*few_y_offset)--;
-  }
-
-  if (folder->open == false)
-    return;
-
-  // Print sub folders
-  for (int i = 0; i < folder->folder_count; i++) {
-    internalPrintExplorerRec(folder->folders + i, few, few_x_offset, few_y_offset,
-                             tree_offset_rec + FILE_EXPLORER_TREE_OFFSET, selected_line);
-  }
-  // Print sub files
-  for (int i = 0; i < folder->file_count; i++) {
-    // Don't print if not in window.
-    if (getcury(few) + 1 >= getmaxy(few))
-      return;
-
-    (*selected_line)--;
-    if (*few_y_offset == 0) {
-      // Print file name
-      if (*selected_line == 0) {
-        wattron(few, A_STANDOUT);
-      }
-      for (int j = 0;
-           j < tree_offset_rec + FILE_EXPLORER_TREE_OFFSET + 1 /*Add one to balance with the folder decoration*/; j++) {
-        printToNcursesNCharFromString(few, " ", getmaxx(few) - (getcurx(few) + 1));
-      }
-      printToNcursesNCharFromString(few, "📄", getmaxx(few) - (getcurx(few) + 1));
-      printToNcursesNCharFromString(few, basename(folder->files[i].path), getmaxx(few) - (getcurx(few) + 1));
-      if (*selected_line == 0) {
-        for (int j = getcurx(few) + 1; j < getmaxx(few); j++) {
-          printToNcursesNCharFromString(few, " ", getmaxx(few) - (getcurx(few) + 1));
+    if (highlight_descriptor->descriptors[whd_offset].end.abs_row >= row) {
+      if (highlight_descriptor->descriptors[whd_offset].line_marker != 0) {
+        if (highlight_descriptor->descriptors[whd_offset].line_marker < marker || marker == 0) {
+          marker = highlight_descriptor->descriptors[whd_offset].line_marker;
+          if (diagnostic != NULL) {
+            *diagnostic = highlight_descriptor->descriptors[whd_offset].diagnostic;
+          }
         }
-        wattroff(few, A_STANDOUT);
       }
-      wprintw(few, "\n");
     }
-    else {
-      (*few_y_offset)--;
-    }
+    whd_offset++;
   }
+
+  return marker;
 }
 
-void printFileExplorer(GUIContext* gui_context, ExplorerFolder* pwd) {
-  wmove(gui_context->few, 0, 0);
+void gui_updateEDW(GUIContext* gui_context) { gui_context->edw_context.refresh_edw = true; }
 
-  // the internal fct need edit this var to lake them.
-  // We need to make a copy of them to keep the value right in the gui_context.
-  int tmp_few_x_offset = gui_context->few_x_offset;
-  int tmp_few_y_offset = gui_context->few_y_offset;
-  int tmp_few_selected_line = gui_context->few_selected_line;
-  internalPrintExplorerRec(pwd, gui_context->few, &tmp_few_x_offset, &tmp_few_y_offset, 0, &tmp_few_selected_line);
-  // Clear end of window
-  for (int i = getcury(gui_context->few) + 1; i < getmaxy(gui_context->few); i++) {
-    wprintw(gui_context->few, "\n");
-  }
-  for (int i = getbegy(gui_context->few); i < getmaxy(gui_context->few); i++) {
-    mvwprintw(gui_context->few, i, getmaxx(gui_context->few) - 1, "│");
-  }
+void gui_updateFEW(GUIContext* gui_context) { gui_context->few_context.refresh_few = true; }
+
+void gui_updateOFW(GUIContext* gui_context) { gui_context->ofw_context.refresh_ofw = true; }
+
+void gui_updateGUI(GUIContext* gui_context) {
+  gui_updateEDW(gui_context);
+  gui_updateFEW(gui_context);
+  gui_updateOFW(gui_context);
 }
 
-////// -------------- RESIZE FUNCTIONS --------------
-
-void resizeEditorWindows(GUIContext* gui_context, int lnw_new_width) {
-  delwin(gui_context->ftw);
-  delwin(gui_context->lnw);
-  gui_context->ftw = newwin(0, 0, gui_context->ofw_height, lnw_new_width + gui_context->few_width);
-  gui_context->lnw = newwin(0, lnw_new_width, gui_context->ofw_height, gui_context->few_width);
+bool gui_doesGUINeedRepaint(GUIContext* gui_context) {
+  return gui_context->edw_context.refresh_edw || gui_context->few_context.refresh_few ||
+    gui_context->ofw_context.refresh_ofw;
 }
-
-void resizeOpenedFileWindow(GUIContext* gui_context) {
-  delwin(gui_context->ofw);
-  gui_context->ofw = newwin(gui_context->ofw_height, 0, 0, gui_context->few_width);
-  gui_context->refresh_ofw = true;
-}
-
-void switchShowFew(GUIContext* gui_context) {
-  if (gui_context->few == NULL) {
-    // Open File Explorer Window
-    gui_context->few_width = gui_context->saved_few_width;
-    gui_context->few = newwin(0, gui_context->few_width, 0, 0);
-    gui_context->refresh_few = true;
-  }
-  else {
-    // Close File Explorer Window
-    gui_context->saved_few_width = getmaxx(gui_context->few);
-    delwin(gui_context->few);
-    gui_context->few = NULL;
-    gui_context->few_width = 0;
-  }
-  // Resize Opened File Window
-  resizeOpenedFileWindow(gui_context);
-  // Resize Editor Window
-  resizeEditorWindows(gui_context, getmaxx(gui_context->lnw));
-}
-
 
 ////// -------------- UTILS FUNCTIONS --------------
 
 
-void moveScreenToMatchCursor(WINDOW* w, Cursor cursor, int* screen_x, int* screen_y) {
-  int current_lines = getmaxy(w);
-  int current_columns = getmaxx(w);
+void moveScreenToMatchCursor(GUIContext* context, Cursor cursor, int* screen_x, int* screen_y, int tab_size) {
+  int current_lines = getmaxy(context->edw_context.ftw);
+  int current_columns = getmaxx(context->edw_context.ftw);
 
   if (cursor.file_id.absolute_row - (*screen_y + current_lines) + 1 >= 0) {
     *screen_y = cursor.file_id.absolute_row - current_lines + 2;
@@ -490,7 +161,7 @@ void moveScreenToMatchCursor(WINDOW* w, Cursor cursor, int* screen_x, int* scree
       *screen_y = 1;
   }
 
-  int screen_x_wide_char = getScreenXForCursor(cursor, *screen_x) + *screen_x;
+  int screen_x_wide_char = getScreenXForCursor(cursor, *screen_x, tab_size) + *screen_x;
   if (screen_x_wide_char - (*screen_x + current_columns - 8) >= 0) {
     *screen_x = screen_x_wide_char - current_columns + 8;
     if (*screen_x < 1)
@@ -504,7 +175,7 @@ void moveScreenToMatchCursor(WINDOW* w, Cursor cursor, int* screen_x, int* scree
   }
 }
 
-void centerCursorOnScreen(WINDOW* w, Cursor cursor, int* screen_x, int* screen_y) {
+void centerCursorOnScreen(GUIContext* context, Cursor cursor, int* screen_x, int* screen_y, int tab_size) {
   // center for y, but right for x.
   *screen_x = cursor.line_id.absolute_column - (COLS /*/ 2*/);
   *screen_y = cursor.file_id.absolute_row - (LINES / 2);
@@ -515,28 +186,28 @@ void centerCursorOnScreen(WINDOW* w, Cursor cursor, int* screen_x, int* screen_y
     *screen_y = 1;
 
   // To match right for x.
-  moveScreenToMatchCursor(w, cursor, screen_x, screen_y);
+  moveScreenToMatchCursor(context, cursor, screen_x, screen_y, tab_size);
 }
 
 
-int getScreenXForCursor(Cursor cursor, int screen_x) {
+int getScreenXForCursor(Cursor cursor, int screen_x, int tab_size) {
   Cursor initial = cursor;
   Cursor old_cursor = cursor;
   int atAdd = 0;
   int size;
 
 
-  if (cursor.line_id.absolute_column != 0 && (size = charPrintSize(getCharForLineIdentifier(cursor.line_id))) >= 2) {
+  if (cursor.line_id.absolute_column != 0 && (size = charPrintSize(getCharForLineIdentifier(cursor.line_id), tab_size)) >= 2) {
     atAdd += size - 1;
   }
   cursor = moveLeft(cursor);
 
 
-  while (screen_x <= cursor.line_id.absolute_column && areCursorEqual(cursor, old_cursor) == false &&
+  while (screen_x <= cursor.line_id.absolute_column && cursor_eq(cursor, old_cursor) == false &&
          cursor.file_id.absolute_row == old_cursor.file_id.absolute_row) {
     assert(cursor.line_id.absolute_column != 0);
     Char_U8 current_ch = getCharForLineIdentifier(cursor.line_id);
-    if ((size = charPrintSize(current_ch)) >= 2) {
+    if ((size = charPrintSize(current_ch, tab_size)) >= 2) {
       atAdd += size - 1;
     }
 
@@ -547,7 +218,7 @@ int getScreenXForCursor(Cursor cursor, int screen_x) {
   return initial.line_id.absolute_column - screen_x + 1 + atAdd;
 }
 
-LineIdentifier getLineIdForScreenX(LineIdentifier line_id, int screen_x, int x_click) {
+LineIdentifier getLineIdForScreenX(LineIdentifier line_id, int screen_x, int x_click, int tab_size) {
   line_id = tryToReachAbsColumn(line_id, screen_x - 1);
 
   int current_column = 0;
@@ -555,7 +226,7 @@ LineIdentifier getLineIdForScreenX(LineIdentifier line_id, int screen_x, int x_c
 
   while (hasElementAfterLine(line_id) == true && current_column <= x_click) {
     line_id = tryToReachAbsColumn(line_id, line_id.absolute_column + 1);
-    int size = charPrintSize(getCharForLineIdentifier(line_id));
+    int size = charPrintSize(getCharForLineIdentifier(line_id), tab_size);
     if (size <= 0)
       size = 1; // TODO handle non UTF_8 char.
     current_column += size;
@@ -570,3 +241,54 @@ LineIdentifier getLineIdForScreenX(LineIdentifier line_id, int screen_x, int x_c
 
 
 void setDesiredColumn(Cursor cursor, int* desired_column) { *desired_column = cursor.line_id.absolute_column; }
+
+
+void printToWindow(WINDOW* w, char* ch, int length, int offset_x, int offset_y, int line_length, int max_line_number, int tab_size) {
+  if (length == -1) {
+    length = strlen(ch);
+  }
+  if (max_line_number == 0) {
+    max_line_number = INT_MAX;
+  }
+  const Char_U8 space = readChar_U8FromCharArray(" ");
+
+  wmove(w, offset_y, offset_x);
+
+  int current_row = 0;
+  int current_ch_index = 0;
+  int current_line_length = 0;
+  while (current_ch_index < length && current_row < max_line_number) {
+
+    if (ch[current_ch_index] == '\n') {
+      current_line_length = 0;
+      current_row++;
+      wmove(w, offset_y + current_row, offset_x);
+    }
+    else {
+      Char_U8 tmp_ch = readChar_U8FromCharArray(ch + current_ch_index);
+      current_ch_index += sizeChar_U8(tmp_ch) - 1;
+
+      if (current_line_length + charPrintSize(tmp_ch, tab_size) > line_length) {
+        current_line_length = 0;
+        current_row++;
+        wmove(w, offset_y + current_row, offset_x);
+        if (current_row >= max_line_number) {
+          break;
+        }
+      }
+
+      current_line_length += charPrintSize(tmp_ch, tab_size);
+
+      if (tmp_ch.t[0] != '\t') {
+        gui_printChar_U8ToNcurses(w, tmp_ch);
+      }
+      else {
+        for (int i = 0; i < tab_size; i++) {
+          gui_printChar_U8ToNcurses(w, space);
+        }
+      }
+    }
+
+    current_ch_index++;
+  }
+}

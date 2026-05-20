@@ -1,5 +1,3 @@
-(comment) @comment
-
 ; Variables
 ;----------
 
@@ -45,12 +43,10 @@
 
 (call_expression
   function: (member_expression
-              property: (property_identifier) @function.method))
+              property: (property_identifier) @method))
 
 ; Special identifiers
 ;--------------------
-(glimmer_opening_tag) @tag.builtin
-(glimmer_closing_tag) @tag.builtin
 
 ((identifier) @constructor
   (#match? @constructor "^[A-Z]"))
@@ -62,34 +58,33 @@
    ] @constant
   (#match? @constant "^[A-Z_][A-Z\\d_]+$"))
 
-((identifier) @variable.builtin
-  (#match? @variable.builtin "^(arguments|module|console|window|document)$")
-  (#is-not? local))
+((identifier) @variable
+  (#match? @variable "^(arguments|module|console|window|document)$"))
 
-((identifier) @function.builtin
-  (#eq? @function.builtin "require")
-  (#is-not? local))
+((identifier) @function
+  (#eq? @function "require"))
 
 ; Literals
 ;---------
 
-(this) @variable.builtin
-(super) @variable.builtin
+(this) @variable
+(super) @variable
 
 [
   (true)
   (false)
   (null)
   (undefined)
-  ] @constant.builtin
+  ] @constant
 
+(comment) @comment
 
 [
   (string)
   (template_string)
   ] @string
 
-(regex) @string.special
+(regex) @string
 (number) @number
 
 ; Tokens
@@ -156,7 +151,7 @@
   "]"
   "{"
   "}"
-  ]  @punctuation.bracket
+  ] @punctuation.bracket
 
 (template_substitution
   "${" @punctuation.special
@@ -205,3 +200,36 @@
   "with"
   "yield"
   ] @keyword
+
+
+; Parse the contents of tagged template literals using
+; a language inferred from the tag.
+
+(call_expression
+  function: [
+              (identifier) @injection.language
+              (member_expression
+                property: (property_identifier) @injection.language)
+              ]
+  arguments: (template_string (string_fragment) @injection.content)
+  (#set! injection.combined)
+  (#set! injection.include-children))
+
+
+; Parse regex syntax within regex literals
+
+((regex_pattern) @injection.content
+  (#set! injection.language "regex"))
+
+; Parse JSDoc annotations in comments
+
+((comment) @injection.content
+  (#set! injection.language "jsdoc"))
+
+; Parse Ember/Glimmer/Handlebars/HTMLBars/etc. template literals
+; e.g.: await render(hbs`<SomeComponent />`)
+(call_expression
+  function: ((identifier) @_name
+              (#eq? @_name "hbs"))
+  arguments: ((template_string) @glimmer
+               (#offset! @glimmer 0 1 0 -1)))

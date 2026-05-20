@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "../data-management/file_management.h"
-#include "constants.h"
+#include "../environnement/constants.h"
 
 int xclip = -1;
 int wl_copy = -1;
@@ -44,14 +44,14 @@ void updateWlPasteVars() {
 bool saveToClipBoard(Cursor begin, Cursor end) {
   createClipBoardTmpDir();
 
-  if (isCursorDisabled(begin) || isCursorDisabled(end)) {
+  if (cursor_is_disabled(begin) || cursor_is_disabled(end)) {
     return true;
   }
 
-  if (areCursorEqual(begin, end))
+  if (cursor_eq(begin, end))
     return true;
 
-  if (isCursorPreviousThanOther(end, begin)) {
+  if (cursor_le(end, begin)) {
     Cursor tmp = end;
     end = begin;
     begin = tmp;
@@ -66,7 +66,7 @@ bool saveToClipBoard(Cursor begin, Cursor end) {
     return false;
   }
 
-  while (isCursorPreviousThanOther(begin, end) && areCursorEqual(begin, end) == false) {
+  while (cursor_lt(begin, end)) {
     // may improve performance.
     begin = moveRight(begin);
     if (begin.line_id.absolute_column == 0) {
@@ -125,7 +125,8 @@ bool saveToClipBoard(Cursor begin, Cursor end) {
   return true;
 }
 
-Cursor loadFromClipBoard(Cursor cursor) {
+Cursor loadFromClipBoard(FileContainer* fc) {
+  Cursor cursor = fc->cursor;
   updateWlPasteVars();
   updateXClipVars();
 
@@ -242,13 +243,13 @@ Cursor loadFromClipBoard(Cursor cursor) {
         // printf("Tab\r\n");
 #endif
         Char_U8 ch;
-        if (TAB_CHAR_USE) {
+        if (!ft_tab_use_space(fc->feature)) {
           ch.t[0] = '\t';
           cursor = insertCharInLineC(cursor, ch);
         }
         else {
           ch.t[0] = ' ';
-          for (int i = 0; i < TAB_SIZE; i++) {
+          for (int i = 0; i < fc->feature->tabulation.size; i++) {
             cursor = insertCharInLineC(cursor, ch);
           }
         }

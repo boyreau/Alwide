@@ -1,7 +1,7 @@
 #ifndef STATE_CONTROL_H
 #define STATE_CONTROL_H
 
-#include "../io_management/io_manager.h"
+#include "../io-management/io_manager.h"
 #include "../utils/tools.h"
 #include "file_structure.h"
 
@@ -19,11 +19,27 @@ typedef struct {
   char unique_ch;
   char* ch;
   time_val time;
-  Cursor cur;
+  CursorDescriptor cur;
   unsigned int byte_start;
-  Cursor cur_end;
+  CursorDescriptor cur_end;
   unsigned int byte_end;
 } Action;
+
+
+typedef struct {
+  uint32_t row;
+  uint32_t column;
+} ChangePoint;
+
+typedef struct {
+  uint32_t start_byte;
+  uint32_t old_end_byte;
+  uint32_t new_end_byte;
+  ChangePoint start_point;
+  ChangePoint old_end_point;
+  ChangePoint new_end_point;
+} ChangeDescriptor;
+
 
 struct History_ {
   Action action;
@@ -34,21 +50,26 @@ struct History_ {
 
 typedef struct History_ History;
 
+#include "../config/language_feature.h"
+
 void initHistory(History* history);
 
-Cursor undo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action action, long* payload), long* payload);
+Cursor undo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action action, Cursor* cursor, void* payload),
+            void* payload, ft_Tabulation* tab);
 
-Cursor redo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action action, long* payload), long* payload);
+Cursor redo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action action, Cursor* cursor, void* payload),
+            void* payload, ft_Tabulation* tab);
 
-void saveAction(History** history_p, Action action, void (*onEachStateChange)(Action action, long* payload),
-                long* payload);
+void saveAction(History** history_p, Action action,
+                void (*onEachStateChange)(Action action, Cursor* cursor, void* payload), Cursor* cursor, void* payload);
 
-Cursor doReverseAction(Action* action_p, Cursor cursor, void (*onEachStateChange)(Action action, long* payload),
-                       long* payload);
+Cursor doReverseAction(Action* action_p, Cursor cursor,
+                       void (*onEachStateChange)(Action action, Cursor* cursor, void* payload), void* payload,
+                       ft_Tabulation* tab);
 
-Action createDeleteAction(Cursor cur1, Cursor cur2);
+Action createDeleteAction(Cursor cur1, CursorDescriptor cur2);
 
-Action createInsertAction(Cursor cur1, Cursor cur2);
+Action createInsertAction(Cursor cur1, CursorDescriptor cur2);
 
 void destroyAction(Action action);
 
@@ -60,5 +81,6 @@ void loadCurrentStateControl(History* root, History** current_state, IO_FileID i
 
 void optimizeHistory(History* root, History** history_frame);
 
+ChangeDescriptor actionToChangeDescriptor(Action action);
 
 #endif // STATE_CONTROL_H

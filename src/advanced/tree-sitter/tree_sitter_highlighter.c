@@ -5,8 +5,8 @@
 #include <time.h>
 
 #include "../../../lib/tree-sitter/lib/src/tree.h"
-#include "../../utils/constants.h"
-#include "../../utils/global-variables.h"
+#include "../../environnement/constants.h"
+#include "../../environnement/global_variables.h"
 #include "tree_query.h"
 
 
@@ -46,7 +46,8 @@ void saveCaptureToHighlightDescriptor(HighlightThemeList theme_list, Cursor tmp,
 
   Cursor begin_cursor = moveRight(byteCursorToCursor(tmp, start_point.row, start_point.column));
   Cursor end_cursor = byteCursorToCursor(tmp, end_point.row, end_point.column);
-  whd_insertDescriptor(highlight_descriptor, begin_cursor, end_cursor, color, attr, priority, true);
+  whd_insertDescriptor(highlight_descriptor, begin_cursor, end_cursor, color, attr, priority + 1, false,
+                       LINE_MARKER_NONE, NULL);
 }
 
 
@@ -81,6 +82,7 @@ void executeInjectionHighlightQuery(Cursor cursor, WindowHighlightDescriptor* hi
   executeHighlightQuery(injected_parser->queries, injected_qcursor, &injected_parser->regex_map,
                         injected_parser->theme_list, cursor, highlight_descriptor, injection_depth + 1);
 
+  ts_query_cursor_delete(injected_qcursor);
   ts_tree_delete(injected_tree);
 }
 
@@ -112,8 +114,8 @@ void executeHighlightQuery(TSQuery* query, TSQueryCursor* qcursor, RegexMap* reg
 }
 
 
-void highlightCurrentFile(FileHighlightDatas* highlight_data, WINDOW* ftw, int screen_x, int screen_y, Cursor cursor,
-                          WindowHighlightDescriptor* highlight_descriptor) {
+void TS_highlightCurrentFile(TS_Data* highlight_data, WINDOW* ftw, int screen_x, int screen_y, Cursor cursor,
+                             WindowHighlightDescriptor* highlight_descriptor) {
   if (highlight_data->is_active == false) {
     return;
   }

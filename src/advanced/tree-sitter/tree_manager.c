@@ -1,17 +1,15 @@
 #include "tree_manager.h"
 
 #include <assert.h>
-#include <bits/time.h>
 #include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include "../../../lib/tree-sitter/lib/include/tree_sitter/api.h"
+#include "../../environnement/constants.h"
+#include "../../environnement/global_variables.h"
 #include "../../terminal/highlight.h"
-#include "../../utils/constants.h"
-#include "../../utils/global-variables.h"
 #include "../../utils/tools.h"
 #include "../tree-sitter/tree_query.h"
 
@@ -134,7 +132,7 @@ void getTSLanguageFromString(const TSLanguage** lang, char* language) {
 
 bool loadNewParser(ParserContainer* container, char* language) {
   // Set file name
-  strcpy(container->lang_id, language);
+  snprintf(container->lang_id, sizeof(container->lang_id), "%s", language);
 
   // Getting TSLanguage
   getTSLanguageFromString(&container->lang, language);
@@ -149,7 +147,7 @@ bool loadNewParser(ParserContainer* container, char* language) {
 
   char path[PATH_MAX];
   // Loading Theme
-  sprintf(path, "%s/theme", load_path);
+  snprintf(path, sizeof(path), "%s/theme", load_path);
 
   bool load_result = getThemeFromFile(path, &container->theme_list);
   if (load_result == false) {
@@ -159,7 +157,7 @@ bool loadNewParser(ParserContainer* container, char* language) {
   }
 
   // Queries
-  sprintf(path, "%s/queries/highlights-%s.scm", load_path, container->lang_id);
+  snprintf(path, sizeof(path), "%s/queries/highlights-%s.scm", load_path, container->lang_id);
 
   uint32_t error_offset;
   TSQueryError error_type;
@@ -184,163 +182,51 @@ bool loadNewParser(ParserContainer* container, char* language) {
 }
 
 
-void setFileHighlightDatas(FileHighlightDatas* data, IO_FileID io_file) {
-  bool did_lang_was_found = getLanguageStringIDForFile(data->lang_id, io_file);
+void setFileHighlightDatas(TS_Data* data, ft_LanguageFeature* feature) {
+  snprintf(data->lang_id, sizeof(data->lang_id), "%s", feature->id);
 
-  ParserContainer* parser = NULL;
-  if (did_lang_was_found == true) {
-    parser = getParserForLanguage(&parsers, data->lang_id);
-  }
+  ParserContainer* parser = getParserForLanguage(&parsers, data->lang_id);
 
   data->is_active = parser != NULL;
   data->tree = NULL;
 }
 
 
-PayloadStateChange getPayloadStateChange(FileHighlightDatas* highlight_datas) {
-  PayloadStateChange payload;
-  payload.highlight_datas = highlight_datas;
-  return payload;
-}
+void onStateChangeTS(Action action, TS_Data* data) {
 
-void onStateChangeTS(Action action, long* payload_p) {
-  PayloadStateChange payload = *(PayloadStateChange*)payload_p;
-
-  if (payload.highlight_datas->is_active == false) {
+  if (data->is_active == false) {
     return;
   }
 
+  ChangeDescriptor change = actionToChangeDescriptor(action);
   TSInputEdit edit;
-  switch (action.action) {
-    case INSERT:
-      // system("echo \"=== INSERT ===\" >> tree_logs.txt");
-      assert(action.byte_start != -1);
-      assert(action.byte_end != -1);
-      edit.start_byte = action.byte_start;
-      edit.start_point.row = action.cur.file_id.absolute_row - 1;
-      edit.start_point.column = action.cur.line_id.absolute_column;
 
-      edit.old_end_byte = action.byte_start;
-      edit.old_end_point.row = edit.start_point.row;
-      edit.old_end_point.column = edit.start_point.column;
+  edit.start_byte = change.start_byte;
+  edit.new_end_byte = change.new_end_byte;
+  edit.old_end_byte = change.old_end_byte;
 
-      edit.new_end_byte = action.byte_end;
-      edit.new_end_point.row = action.cur_end.file_id.absolute_row - 1;
-      edit.new_end_point.column = action.cur_end.line_id.absolute_column;
-      // To force the match with previous node.
-      break;
-    case DELETE:
-      // system("echo \"=== DELETE ===\" >> tree_logs.txt");
-      assert(action.byte_start != -1);
-      edit.start_byte = action.byte_start;
-      edit.start_point.row = action.cur.file_id.absolute_row - 1;
-      edit.start_point.column = action.cur.line_id.absolute_column;
+  edit.start_point.row = change.start_point.row;
+  edit.start_point.column = change.start_point.column;
 
-      edit.old_end_byte = action.byte_end;
+  edit.old_end_point.row = change.old_end_point.row;
+  edit.old_end_point.column = change.old_end_point.column;
 
-      // TODO may optimize
-      // CALCULATE ROW AND COLUMN POINT
-      char* ch = action.ch;
-      int current_row = edit.start_point.row;
-      int current_column = edit.start_point.column;
+  edit.new_end_point.row = change.new_end_point.row;
+  edit.new_end_point.column = change.new_end_point.column;
 
-      int current_ch_index = 0;
-      while (current_ch_index < action.byte_end - action.byte_start) {
-        if (TAB_CHAR_USE == false) {
-          assert(ch[current_ch_index] != '\t');
-        }
-        if (ch[current_ch_index] == '\n') {
-          current_row++;
-          current_column = 0;
-        }
-        else {
-          Char_U8 tmp_ch = readChar_U8FromCharArray(ch + current_ch_index);
-          current_ch_index += sizeChar_U8(tmp_ch) - 1;
-          current_column++;
-        }
-        current_ch_index++;
-      }
-
-      edit.old_end_point.row = current_row;
-      edit.old_end_point.column = current_column;
-
-
-      edit.new_end_byte = action.byte_start;
-      edit.new_end_point.row = edit.start_point.row;
-      edit.new_end_point.column = edit.start_point.column;
-      // To force the match with previous node.
-      break;
-    case DELETE_ONE:
-      // system("echo \"=== DELETE_ONE ===\" >> tree_logs.txt");
-      assert(action.byte_start != -1);
-      edit.start_byte = action.byte_start;
-      edit.start_point.row = action.cur.file_id.absolute_row - 1;
-      edit.start_point.column = action.cur.line_id.absolute_column;
-
-      edit.old_end_byte = action.byte_start + 1;
-      edit.old_end_point.row = edit.start_point.row;
-      edit.old_end_point.column = edit.start_point.column;
-      if (action.unique_ch == '\n') {
-        edit.old_end_point.row++;
-        edit.old_end_point.column = 0;
-      }
-      else {
-        edit.old_end_point.column++;
-      }
-
-      edit.new_end_byte = action.byte_start;
-      edit.new_end_point.row = edit.start_point.row;
-      edit.new_end_point.column = edit.start_point.column;
-      // To force the match with previous node.
-
-      break;
-    default:
-      assert(action.action == ACTION_NONE);
-      return;
-  }
-
-  /*
-  // PRINT TO JSON EDITs
-  cJSON* obj = cJSON_CreateObject();
-  cJSON_AddNumberToObject(obj, "start_byte", edit.start_byte);
-  cJSON_AddNumberToObject(obj, "start_point.row", edit.start_point.row);
-  cJSON_AddNumberToObject(obj, "start_point.column", edit.start_point.column);
-
-  cJSON_AddNumberToObject(obj, "old_end_byte", edit.old_end_byte);
-  cJSON_AddNumberToObject(obj, "old_end_point.row", edit.old_end_point.row);
-  cJSON_AddNumberToObject(obj, "old_end_point.column", edit.old_end_point.column);
-
-  cJSON_AddNumberToObject(obj, "new_end_byte", edit.new_end_byte);
-  cJSON_AddNumberToObject(obj, "new_end_point.row", edit.new_end_point.row);
-  cJSON_AddNumberToObject(obj, "new_end_point.column", edit.new_end_point.column);
-
-  char* obj_text = cJSON_Print(obj);
-
-  FILE *f = fopen("tree_logs.txt", "a");
-  fprintf(f, obj_text);
-  fprintf(f,"\n");
-  fclose(f);
-
-
-  free(obj_text);
-  cJSON_Delete(obj);*/
-
-  ts_tree_edit(payload.highlight_datas->tree, &edit);
+  ts_tree_edit(data->tree, &edit);
 }
 
 char read_buffer[CHAR_CHUNK_SIZE_TSINPUT * 4];
 
 const char* internalReaderForTree(void* payload, uint32_t byte_index, TSPoint position, uint32_t* bytes_read) {
   PayloadInternalReader* values = payload;
-  // fprintf(stderr, "READ FROM READER\n");
   *bytes_read =
     readNu8CharAtPosition(&values->cursor, position.row, position.column, read_buffer, CHAR_CHUNK_SIZE_TSINPUT);
   return read_buffer;
 }
 
-
-void parseTree(FileNode** root, History** history_frame, FileHighlightDatas* highlight_data,
-               History** old_history_frame) {
+void parseTree(FileNode** root, History** history_frame, TS_Data* highlight_data, History** old_history_frame) {
   if (highlight_data->is_active == false)
     return;
 
@@ -356,18 +242,9 @@ void parseTree(FileNode** root, History** history_frame, FileHighlightDatas* hig
   input.read = internalReaderForTree;
   input.payload = &reader_payload;
 
-  clock_t t;
-  t = clock();
-
   TSTree* old_tree = highlight_data->tree;
   highlight_data->tree = ts_parser_parse(parser->parser, highlight_data->tree, input);
   ts_tree_delete(old_tree);
-
-
-  t = clock() - t;
-  double time_taken = ((double)t) / CLOCKS_PER_SEC; // in seconds
-
-  // fprintf(stderr, "parse() took %f seconds to execute \n", time_taken);
 
   *old_history_frame = *history_frame;
 }
@@ -420,9 +297,9 @@ char* getNodeContent(TSNode node, Cursor* cursor) {
 
 int fillWithNodeContent(TSNode node, Cursor* cursor, char* content, int length) {
   uint32_t content_length = ts_node_end_byte(node) - ts_node_start_byte(node);
-  length = min(length, content_length + 1);
+  int to_read = min(length - 1, content_length);
   TSPoint start_point = ts_node_start_point(node);
-  readNBytesAtPosition(cursor, start_point.row, start_point.column, content, length);
-  content[content_length] = '\0';
-  return length;
+  readNBytesAtPosition(cursor, start_point.row, start_point.column, content, to_read);
+  content[to_read] = '\0';
+  return to_read;
 }

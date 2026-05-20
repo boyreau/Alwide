@@ -1,21 +1,22 @@
 #include "io_manager.h"
-#include "../utils/constants.h"
+#include "../environnement/constants.h"
 
 #include <assert.h>
 #include <ctype.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-Cursor initWrittableFileFromFile(char* fileName) {
+Cursor initWrittableFileFromFile(char* fileName, ft_Tabulation* tab) {
   Cursor cursor = initNewWrittableFile();
-  loadFile(cursor, fileName);
+  loadFile(cursor, fileName, tab);
   return cursorOf(cursor.file_id, moduloLineIdentifierR(getLineForFileIdentifier(cursor.file_id), 0));
 }
 
 
-bool loadFile(Cursor cursor, char* fileName) {
+bool loadFile(Cursor cursor, char* fileName, ft_Tabulation* tab) {
   cursor = moduloCursor(cursor);
   // If relative_row == 0 no line created. Use initNewWrittableFile() before.
   assert(cursor.file_id.relative_row != 0);
@@ -45,13 +46,13 @@ bool loadFile(Cursor cursor, char* fileName) {
         // fprintf(stderr, "Tab\r\n");
 #endif
         Char_U8 ch;
-        if (TAB_CHAR_USE) {
+        if (!tab->use_space) {
           ch.t[0] = '\t';
           cursor = insertCharInLineC(cursor, ch);
         }
         else {
           ch.t[0] = ' ';
-          for (int i = 0; i < TAB_SIZE; i++) {
+          for (int i = 0; i < tab->size; i++) {
             cursor = insertCharInLineC(cursor, ch);
           }
         }
@@ -116,10 +117,9 @@ void saveFile(FileNode* root, IO_FileID* file) {
 
 
 void setupFile(char* path, IO_FileID* file) {
-  file->path_args = NULL;
   // 3 file status: no file given, file doesn't exist, file exists.
   if (strcmp(path, "") != 0) {
-    file->path_args = path;
+    strncpy(file->path_args, path, PATH_MAX);
     if (access(path, F_OK) == 0) {
       file->status = EXIST;
       // File exist
@@ -129,13 +129,34 @@ void setupFile(char* path, IO_FileID* file) {
     else {
       // File doesn't exist.
       file->status = DONT_EXIST;
-      strncpy(file->path_abs, path, PATH_MAX);
+      char path_copy1[PATH_MAX];
+      char path_copy2[PATH_MAX];
+      strncpy(path_copy1, path, PATH_MAX);
+      strncpy(path_copy2, path, PATH_MAX);
+      
+      char* dname = dirname(path_copy1);
+      char* bname = basename(path_copy2);
+      
+      char dir_abs[PATH_MAX];
+      if (realpath(dname, dir_abs) != NULL) {
+        snprintf(file->path_abs, PATH_MAX, "%s/%s", dir_abs, bname);
+      } else {
+        // Fallback
+        if (path[0] == '/') {
+          strncpy(file->path_abs, path, PATH_MAX);
+        } else {
+          char cwd[PATH_MAX];
+          getcwd(cwd, sizeof(cwd));
+          snprintf(file->path_abs, PATH_MAX, "%s/%s", cwd, path);
+        }
+      }
     }
   }
   else {
     // No file given
     file->status = NONE;
-    file->path_args = "untitled";
+    strcpy(file->path_args, "untitled");
     strcpy(file->path_abs, "untitled");
   }
 }
+

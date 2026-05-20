@@ -4,8 +4,10 @@
 
 #include "../../../lib/tree-sitter/lib/include/tree_sitter/api.h"
 #include "../../data-management/state_control.h"
-#include "../../io_management/io_manager.h"
+#include "../../environnement/constants.h"
 #include "../theme.h"
+#include "../../config/language_feature.h"
+
 
 #define CHAR_CHUNK_SIZE_TSINPUT 500
 
@@ -40,7 +42,7 @@ bool getRegexForRegexId(const RegexMap* regex_map, uint32_t regex_id, regex_t* r
 ////// ------------------- TREE HANDLER -------------------
 
 typedef struct {
-  char lang_id[100];
+  char lang_id[LANG_ID_LENGTH];
   const TSLanguage* lang;
   TSParser* parser;
   TSQuery* queries;
@@ -54,14 +56,11 @@ typedef struct {
 } ParserList;
 
 typedef struct {
-  char lang_id[100];
+  char lang_id[LANG_ID_LENGTH];
   bool is_active;
   TSTree* tree;
-} FileHighlightDatas;
+} TS_Data;
 
-typedef struct {
-  FileHighlightDatas* highlight_datas;
-} PayloadStateChange;
 
 typedef struct {
   Cursor cursor;
@@ -123,16 +122,13 @@ bool loadNewParser(ParserContainer* container, char* language);
 
 ////// ------------------- TREE UTILS -------------------
 
-void setFileHighlightDatas(FileHighlightDatas* data, IO_FileID io_file);
+void setFileHighlightDatas(TS_Data* data, ft_LanguageFeature* feature);
 
-PayloadStateChange getPayloadStateChange(FileHighlightDatas* highlight_datas);
-
-void onStateChangeTS(Action action, long* payload_p);
+void onStateChangeTS(Action action, TS_Data* data);
 
 const char* internalReaderForTree(void* payload, uint32_t byte_index, TSPoint position, uint32_t* bytes_read);
 
-void parseTree(FileNode** root, History** history_frame, FileHighlightDatas* highlight_data,
-               History** old_history_frame);
+void parseTree(FileNode** root, History** history_frame, TS_Data* highlight_data, History** old_history_frame);
 
 char* getNodeContent(TSNode node, Cursor* cursor);
 
