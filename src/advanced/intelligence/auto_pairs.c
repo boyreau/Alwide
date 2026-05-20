@@ -1,16 +1,12 @@
 #include "auto_pairs.h"
 #include <string.h>
 #include "../../terminal/term_handler.h"
+#include "../../data-management/utf_8_extractor.h"
 
 bool ft_handleAutoPairs(FileContainer* fc, Char_U8 input, History** history_p, PayloadStateChange payload_state_change) {
   if (!fc->feature || fc->feature->pairs_count == 0) {
     return false;
   }
-
-  // TODO you may use areCharU8Equal and use a CharU8 function to convert a char to a charu8
-  // Convert Char_U8 to string for comparison
-  char input_str[5] = {0};
-  memcpy(input_str, input.t, 4);
 
   // 1. Check for overtyping a closing character
   Char_U8 current_ch = {0};
@@ -19,13 +15,11 @@ bool ft_handleAutoPairs(FileContainer* fc, Char_U8 input, History** history_p, P
   } else if (fc->cursor.line_id.line->next != NULL && fc->cursor.line_id.line->next->element_number > 0) {
     current_ch = fc->cursor.line_id.line->next->ch[0];
   }
-  
-  char current_str[5] = {0};
-  memcpy(current_str, current_ch.t, 4);
 
   for (int i = 0; i < fc->feature->pairs_count; i++) {
     ft_Pair* pair = &fc->feature->pairs[i];
-    if (strcmp(input_str, pair->close) == 0 && strcmp(input_str, current_str) == 0) {
+    Char_U8 close_u8 = readChar_U8FromCharArray(pair->close);
+    if (areChar_U8Equals(input, close_u8) && areChar_U8Equals(input, current_ch)) {
       fc->cursor = moveRight(fc->cursor);
       return true;
     }
@@ -34,13 +28,14 @@ bool ft_handleAutoPairs(FileContainer* fc, Char_U8 input, History** history_p, P
   // 2. Check for inserting an opening character
   for (int i = 0; i < fc->feature->pairs_count; i++) {
     ft_Pair* pair = &fc->feature->pairs[i];
+    Char_U8 open_u8 = readChar_U8FromCharArray(pair->open);
     
-    if (strcmp(input_str, pair->open) == 0) {
+    if (areChar_U8Equals(input, open_u8)) {
       char combined[9] = {0};
-      strcat(combined, input_str);
+      strcat(combined, pair->open);
       strcat(combined, pair->close);
 
-      fc->cursor = insertCharArrayAtCursorWithHist(history_p, fc->cursor, combined, payload_state_change, fc->feature->tabulation.size, fc->feature->tabulation.use_space);
+      fc->cursor = insertCharArrayAtCursorWithHist(history_p, fc->cursor, combined, payload_state_change, ft_tab(fc->feature));
       
       // Move cursor back one position to be between the pairs
       fc->cursor = moveLeft(fc->cursor);

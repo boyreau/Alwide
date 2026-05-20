@@ -16,9 +16,8 @@ void initHistory(History* history) {
   history->next = NULL;
 }
 
-// TODO prefer pass the ft_Tabulation pointer instead of attributes
 Cursor undo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action action, Cursor* cursor, void* payload),
-            void* payload, int tab_size, bool use_space) {
+            void* payload, ft_Tabulation* tab) {
   History* history = *history_p;
 
   // If history is at root return and do nothing. Can't undo ;).
@@ -27,21 +26,20 @@ Cursor undo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action
   }
 
   time_val canceled_time_action = history->action.time;
-  cursor = doReverseAction(&history->action, cursor, onEachStateChange, payload, tab_size, use_space);
+  cursor = doReverseAction(&history->action, cursor, onEachStateChange, payload, tab);
   history->action.time = canceled_time_action;
 
   *history_p = history->prev;
 
   if (diff2Time(history->action.time, history->prev->action.time) < TIME_CONSIDER_UNIQUE_UNDO) {
-    return undo(history_p, cursor, onEachStateChange, payload, tab_size, use_space);
+    return undo(history_p, cursor, onEachStateChange, payload, tab);
   }
 
   return cursor;
 }
 
-// TODO prefer pass the ft_Tabulation pointer instead of attributes
 Cursor redo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action action, Cursor* cursor, void* payload),
-            void* payload, int tab_size, bool use_space) {
+            void* payload, ft_Tabulation* tab) {
   History* history = *history_p;
 
   // If history is at the end return and do nothing. Cannot redo nothing ;).
@@ -54,12 +52,12 @@ Cursor redo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action
 
   time_val canceled_time_action = history->action.time;
 
-  cursor = doReverseAction(&history->action, cursor, onEachStateChange, payload, tab_size, use_space);
+  cursor = doReverseAction(&history->action, cursor, onEachStateChange, payload, tab);
   history->action.time = canceled_time_action;
 
   if (history->next != NULL &&
       diff2Time(history->action.time, history->next->action.time) < TIME_CONSIDER_UNIQUE_UNDO) {
-    return redo(history_p, cursor, onEachStateChange, payload, tab_size, use_space);
+    return redo(history_p, cursor, onEachStateChange, payload, tab);
   }
 
   return cursor;
@@ -95,10 +93,9 @@ void saveAction(History** history_p, Action action,
   }
 }
 
-// TODO prefer pass the ft_Tabulation pointer instead of attributes
 Cursor doReverseAction(Action* action_p, Cursor cursor,
                        void (*onEachStateChange)(Action action, Cursor* cursor, void* payload), void* payload,
-                       int tab_size, bool use_space) {
+                       ft_Tabulation* tabulation) {
   Action action = *action_p;
   Cursor tmp;
   Cursor tmp_end;
@@ -126,7 +123,7 @@ Cursor doReverseAction(Action* action_p, Cursor cursor,
     case DELETE:
       tmp.file_id = tryToReachAbsRow(cursor.file_id, action.cur.row);
       tmp.line_id = moduloLineIdentifierR(getLineForFileIdentifier(tmp.file_id), action.cur.column);
-      cursor = insertCharArrayAtCursor(tmp, action.ch, tab_size, use_space);
+      cursor = insertCharArrayAtCursor(tmp, action.ch, tabulation);
       destroyAction(action);
       *action_p = createInsertAction(tmp, cursor_to_desc(cursor));
       if (onEachStateChange != NULL) {

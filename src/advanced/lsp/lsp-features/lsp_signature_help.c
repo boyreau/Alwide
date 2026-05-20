@@ -85,12 +85,12 @@ void receiveSignatureHelpData(cJSON* packet, FileContainer* file, GUIContext* gu
   if (paren_col != -1) {
     Cursor paren_cursor = *cursor;
     paren_cursor.line_id.absolute_column = paren_col;
-    int paren_screen_x = getScreenXForCursor(paren_cursor, *view_port.screen_x, file->feature->tabulation.size);
+    int paren_screen_x = getScreenXForCursor(paren_cursor, *view_port.screen_x, ft_tab_size(file->feature));
     popup_x = paren_screen_x - paren_offset_in_sig - 1;
   }
   else {
     // Fallback if no '(' found (shouldn't happen for signature help)
-    int cursor_screen_x = getScreenXForCursor(*cursor, *view_port.screen_x, file->feature->tabulation.size);
+    int cursor_screen_x = getScreenXForCursor(*cursor, *view_port.screen_x, ft_tab_size(file->feature));
     popup_x = cursor_screen_x - 1 - paren_offset_in_sig;
   }
 

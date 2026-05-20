@@ -41,8 +41,6 @@ void getLocalURI(char* realive_abs_path, char* uri);
 
 bool isDir(char* path);
 
-bool getLanguageStringIDForFile(char* lang, IO_FileID io_file);
-
 int hashString(unsigned char* str);
 
 char* loadFullFile(const char* path, long* length);

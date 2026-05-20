@@ -125,7 +125,7 @@ void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     FileIdentifier new_file_id = tryToReachAbsRow(cursor->file_id, *screen_y + m_event->y - edws_offset_y);
     LineIdentifier new_line_id =
       getLineIdForScreenX(moduloLineIdentifierR(getLineForFileIdentifier(new_file_id), 0), *screen_x,
-                          m_event->x - edws_offset_x, file->feature->tabulation.size);
+                          m_event->x - edws_offset_x, ft_tab_size(file->feature));
 
     if (cursor_is_disabled(*select_cursor) == false) {
       *cursor = cursorOf(new_file_id, new_line_id);
@@ -141,7 +141,7 @@ void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
   if (m_event->bstate & BUTTON1_PRESSED) {
     setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
     *cursor = getCursorForEDWClick(cursor, m_event, *screen_x, *screen_y, edws_offset_x, edws_offset_y,
-                                   file->feature->tabulation.size);
+                                   ft_tab_size(file->feature));
     setDesiredColumn(*cursor, desired_column);
     gui_closePopup(gui_context);
   }
@@ -201,7 +201,7 @@ void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
       }
       else {
         gui_showDiagnostic(gui_context, m_event->y - getbegy(gui_context->edw_context.lnw) + 1,
-                           getbegy(gui_context->edw_context.ftw), diagnostic, file->feature->tabulation.size);
+                           getbegy(gui_context->edw_context.ftw), diagnostic, ft_tab_size(file->feature));
       }
     }
   }
@@ -209,7 +209,7 @@ void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
     // track mouse position
     // TODO may safe raw m_event position to avoid calling @getCursorForEDWCLick() everytime which is heavy.
     Cursor hover_cursor = getCursorForEDWClick(cursor, m_event, *screen_x, *screen_y, edws_offset_x, edws_offset_y,
-                                               file->feature->tabulation.size);
+                                               ft_tab_size(file->feature));
     gui_context->edw_context.lastMousePosition = cursor_to_desc(hover_cursor);
     if (file->lsp_datas.is_enable && m_event->bstate & BUTTON_CTRL) {
 
@@ -231,7 +231,7 @@ void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
           // We resume the hover data previously fetched.
           ViewPort view_port = (ViewPort){.gui = gui_context, .screen_x = screen_x, .screen_y = screen_y};
           gui_resumeHoverInformation(cursor, &view_port, &file->lsp_datas.computed->hover,
-                                     file->feature->tabulation.size);
+                                     ft_tab_size(file->feature));
         }
       }
     }

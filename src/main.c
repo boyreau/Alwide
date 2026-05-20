@@ -29,6 +29,7 @@ cJSON* config;
 ParserList parsers;
 LSPServerLinkedList lsp_servers;
 WorkspaceSettings workspace_settings;
+ft_LanguageFeatureList language_features;
 
 
 int main(int file_count, char** args) {
@@ -42,7 +43,7 @@ int main(int file_count, char** args) {
   /// --- Init global vars ---
   // Load config
   config = loadConfig();
-  // Load language features
+  // Language features
   ft_loadLanguageFeatures();
   // Parser Datas
   initParserList(&parsers);

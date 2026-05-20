@@ -17,7 +17,7 @@ void jumpToLocation(ModuleContext* data, LSP_Location location) {
   current->cursor = tryToReachAbsPosition(current->cursor, LSP_0_row_to_1_row(location.range.pos1.row), location.range.pos1.column);
 
   moveScreenToMatchCursor(data->view_port.gui, current->cursor, &current->screen_x, &current->screen_y,
-                          current->feature->tabulation.size);
+                          ft_tab_size(current->feature));
 }
 
 bool LSP_isPositionInRange(LSP_Position lsp_pos, LSP_Range lsp_range) {

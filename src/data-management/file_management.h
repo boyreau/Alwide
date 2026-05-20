@@ -46,7 +46,7 @@ void openNewFile(char* file_path, FileContainer** files, int* file_count, int* c
 
 void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_local_vars);
 
-Cursor createRoot(IO_FileID file, int tab_size, bool use_space);
+Cursor createRoot(IO_FileID file, ft_Tabulation* tab);
 
 void setupFileContainer(char* args, FileContainer* container);
 
@@ -80,9 +80,9 @@ Cursor skipLeftInvisibleChar(Cursor cursor);
 Cursor moveToNextWord(Cursor cursor);
 Cursor moveToPreviousWord(Cursor cursor);
 
-Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, int tab_size, bool use_space);
+Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, ft_Tabulation* tab);
 Cursor insertCharArrayAtCursorWithHist(History** history_p, Cursor cursor, char* chs,
-                                       PayloadStateChange payload_state_change, int tab_size, bool use_space);
+                                       PayloadStateChange payload_state_change, ft_Tabulation* tab);
 
 Cursor byteCursorToCursor(Cursor cursor, int row, int byte_column);
 

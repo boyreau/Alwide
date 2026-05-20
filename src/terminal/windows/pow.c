@@ -424,7 +424,7 @@ bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_has
         }
         else {
           executeLSPCompletion(cursor, lsp_data->completions.completions.items + (clicked_item - ca_size), history_p,
-                               payload_state_change, fc->feature->tabulation.size, fc->feature->tabulation.use_space);
+                               payload_state_change, ft_tab(fc->feature));
         }
         gui_closePopup(context);
       }
@@ -463,7 +463,7 @@ bool gui_handleCompletionInput(GUIContext* context, FileContainer* fc, int c_has
         else {
           executeLSPCompletion(
             cursor, lsp_data->completions.completions.items + (context->edw_context.item_selected - ca_size), history_p,
-            payload_state_change, fc->feature->tabulation.size, fc->feature->tabulation.use_space);
+            payload_state_change, ft_tab(fc->feature));
         }
       }
       gui_closePopup(context);

@@ -84,10 +84,9 @@ void closeFile(FileContainer** files, int* file_count, int* current_file, bool* 
   *refresh_local_vars = true;
 }
 
-// TODO prefer pass the ft_Tabulation pointer instead of attributes
-Cursor createRoot(IO_FileID file, int tab_size, bool use_space) {
+Cursor createRoot(IO_FileID file, ft_Tabulation* tab) {
   if (file.status == EXIST) {
-    return initWrittableFileFromFile(file.path_abs, tab_size, use_space);
+    return initWrittableFileFromFile(file.path_abs, tab);
   }
   return initNewWrittableFile();
 }
@@ -101,17 +100,12 @@ void setupFileContainer(char* path, FileContainer* container) {
   container->history_root = malloc(sizeof(History));
   container->history_frame = container->history_root;
 
-  // TODO extract  this logic and dispatch the method in the right module.
-  char lang_id[LANG_ID_LENGTH];
-  getLanguageStringIDForFile(lang_id, container->io_file);
-  container->feature = ft_getFeatureById(lang_id);
+  container->feature = ft_getFeatureForFile(container->io_file.path_abs);
 
   setFileHighlightDatas(&container->highlight_data, container->feature);
   setLspDatas(&container->lsp_datas, container->io_file, container->feature);
 
-  // TODO prefer pass the ft_Tabulation pointer instead of attributes
-  container->cursor =
-    createRoot(container->io_file, container->feature->tabulation.size, container->feature->tabulation.use_space);
+  container->cursor = createRoot(container->io_file, ft_tab(container->feature));
   container->select_cursor = cursor_disable(container->cursor);
   setDesiredColumn(container->cursor, &container->desired_column);
 
@@ -348,8 +342,7 @@ Cursor moveToPreviousWord(Cursor cursor) {
   return cursor;
 }
 
-// TODO prefer pass the ft_Tabulation pointer instead of attributes
-Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, int tab_size, bool use_space) {
+Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, ft_Tabulation* tab) {
   // Duplicated search in project DUP_SCAN.
 
   int index = 0;
@@ -371,13 +364,13 @@ Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, int tab_size, bool use_
         // printf("Tab\r\n");
 #endif
         Char_U8 ch;
-        if (!use_space) {
+        if (!tab->use_space) {
           ch.t[0] = '\t';
           cursor = insertCharInLineC(cursor, ch);
         }
         else {
           ch.t[0] = ' ';
-          for (int i = 0; i < tab_size; i++) {
+          for (int i = 0; i < tab->size; i++) {
             cursor = insertCharInLineC(cursor, ch);
           }
         }
@@ -404,11 +397,10 @@ Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, int tab_size, bool use_
   return cursor;
 }
 
-// TODO use feature pointer instead of attributes.
 Cursor insertCharArrayAtCursorWithHist(History** history_p, Cursor cursor, char* chs,
-                                       PayloadStateChange payload_state_change, int tab_size, bool use_space) {
+                                       PayloadStateChange payload_state_change, ft_Tabulation* tab) {
   Cursor tmp = cursor;
-  cursor = insertCharArrayAtCursor(cursor, chs, tab_size, use_space);
+  cursor = insertCharArrayAtCursor(cursor, chs, tab);
   saveAction(history_p, createInsertAction(tmp, cursor_to_desc(cursor)), globalOnStageChange, &cursor,
              &payload_state_change);
 

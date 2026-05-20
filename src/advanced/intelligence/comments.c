@@ -35,7 +35,7 @@ static bool isLineCommented(LineNode* line, const char* prefix) {
 }
 
 void ft_toggleComments(FileContainer* fc, History** history_frame, PayloadStateChange* payload_state_change) {
-  if (!fc->feature || !fc->feature->comments.line || strlen(fc->feature->comments.line) == 0) {
+  if (!fc->feature || fc->feature->comments.line[0] == '\0') {
     return;
   }
 
@@ -110,8 +110,9 @@ void ft_toggleComments(FileContainer* fc, History** history_frame, PayloadStateC
 
       if (!empty || start_row == end_row) {
         Cursor insert_pos = tryToReachAbsPosition(it, r, indent);
-        insert_pos = insertCharArrayAtCursorWithHist(history_frame, insert_pos, (char*)prefix, *payload_state_change,
-                                                     fc->feature->tabulation.size, fc->feature->tabulation.use_space);
+        insert_pos = insertCharArrayAtCursorWithHist(history_frame, insert_pos, (char*)prefix, *payload_state_change, 
+                                                    ft_tab(fc->feature));
+
       }
     }
   }

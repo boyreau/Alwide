@@ -243,7 +243,7 @@ Cursor loadFromClipBoard(FileContainer* fc) {
         // printf("Tab\r\n");
 #endif
         Char_U8 ch;
-        if (!fc->feature->tabulation.use_space) {
+        if (!ft_tab_use_space(fc->feature)) {
           ch.t[0] = '\t';
           cursor = insertCharInLineC(cursor, ch);
         }

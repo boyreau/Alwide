@@ -62,7 +62,7 @@ static void finalizeGlobalSystems() {
   cJSON_Delete(config);
 
   // Free language features
-  ft_freeLanguageFeatures();
+  destroyLanguageFeatureList(&language_features);
 
   // Destroy global parser list
   destroyParserList(&parsers);

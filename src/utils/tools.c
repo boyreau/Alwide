@@ -150,32 +150,6 @@ bool isDir(char* path) {
   return S_ISDIR(file_info.st_mode);
 }
 
-bool getLanguageStringIDForFile(char* lang_id, IO_FileID io_file) {
-  if (io_file.status == NONE) {
-    return false;
-  }
-
-  char first_line[256] = {0};
-  if (io_file.status == EXIST) {
-    FILE* f = fopen(io_file.path_abs, "r");
-    if (f) {
-      if (fgets(first_line, sizeof(first_line), f) == NULL) {
-        first_line[0] = '\0';
-      }
-      fclose(f);
-    }
-  }
-
-  const char* detected = ft_detectLanguage(io_file.path_abs, first_line);
-  if (detected) {
-    strcpy(lang_id, detected);
-    return true;
-  }
-
-  return false;
-}
-
-
 // copy from http://www.cse.yorku.ca/~oz/hash.html
 int hashString(unsigned char* str) {
   unsigned long hash = 5381;
