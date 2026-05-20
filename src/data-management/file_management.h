@@ -24,7 +24,7 @@ typedef struct {
   History* history_frame;      // Current node of the History. Before -> Undo, After -> Redo.
   TS_Data highlight_data;      // Object which represent the highlight_data of the current file.
   LSP_Data lsp_datas;          // Object which contain all the datas of lsp.
-  ft_LanguageFeature* feature; // TODO comment
+  ft_LanguageFeature* feature; // Language feature config detected for this file (tabs, pairs, LSP, comments).
 } FileContainer;
 
 typedef struct {

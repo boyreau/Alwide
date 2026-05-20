@@ -133,10 +133,10 @@ void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file,
   *old_screen_y = &files[current_file].old_screen_y;     // old screen_y used to flag screen_y changes
   *history_root = &files[current_file].history_root;     // Root of History object for the current File
   *history_frame = &files[current_file].history_frame;   // Current node of the History. Before -> Undo, After -> Redo.
-  *highlight_data = &files[current_file].highlight_data; // TODO comment
-  **old_screen_y = -1;                                   // TODO comment
-  *lsp_datas = &files[current_file].lsp_datas;           // TODO comment
-  *feature = files[current_file].feature;                // TODO comment
+  *highlight_data = &files[current_file].highlight_data; // Object which represent the highlight data of the current file.
+  **old_screen_y = -1;                                   // Reset old_screen_y to force a viewport diff on next render.
+  *lsp_datas = &files[current_file].lsp_datas;           // Object which contains all the data of the active LSP server.
+  *feature = files[current_file].feature;                // Language feature config detected for this file (tabs, pairs, LSP, comments).
 }
 
 
