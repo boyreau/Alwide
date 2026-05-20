@@ -1,4 +1,4 @@
-# Alwide — A Lightweight IDE
+# Alwide — A LightWeight IDE
 
 > A terminal-based code editor and IDE written in C, built around speed, simplicity, and real IDE capabilities — without the weight of Electron or JVM runtimes.
 
