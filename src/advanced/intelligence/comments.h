@@ -6,6 +6,6 @@
 /**
  * Toggles line comments for the current selection or current line.
  */
-void ft_toggleComments(FileContainer* fc, History** history_frame, PayloadStateChange* payload_state_change);
+void ilj_toggleComments(FileContainer* fc, History** history_frame, PayloadStateChange* payload_state_change);
 
 #endif // COMMENTS_H

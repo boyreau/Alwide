@@ -82,7 +82,7 @@ static void handleDefaultKeyInput(EditorContext* ctx, int c) {
   CursorDescriptor tmp = cursor_to_desc(*cursor);
   Char_U8 u8 = readChar_U8FromInput(c);
 
-  if (!ft_handleAutoPairs(fc, u8, history_frame, ctx->payload_state_change)) {
+  if (!ilj_handleAutoPairs(fc, u8, history_frame, ctx->payload_state_change)) {
     *cursor = insertCharInLineC(*cursor, u8);
     saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
                (long*)&ctx->payload_state_change);
@@ -302,7 +302,7 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       setDesiredColumn(*cursor, desired_column);
       break;
     case 0x1F: // CTRL('/') or CTRL('_')
-      ft_toggleComments(fc, history_frame, &ctx->payload_state_change);
+      ilj_toggleComments(fc, history_frame, &ctx->payload_state_change);
       gui_updateEDW(&ctx->gui_context);
       break;
     case CTRL('q'):
@@ -353,6 +353,11 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
     case H_KEY_DELETE:
       {
         if (cursor_is_disabled(*select_cursor)) {
+          if (ilj_handleAutoPairDelete(fc, history_frame, ctx->payload_state_change)) {
+            setDesiredColumn(*cursor, desired_column);
+            askCompletion(&ctx->gui_context, fc, false, false);
+            break;
+          }
           *select_cursor = moveLeft(*cursor);
         }
         bool need_reask_signature = adaptSignatureHelpOnDelete(*cursor, *select_cursor, lsp_data, ctx);

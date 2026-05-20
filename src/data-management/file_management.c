@@ -397,7 +397,7 @@ Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, ft_Tabulation* tab) {
   return cursor;
 }
 
-Cursor insertCharArrayAtCursorWithHist(History** history_p, Cursor cursor, char* chs,
+Cursor insertCharArrayAtCursorWithState(History** history_p, Cursor cursor, char* chs,
                                        PayloadStateChange payload_state_change, ft_Tabulation* tab) {
   Cursor tmp = cursor;
   cursor = insertCharArrayAtCursor(cursor, chs, tab);

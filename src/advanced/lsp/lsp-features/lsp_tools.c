@@ -12,7 +12,7 @@ void applyTextEdit(Cursor* cursor, LSP_TextEdit* text_edit, History** history_p,
   Cursor end = LSP_tryToReachCursorForLSPPosition(*cursor, text_edit->range.pos2);
   deleteSelectionWithState(history_p, cursor, &end, payload_state_change);
   // insert part
-  *cursor = insertCharArrayAtCursorWithHist(history_p, *cursor, text_edit->new_text, payload_state_change,
+  *cursor = insertCharArrayAtCursorWithState(history_p, *cursor, text_edit->new_text, payload_state_change,
                                             tab);
 }
 
