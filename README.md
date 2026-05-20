@@ -31,6 +31,7 @@ Most modern editors are powerful but **heavy**. Alwide is built on a different p
 | **Comment Toggling** | `Ctrl+/` comments/uncomments line or block selection |
 | **Mouse Support** | Click, drag-select, double-click to open files |
 | **Popup UI** | Floating windows for completions, hover, signatures, diagnostics |
+| **Workspace Persistence** | Reopen your previous session (files, windows, and layout) by simply running `al` without arguments |
 
 ### Supported Languages
 
