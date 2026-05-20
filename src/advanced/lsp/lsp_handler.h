@@ -42,7 +42,7 @@ typedef struct {
 } LSPServerLinkedList;
 
 
-void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file, ft_LanguageFeature* feature);
+void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file, LF_LanguageFeature* feature);
 
 void destroyLspDatas(LSP_Data* lsp_datas);
 

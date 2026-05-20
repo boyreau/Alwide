@@ -9,14 +9,14 @@
 #include <string.h>
 #include <unistd.h>
 
-Cursor initWrittableFileFromFile(char* fileName, ft_Tabulation* tab) {
+Cursor initWrittableFileFromFile(char* fileName, LF_Tabulation* tab) {
   Cursor cursor = initNewWrittableFile();
   loadFile(cursor, fileName, tab);
   return cursorOf(cursor.file_id, moduloLineIdentifierR(getLineForFileIdentifier(cursor.file_id), 0));
 }
 
 
-bool loadFile(Cursor cursor, char* fileName, ft_Tabulation* tab) {
+bool loadFile(Cursor cursor, char* fileName, LF_Tabulation* tab) {
   cursor = moduloCursor(cursor);
   // If relative_row == 0 no line created. Use initNewWrittableFile() before.
   assert(cursor.file_id.relative_row != 0);

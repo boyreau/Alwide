@@ -85,7 +85,7 @@ void gui_repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highligh
   wnoutrefresh(stdscr);
   gui_repaintEDW(&gui_context->edw_context, files[current_file].cursor, files[current_file].select_cursor,
                  files[current_file].screen_x, files[current_file].screen_y, highlight_descriptor,
-                 files[current_file].lsp_datas.computed, ft_tab_size(files[current_file].feature));
+                 files[current_file].lsp_datas.computed, LF_tab_size(files[current_file].feature));
   gui_repaintFEW(&gui_context->few_context, explorer);
   gui_repaintOFW(&gui_context->ofw_context, files, file_count, current_file);
   doupdate();

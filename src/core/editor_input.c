@@ -98,11 +98,11 @@ static void handleDefaultKeyInput(EditorContext* ctx, int c) {
 }
 
 static void handleTabInsertion(FileContainer* fc, Cursor* cursor) {
-  if (!ft_tab_use_space(fc->feature)) {
+  if (!LF_tab_use_space(fc->feature)) {
     *cursor = insertCharInLineC(*cursor, readChar_U8FromInput('\t'));
   }
   else {
-    int tab_size = ft_tab_size(fc->feature);
+    int tab_size = LF_tab_size(fc->feature);
     for (int i = 0; i < tab_size; i++) {
       *cursor = insertCharInLineC(*cursor, readChar_U8FromInput(' '));
     }
@@ -265,7 +265,7 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
     case CTRL('z'):
       setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
       *cursor =
-        undo(history_frame, *cursor, globalOnStageChange, (long*)&ctx->payload_state_change, ft_tab(fc->feature));
+        undo(history_frame, *cursor, globalOnStageChange, (long*)&ctx->payload_state_change, LF_tab(fc->feature));
       ctx->old_history_frame = NULL;
       setDesiredColumn(*cursor, desired_column);
       gui_updateEDW(&ctx->gui_context);
@@ -274,7 +274,7 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
     case CTRL('y'):
       setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
       *cursor =
-        redo(history_frame, *cursor, globalOnStageChange, (long*)&ctx->payload_state_change, ft_tab(fc->feature));
+        redo(history_frame, *cursor, globalOnStageChange, (long*)&ctx->payload_state_change, LF_tab(fc->feature));
       ctx->old_history_frame = NULL;
       setDesiredColumn(*cursor, desired_column);
       gui_updateEDW(&ctx->gui_context);

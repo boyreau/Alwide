@@ -182,7 +182,7 @@ bool loadNewParser(ParserContainer* container, char* language) {
 }
 
 
-void setFileHighlightDatas(TS_Data* data, ft_LanguageFeature* feature) {
+void setFileHighlightDatas(TS_Data* data, LF_LanguageFeature* feature) {
   snprintf(data->lang_id, sizeof(data->lang_id), "%s", feature->id);
 
   ParserContainer* parser = getParserForLanguage(&parsers, data->lang_id);

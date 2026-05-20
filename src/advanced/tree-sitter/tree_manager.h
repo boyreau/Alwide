@@ -122,7 +122,7 @@ bool loadNewParser(ParserContainer* container, char* language);
 
 ////// ------------------- TREE UTILS -------------------
 
-void setFileHighlightDatas(TS_Data* data, ft_LanguageFeature* feature);
+void setFileHighlightDatas(TS_Data* data, LF_LanguageFeature* feature);
 
 void onStateChangeTS(Action action, TS_Data* data);
 

@@ -24,7 +24,7 @@ typedef struct {
   History* history_frame;      // Current node of the History. Before -> Undo, After -> Redo.
   TS_Data highlight_data;      // Object which represent the highlight_data of the current file.
   LSP_Data lsp_datas;          // Object which contain all the datas of lsp.
-  ft_LanguageFeature* feature; // Language feature config detected for this file (tabs, pairs, LSP, comments).
+  LF_LanguageFeature* feature; // Language feature config detected for this file (tabs, pairs, LSP, comments).
 } FileContainer;
 
 typedef struct {
@@ -46,14 +46,14 @@ void openNewFile(char* file_path, FileContainer** files, int* file_count, int* c
 
 void closeFile(FileContainer** files, int* file_count, int* current_file, bool* refresh_local_vars);
 
-Cursor createRoot(IO_FileID file, ft_Tabulation* tab);
+Cursor createRoot(IO_FileID file, LF_Tabulation* tab);
 
 void setupFileContainer(char* args, FileContainer* container);
 
 void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file, FileNode*** root, Cursor** cursor,
                     Cursor** select_cursor, Cursor** old_cur, int** desired_column, int** screen_x, int** screen_y,
                     int** old_screen_x, int** old_screen_y, History*** history_root, History*** history_frame,
-                    TS_Data** highlight_data, LSP_Data** lsp_datas, ft_LanguageFeature** feature);
+                    TS_Data** highlight_data, LSP_Data** lsp_datas, LF_LanguageFeature** feature);
 
 bool isFileContainerEmpty(FileContainer* container);
 
@@ -80,9 +80,9 @@ Cursor skipLeftInvisibleChar(Cursor cursor);
 Cursor moveToNextWord(Cursor cursor);
 Cursor moveToPreviousWord(Cursor cursor);
 
-Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, ft_Tabulation* tab);
+Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, LF_Tabulation* tab);
 Cursor insertCharArrayAtCursorWithState(History** history_p, Cursor cursor, char* chs,
-                                       PayloadStateChange payload_state_change, ft_Tabulation* tab);
+                                       PayloadStateChange payload_state_change, LF_Tabulation* tab);
 
 Cursor byteCursorToCursor(Cursor cursor, int row, int byte_column);
 

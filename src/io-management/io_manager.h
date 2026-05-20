@@ -18,9 +18,9 @@ typedef struct {
   char path_args[PATH_MAX];
 } IO_FileID;
 
-Cursor initWrittableFileFromFile(char* fileName, ft_Tabulation* tab);
+Cursor initWrittableFileFromFile(char* fileName, LF_Tabulation* tab);
 
-bool loadFile(Cursor cursor, char* fileName, ft_Tabulation* tab);
+bool loadFile(Cursor cursor, char* fileName, LF_Tabulation* tab);
 
 void saveFile(FileNode* root, IO_FileID* file);
 

@@ -8,12 +8,12 @@
 #include "../utils/tools.h"
 #include "config.h"
 
-void initLanguageFeatureList(ft_LanguageFeatureList* list) {
+void initLanguageFeatureList(LF_LanguageFeatureList* list) {
   list->list = NULL;
   list->size = 0;
 }
 
-static ft_LanguageFeature default_feature = {
+static LF_LanguageFeature default_feature = {
   .id = "plain",
   .label = "Plain Text",
   .detect = {.extensions = NULL, .extensions_count = 0, .filenames = NULL, .filenames_count = 0, .shebangs = NULL, .shebangs_count = 0},
@@ -55,7 +55,7 @@ static void* parseStringArrayDynamic(cJSON* array, int* count, int item_len) {
   return dest;
 }
 
-void ft_loadLanguageFeatures() {
+void LF_loadLanguageFeatures() {
   const char* home = getenv("HOME");
   if (!home) {
     return;
@@ -83,11 +83,11 @@ void ft_loadLanguageFeatures() {
   }
 
   language_features.size = cJSON_GetArraySize(json);
-  language_features.list = malloc(sizeof(ft_LanguageFeature) * language_features.size);
+  language_features.list = malloc(sizeof(LF_LanguageFeature) * language_features.size);
 
   for (int i = 0; i < language_features.size; i++) {
     cJSON* lang_json = cJSON_GetArrayItem(json, i);
-    ft_LanguageFeature* lang = &language_features.list[i];
+    LF_LanguageFeature* lang = &language_features.list[i];
 
     const char* id_val = cJSON_GetStringValue(cJSON_GetObjectItem(lang_json, "id"));
     if (id_val) {
@@ -106,9 +106,9 @@ void ft_loadLanguageFeatures() {
     }
 
     cJSON* detect = cJSON_GetObjectItem(lang_json, "detect");
-    lang->detect.extensions = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "extensions"), &lang->detect.extensions_count, FT_EXTENSION_MAX_LENGTH);
-    lang->detect.filenames = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "file-name"), &lang->detect.filenames_count, FT_FILENAME_MAX_LENGTH);
-    lang->detect.shebangs = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "shebang"), &lang->detect.shebangs_count, FT_SHEBANG_MAX_LENGTH);
+    lang->detect.extensions = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "extensions"), &lang->detect.extensions_count, LF_EXTENSION_MAX_LENGTH);
+    lang->detect.filenames = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "file-name"), &lang->detect.filenames_count, LF_FILENAME_MAX_LENGTH);
+    lang->detect.shebangs = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "shebang"), &lang->detect.shebangs_count, LF_SHEBANG_MAX_LENGTH);
 
     cJSON* comments = cJSON_GetObjectItem(lang_json, "comments");
     const char* line_val = cJSON_GetStringValue(cJSON_GetObjectItem(comments, "line"));
@@ -149,7 +149,7 @@ void ft_loadLanguageFeatures() {
     int pairs_size = cJSON_GetArraySize(pairs_arr);
     lang->pairs_count = pairs_size;
     if (pairs_size > 0) {
-      lang->pairs = malloc(sizeof(ft_Pair) * pairs_size);
+      lang->pairs = malloc(sizeof(LF_Pair) * pairs_size);
       if (lang->pairs) {
         for (int j = 0; j < pairs_size; j++) {
           cJSON* pair = cJSON_GetArrayItem(pairs_arr, j);
@@ -208,7 +208,7 @@ void ft_loadLanguageFeatures() {
   cJSON_Delete(json);
 }
 
-ft_LanguageFeature* ft_getFeatureById(const char* id) {
+LF_LanguageFeature* LF_getFeatureById(const char* id) {
   if (id) {
     for (int i = 0; i < language_features.size; i++) {
       if (strcmp(language_features.list[i].id, id) == 0) {
@@ -219,9 +219,9 @@ ft_LanguageFeature* ft_getFeatureById(const char* id) {
   return &default_feature;
 }
 
-ft_LanguageFeature* ft_getFeatureForFile(const char* filepath) {
+LF_LanguageFeature* LF_getFeatureForFile(const char* filepath) {
   if (!filepath) {
-    return ft_getFeatureById("plain");
+    return LF_getFeatureById("plain");
   }
 
   char first_line[256] = {0};
@@ -233,38 +233,38 @@ ft_LanguageFeature* ft_getFeatureForFile(const char* filepath) {
     fclose(f);
   }
 
-  const char* detected = ft_detectLanguage(filepath, first_line);
-  return ft_getFeatureById(detected);
+  const char* detected = LF_detectLanguage(filepath, first_line);
+  return LF_getFeatureById(detected);
 }
 
-ft_Tabulation* ft_tab(ft_LanguageFeature* ft) { return &ft->tabulation; }
+LF_Tabulation* LF_tab(LF_LanguageFeature* ft) { return &ft->tabulation; }
 
-int ft_tab_size(ft_LanguageFeature* ft) { return ft->tabulation.size; }
+int LF_tab_size(LF_LanguageFeature* ft) { return ft->tabulation.size; }
 
-bool ft_tab_use_space(ft_LanguageFeature* ft) { return ft->tabulation.use_space; }
+bool LF_tab_use_space(LF_LanguageFeature* ft) { return ft->tabulation.use_space; }
 
-const char* ft_id(ft_LanguageFeature* ft) { return ft->id; }
+const char* LF_id(LF_LanguageFeature* ft) { return ft->id; }
 
-const char* ft_label(ft_LanguageFeature* ft) { return ft->label; }
+const char* LF_label(LF_LanguageFeature* ft) { return ft->label; }
 
-const char* ft_comment_line(ft_LanguageFeature* ft) { return ft->comments.line; }
+const char* LF_comment_line(LF_LanguageFeature* ft) { return ft->comments.line; }
 
-const char* ft_comment_block_start(ft_LanguageFeature* ft) { return ft->comments.block_start; }
+const char* LF_comment_block_start(LF_LanguageFeature* ft) { return ft->comments.block_start; }
 
-const char* ft_comment_block_end(ft_LanguageFeature* ft) { return ft->comments.block_end; }
+const char* LF_comment_block_end(LF_LanguageFeature* ft) { return ft->comments.block_end; }
 
-int ft_pairs_count(ft_LanguageFeature* ft) { return ft->pairs_count; }
+int LF_pairs_count(LF_LanguageFeature* ft) { return ft->pairs_count; }
 
-ft_Pair* ft_pair(ft_LanguageFeature* ft, int index) {
+LF_Pair* LF_pair(LF_LanguageFeature* ft, int index) {
   if (index < 0 || index >= ft->pairs_count) return NULL;
   return &ft->pairs[index];
 }
 
-const char* ft_lsp_exe(ft_LanguageFeature* ft) { return ft->lsp.exe; }
+const char* LF_lsp_exe(LF_LanguageFeature* ft) { return ft->lsp.exe; }
 
-const char* ft_lsp_args(ft_LanguageFeature* ft) { return ft->lsp.arguments; }
+const char* LF_lsp_args(LF_LanguageFeature* ft) { return ft->lsp.arguments; }
 
-const char* ft_detectLanguage(const char* filepath, const char* first_line) {
+const char* LF_detectLanguage(const char* filepath, const char* first_line) {
   if (!filepath) {
     return NULL;
   }
@@ -276,7 +276,7 @@ const char* ft_detectLanguage(const char* filepath, const char* first_line) {
   const char* found_id = NULL;
 
   for (int i = 0; i < language_features.size; i++) {
-    ft_LanguageFeature* lang = &language_features.list[i];
+    LF_LanguageFeature* lang = &language_features.list[i];
 
     // 1. Match filenames
     for (int j = 0; j < lang->detect.filenames_count; j++) {
@@ -312,7 +312,7 @@ cleanup:
   return found_id;
 }
 
-void destroyLanguageFeatureList(ft_LanguageFeatureList* list) {
+void destroyLanguageFeatureList(LF_LanguageFeatureList* list) {
   if (!list || !list->list) {
     return;
   }

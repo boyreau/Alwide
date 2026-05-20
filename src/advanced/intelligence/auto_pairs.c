@@ -20,7 +20,7 @@ bool ilj_handleAutoPairs(FileContainer* fc, Char_U8 input, History** history_p,
   }
 
   for (int i = 0; i < fc->feature->pairs_count; i++) {
-    ft_Pair* pair = &fc->feature->pairs[i];
+    LF_Pair* pair = &fc->feature->pairs[i];
     Char_U8 close_u8 = readChar_U8FromCharArray(pair->close);
     if (areChar_U8Equals(input, close_u8) && areChar_U8Equals(input, current_ch)) {
       fc->cursor = moveRight(fc->cursor);
@@ -30,7 +30,7 @@ bool ilj_handleAutoPairs(FileContainer* fc, Char_U8 input, History** history_p,
 
   // 2. Check for inserting an opening character
   for (int i = 0; i < fc->feature->pairs_count; i++) {
-    ft_Pair* pair = &fc->feature->pairs[i];
+    LF_Pair* pair = &fc->feature->pairs[i];
     Char_U8 open_u8 = readChar_U8FromCharArray(pair->open);
 
     if (areChar_U8Equals(input, open_u8)) {
@@ -39,7 +39,7 @@ bool ilj_handleAutoPairs(FileContainer* fc, Char_U8 input, History** history_p,
       strcat(combined, pair->close);
 
       fc->cursor =
-        insertCharArrayAtCursorWithState(history_p, fc->cursor, combined, payload_state_change, ft_tab(fc->feature));
+        insertCharArrayAtCursorWithState(history_p, fc->cursor, combined, payload_state_change, LF_tab(fc->feature));
 
       // Move cursor back one position to be between the pairs
       fc->cursor = moveLeft(fc->cursor);
@@ -67,7 +67,7 @@ bool ilj_handleAutoPairDelete(FileContainer* fc, History** history_p, PayloadSta
 
   // Check if left_ch / right_ch match any configured open/close pair.
   for (int i = 0; i < fc->feature->pairs_count; i++) {
-    ft_Pair* pair = &fc->feature->pairs[i];
+    LF_Pair* pair = &fc->feature->pairs[i];
     Char_U8 open_u8 = readChar_U8FromCharArray(pair->open);
     Char_U8 close_u8 = readChar_U8FromCharArray(pair->close);
 

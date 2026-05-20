@@ -11,7 +11,7 @@ extern cJSON* config;
 extern ParserList parsers;
 extern LSPServerLinkedList lsp_servers;
 extern WorkspaceSettings workspace_settings;
-extern ft_LanguageFeatureList language_features;
+extern LF_LanguageFeatureList language_features;
 
 
 #endif // WISHWIM_GLOBALS_H

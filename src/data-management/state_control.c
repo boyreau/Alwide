@@ -17,7 +17,7 @@ void initHistory(History* history) {
 }
 
 Cursor undo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action action, Cursor* cursor, void* payload),
-            void* payload, ft_Tabulation* tab) {
+            void* payload, LF_Tabulation* tab) {
   History* history = *history_p;
 
   // If history is at root return and do nothing. Can't undo ;).
@@ -39,7 +39,7 @@ Cursor undo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action
 }
 
 Cursor redo(History** history_p, Cursor cursor, void (*onEachStateChange)(Action action, Cursor* cursor, void* payload),
-            void* payload, ft_Tabulation* tab) {
+            void* payload, LF_Tabulation* tab) {
   History* history = *history_p;
 
   // If history is at the end return and do nothing. Cannot redo nothing ;).
@@ -95,7 +95,7 @@ void saveAction(History** history_p, Action action,
 
 Cursor doReverseAction(Action* action_p, Cursor cursor,
                        void (*onEachStateChange)(Action action, Cursor* cursor, void* payload), void* payload,
-                       ft_Tabulation* tabulation) {
+                       LF_Tabulation* tabulation) {
   Action action = *action_p;
   Cursor tmp;
   Cursor tmp_end;

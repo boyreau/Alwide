@@ -111,7 +111,7 @@ void ilj_toggleComments(FileContainer* fc, History** history_frame, PayloadState
       if (!empty || start_row == end_row) {
         Cursor insert_pos = tryToReachAbsPosition(it, r, indent);
         insert_pos = insertCharArrayAtCursorWithState(history_frame, insert_pos, (char*)prefix, *payload_state_change,
-                                                    ft_tab(fc->feature));
+                                                    LF_tab(fc->feature));
 
       }
     }

@@ -10,7 +10,7 @@
 #include "../../utils/tools.h"
 
 
-void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file, ft_LanguageFeature* feature) {
+void setLspDatas(LSP_Data* lsp_data, IO_FileID io_file, LF_LanguageFeature* feature) {
   snprintf(lsp_data->lang_id, sizeof(lsp_data->lang_id), "%s", feature->id);
 
   LSP_Server* lsp_server = getLSPServerForLanguage(&lsp_servers, lsp_data->lang_id);
@@ -114,7 +114,7 @@ void addLSPServerCellToLSPServerList(LSPServerLinkedList* list, LSPServerLinkedL
 }
 
 bool getProgName(char* language, char* prog_name, char* args) {
-  ft_LanguageFeature* feature = ft_getFeatureById(language);
+  LF_LanguageFeature* feature = LF_getFeatureById(language);
   if (!feature || strlen(feature->lsp.exe) == 0) {
     return false;
   }

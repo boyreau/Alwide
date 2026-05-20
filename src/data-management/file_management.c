@@ -84,7 +84,7 @@ void closeFile(FileContainer** files, int* file_count, int* current_file, bool* 
   *refresh_local_vars = true;
 }
 
-Cursor createRoot(IO_FileID file, ft_Tabulation* tab) {
+Cursor createRoot(IO_FileID file, LF_Tabulation* tab) {
   if (file.status == EXIST) {
     return initWrittableFileFromFile(file.path_abs, tab);
   }
@@ -100,12 +100,12 @@ void setupFileContainer(char* path, FileContainer* container) {
   container->history_root = malloc(sizeof(History));
   container->history_frame = container->history_root;
 
-  container->feature = ft_getFeatureForFile(container->io_file.path_abs);
+  container->feature = LF_getFeatureForFile(container->io_file.path_abs);
 
   setFileHighlightDatas(&container->highlight_data, container->feature);
   setLspDatas(&container->lsp_datas, container->io_file, container->feature);
 
-  container->cursor = createRoot(container->io_file, ft_tab(container->feature));
+  container->cursor = createRoot(container->io_file, LF_tab(container->feature));
   container->select_cursor = cursor_disable(container->cursor);
   setDesiredColumn(container->cursor, &container->desired_column);
 
@@ -120,7 +120,7 @@ void setupFileContainer(char* path, FileContainer* container) {
 void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file, FileNode*** root, Cursor** cursor,
                     Cursor** select_cursor, Cursor** old_cur, int** desired_column, int** screen_x, int** screen_y,
                     int** old_screen_x, int** old_screen_y, History*** history_root, History*** history_frame,
-                    TS_Data** highlight_data, LSP_Data** lsp_datas, ft_LanguageFeature** feature) {
+                    TS_Data** highlight_data, LSP_Data** lsp_datas, LF_LanguageFeature** feature) {
   *io_file = &files[current_file].io_file;               // Describe the IO file on OS
   *root = &files[current_file].root;                     // The root of the File object
   *cursor = &files[current_file].cursor;                 // The current cursor for the root File
@@ -129,14 +129,16 @@ void setupLocalVars(FileContainer* files, int current_file, IO_FileID** io_file,
   *desired_column = &files[current_file].desired_column; // Used on line change to try to reach column
   *screen_x = &files[current_file].screen_x; // The x coord of the top left corner of the current viewport of the file
   *screen_y = &files[current_file].screen_y; // The y coord of the top left corner of the current viewport of the file
-  *old_screen_x = &files[current_file].old_screen_x;     // old screen_x used to flag screen_x changes
-  *old_screen_y = &files[current_file].old_screen_y;     // old screen_y used to flag screen_y changes
-  *history_root = &files[current_file].history_root;     // Root of History object for the current File
-  *history_frame = &files[current_file].history_frame;   // Current node of the History. Before -> Undo, After -> Redo.
-  *highlight_data = &files[current_file].highlight_data; // Object which represent the highlight data of the current file.
-  **old_screen_y = -1;                                   // Reset old_screen_y to force a viewport diff on next render.
-  *lsp_datas = &files[current_file].lsp_datas;           // Object which contains all the data of the active LSP server.
-  *feature = files[current_file].feature;                // Language feature config detected for this file (tabs, pairs, LSP, comments).
+  *old_screen_x = &files[current_file].old_screen_x;   // old screen_x used to flag screen_x changes
+  *old_screen_y = &files[current_file].old_screen_y;   // old screen_y used to flag screen_y changes
+  *history_root = &files[current_file].history_root;   // Root of History object for the current File
+  *history_frame = &files[current_file].history_frame; // Current node of the History. Before -> Undo, After -> Redo.
+  *highlight_data =
+    &files[current_file].highlight_data;       // Object which represent the highlight data of the current file.
+  **old_screen_y = -1;                         // Reset old_screen_y to force a viewport diff on next render.
+  *lsp_datas = &files[current_file].lsp_datas; // Object which contains all the data of the active LSP server.
+  *feature =
+    files[current_file].feature; // Language feature config detected for this file (tabs, pairs, LSP, comments).
 }
 
 
@@ -342,7 +344,7 @@ Cursor moveToPreviousWord(Cursor cursor) {
   return cursor;
 }
 
-Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, ft_Tabulation* tab) {
+Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, LF_Tabulation* tab) {
   // Duplicated search in project DUP_SCAN.
 
   int index = 0;
@@ -398,7 +400,7 @@ Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, ft_Tabulation* tab) {
 }
 
 Cursor insertCharArrayAtCursorWithState(History** history_p, Cursor cursor, char* chs,
-                                       PayloadStateChange payload_state_change, ft_Tabulation* tab) {
+                                        PayloadStateChange payload_state_change, LF_Tabulation* tab) {
   Cursor tmp = cursor;
   cursor = insertCharArrayAtCursor(cursor, chs, tab);
   saveAction(history_p, createInsertAction(tmp, cursor_to_desc(cursor)), globalOnStageChange, &cursor,
