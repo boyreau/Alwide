@@ -16,7 +16,12 @@ void initLanguageFeatureList(LF_LanguageFeatureList* list) {
 static LF_LanguageFeature default_feature = {
   .id = "plain",
   .label = "Plain Text",
-  .detect = {.extensions = NULL, .extensions_count = 0, .filenames = NULL, .filenames_count = 0, .shebangs = NULL, .shebangs_count = 0},
+  .detect = {.extensions = NULL,
+             .extensions_count = 0,
+             .filenames = NULL,
+             .filenames_count = 0,
+             .shebangs = NULL,
+             .shebangs_count = 0},
   .comments = {.line = "//", .block_start = "/*", .block_end = "*/"}, // Reasonable defaults
   .tabulation = {.size = 2, .use_space = true},
   .pairs_count = 0,
@@ -93,7 +98,8 @@ void LF_loadLanguageFeatures() {
     if (id_val) {
       strncpy(lang->id, id_val, sizeof(lang->id) - 1);
       lang->id[sizeof(lang->id) - 1] = '\0';
-    } else {
+    }
+    else {
       lang->id[0] = '\0';
     }
 
@@ -101,21 +107,26 @@ void LF_loadLanguageFeatures() {
     if (label_val) {
       strncpy(lang->label, label_val, sizeof(lang->label) - 1);
       lang->label[sizeof(lang->label) - 1] = '\0';
-    } else {
+    }
+    else {
       lang->label[0] = '\0';
     }
 
     cJSON* detect = cJSON_GetObjectItem(lang_json, "detect");
-    lang->detect.extensions = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "extensions"), &lang->detect.extensions_count, LF_EXTENSION_MAX_LENGTH);
-    lang->detect.filenames = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "file-name"), &lang->detect.filenames_count, LF_FILENAME_MAX_LENGTH);
-    lang->detect.shebangs = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "shebang"), &lang->detect.shebangs_count, LF_SHEBANG_MAX_LENGTH);
+    lang->detect.extensions = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "extensions"),
+                                                      &lang->detect.extensions_count, LF_EXTENSION_MAX_LENGTH);
+    lang->detect.filenames = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "file-name"),
+                                                     &lang->detect.filenames_count, LF_FILENAME_MAX_LENGTH);
+    lang->detect.shebangs = parseStringArrayDynamic(cJSON_GetObjectItem(detect, "shebang"),
+                                                    &lang->detect.shebangs_count, LF_SHEBANG_MAX_LENGTH);
 
     cJSON* comments = cJSON_GetObjectItem(lang_json, "comments");
     const char* line_val = cJSON_GetStringValue(cJSON_GetObjectItem(comments, "line"));
     if (line_val) {
       strncpy(lang->comments.line, line_val, sizeof(lang->comments.line) - 1);
       lang->comments.line[sizeof(lang->comments.line) - 1] = '\0';
-    } else {
+    }
+    else {
       lang->comments.line[0] = '\0';
     }
 
@@ -126,13 +137,15 @@ void LF_loadLanguageFeatures() {
       if (bstart) {
         strncpy(lang->comments.block_start, bstart, sizeof(lang->comments.block_start) - 1);
         lang->comments.block_start[sizeof(lang->comments.block_start) - 1] = '\0';
-      } else {
+      }
+      else {
         lang->comments.block_start[0] = '\0';
       }
       if (bend) {
         strncpy(lang->comments.block_end, bend, sizeof(lang->comments.block_end) - 1);
         lang->comments.block_end[sizeof(lang->comments.block_end) - 1] = '\0';
-      } else {
+      }
+      else {
         lang->comments.block_end[0] = '\0';
       }
     }
@@ -155,23 +168,26 @@ void LF_loadLanguageFeatures() {
           cJSON* pair = cJSON_GetArrayItem(pairs_arr, j);
           const char* open_val = cJSON_GetStringValue(cJSON_GetArrayItem(pair, 0));
           const char* close_val = cJSON_GetStringValue(cJSON_GetArrayItem(pair, 1));
-          
+
           if (open_val) {
             strncpy(lang->pairs[j].open, open_val, sizeof(lang->pairs[j].open) - 1);
             lang->pairs[j].open[sizeof(lang->pairs[j].open) - 1] = '\0';
-          } else {
+          }
+          else {
             lang->pairs[j].open[0] = '\0';
           }
 
           if (close_val) {
             strncpy(lang->pairs[j].close, close_val, sizeof(lang->pairs[j].close) - 1);
             lang->pairs[j].close[sizeof(lang->pairs[j].close) - 1] = '\0';
-          } else {
+          }
+          else {
             lang->pairs[j].close[0] = '\0';
           }
         }
       }
-    } else {
+    }
+    else {
       lang->pairs = NULL;
     }
 
@@ -180,7 +196,8 @@ void LF_loadLanguageFeatures() {
     if (exe_val) {
       strncpy(lang->lsp.exe, exe_val, sizeof(lang->lsp.exe) - 1);
       lang->lsp.exe[sizeof(lang->lsp.exe) - 1] = '\0';
-    } else {
+    }
+    else {
       lang->lsp.exe[0] = '\0';
     }
 
@@ -256,7 +273,9 @@ const char* LF_comment_block_end(LF_LanguageFeature* ft) { return ft->comments.b
 int LF_pairs_count(LF_LanguageFeature* ft) { return ft->pairs_count; }
 
 LF_Pair* LF_pair(LF_LanguageFeature* ft, int index) {
-  if (index < 0 || index >= ft->pairs_count) return NULL;
+  if (index < 0 || index >= ft->pairs_count) {
+    return NULL;
+  }
   return &ft->pairs[index];
 }
 

@@ -325,7 +325,12 @@ LSP_Range LSP_range_from_cursor(int r1, int c1, int r2, int c2) {
 }
 
 
-int LSP_0_row_to_1_row(int lsp_row) { return lsp_row + 1; }
+int LSP_0_row_to_1_row(int lsp_row) {
+  if (lsp_row == INT_MAX) {
+    return INT_MAX;
+  }
+  return lsp_row + 1;
+}
 
 Cursor LSP_tryToReachCursorForLSPPosition(Cursor cursor, LSP_Position position) {
   return tryToReachAbsPosition(cursor, LSP_0_row_to_1_row(position.row), position.column);
