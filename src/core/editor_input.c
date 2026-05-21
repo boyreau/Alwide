@@ -10,6 +10,7 @@
 
 #include "../advanced/intelligence/auto_pairs.h"
 #include "../advanced/intelligence/comments.h"
+#include "../advanced/intelligence/indentation.h"
 #include "../advanced/lsp/lsp-features/lsp_completion.h"
 #include "../advanced/lsp/lsp-features/lsp_formatting.h"
 #include "../advanced/lsp/lsp-features/lsp_signature_help.h"
@@ -388,13 +389,22 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       gui_updateEDW(&ctx->gui_context);
       break;
     case KEY_TAB:
-      deleteSelectionWithState(history_frame, cursor, select_cursor, ctx->payload_state_change);
-      tmp = cursor_to_desc(*cursor);
-      handleTabInsertion(fc, cursor);
-      saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
-                 (long*)&ctx->payload_state_change);
-      setDesiredColumn(*cursor, desired_column);
-      askOnTypeFormatting(fc, "\t", &lsp_ctx);
+      if (!cursor_is_disabled(*select_cursor) && cursor->file_id.absolute_row != select_cursor->file_id.absolute_row) {
+        ilf_indentSelectedLines(fc, history_frame, &ctx->payload_state_change);
+        gui_updateEDW(&ctx->gui_context);
+      } else {
+        deleteSelectionWithState(history_frame, cursor, select_cursor, ctx->payload_state_change);
+        tmp = cursor_to_desc(*cursor);
+        handleTabInsertion(fc, cursor);
+        saveAction(history_frame, createInsertAction(*cursor, tmp), globalOnStageChange, cursor,
+                   (long*)&ctx->payload_state_change);
+        setDesiredColumn(*cursor, desired_column);
+        askOnTypeFormatting(fc, "\t", &lsp_ctx);
+      }
+      break;
+    case H_KEY_SHIFT_TAB:
+      ilf_deindentSelectedLines(fc, history_frame, &ctx->payload_state_change);
+      gui_updateEDW(&ctx->gui_context);
       break;
     case CTRL('d'):
       if (cursor_is_disabled(*select_cursor) == true) {

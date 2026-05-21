@@ -80,6 +80,11 @@ void ilj_toggleComments(FileContainer* fc, History** history_frame, PayloadState
     }
   }
 
+  int cursor_row = original_cursor.file_id.absolute_row;
+  int cursor_col = original_cursor.line_id.absolute_column;
+  int select_row = cursor_is_disabled(original_select) ? -1 : original_select.file_id.absolute_row;
+  int select_col = cursor_is_disabled(original_select) ? -1 : original_select.line_id.absolute_column;
+
   // 2. Apply change using high-level functions
   for (int r = start_row; r <= end_row; r++) {
     Cursor it = tryToReachAbsPosition(original_cursor, r, 0);
@@ -96,6 +101,22 @@ void ilj_toggleComments(FileContainer* fc, History** history_frame, PayloadState
         Cursor delete_start = tryToReachAbsPosition(it, r, indent);
         Cursor delete_end = tryToReachAbsPosition(it, r, indent + prefix_len);
         deleteSelectionWithState(history_frame, &delete_start, &delete_end, *payload_state_change);
+
+        // Adjust column position if cursor or selection was on this line
+        if (r == cursor_row) {
+          if (cursor_col >= indent + prefix_len) {
+            cursor_col -= prefix_len;
+          } else if (cursor_col > indent) {
+            cursor_col = indent;
+          }
+        }
+        if (r == select_row) {
+          if (select_col >= indent + prefix_len) {
+            select_col -= prefix_len;
+          } else if (select_col > indent) {
+            select_col = indent;
+          }
+        }
       }
     }
     else {
@@ -111,17 +132,36 @@ void ilj_toggleComments(FileContainer* fc, History** history_frame, PayloadState
       if (!empty || start_row == end_row) {
         Cursor insert_pos = tryToReachAbsPosition(it, r, indent);
         insert_pos = insertCharArrayAtCursorWithState(history_frame, insert_pos, (char*)prefix, *payload_state_change,
-                                                    LF_tab(fc->feature));
+                                                     LF_tab(fc->feature));
 
+        // Adjust column position if cursor or selection was on this line
+        if (r == cursor_row) {
+          if (cursor_col >= indent) {
+            cursor_col += prefix_len;
+          }
+        }
+        if (r == select_row) {
+          if (select_col >= indent) {
+            select_col += prefix_len;
+          }
+        }
       }
     }
   }
 
-  // Restore cursor/selection (they might have shifted, but absolute row/col should be mostly okay)
-  fc->cursor = tryToReachAbsPosition(original_cursor, original_cursor.file_id.absolute_row,
-                                     original_cursor.line_id.absolute_column);
+  // Restore cursor/selection
+  fc->cursor = tryToReachAbsPosition(original_cursor, cursor_row, cursor_col);
+  fc->desired_column = cursor_col;
+
   if (!cursor_is_disabled(original_select)) {
-    fc->select_cursor = tryToReachAbsPosition(original_cursor, original_select.file_id.absolute_row,
-                                              original_select.line_id.absolute_column);
+    fc->select_cursor = tryToReachAbsPosition(original_cursor, select_row, select_col);
+  }
+
+  // Jump to the line under if called on only one line
+  if (start_row == end_row) {
+    if (hasElementAfterFile(fc->cursor.file_id)) {
+      fc->cursor = moveDown(fc->cursor, fc->desired_column);
+      setSelectCursorOff(&fc->cursor, &fc->select_cursor, SELECT_OFF_RIGHT);
+    }
   }
 }
