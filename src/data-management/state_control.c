@@ -208,6 +208,12 @@ Action createDeleteAction(Cursor cur1, CursorDescriptor cur2_desc) {
 
 Action createInsertAction(Cursor cur1, CursorDescriptor cur2_desc) {
   Cursor cur2 = tryToReachAbsPosition(cur1, cur2_desc.row, cur2_desc.column);
+  if (cursor_eq(cur1, cur2)) {
+    Action action;
+    action.action = ACTION_NONE;
+    action.time = 0;
+    return action;
+  }
   Action action;
   action.action = INSERT;
   // Know that cur is the first cursor can be useful.
@@ -227,7 +233,9 @@ Action createInsertAction(Cursor cur1, CursorDescriptor cur2_desc) {
 }
 
 void destroyAction(Action action) {
-  assert(action.action != ACTION_NONE);
+  if (action.action == ACTION_NONE) {
+    return;
+  }
   free(action.ch);
 }
 
@@ -240,8 +248,9 @@ void destroyEndOfHistory(History* history) {
     History* tmp2 = history;
     history = history->next;
 
-    assert(tmp2->action.action != ACTION_NONE);
-    destroyAction(tmp2->action);
+    if (tmp2->action.action != ACTION_NONE) {
+      destroyAction(tmp2->action);
+    }
     free(tmp2);
   }
 
@@ -264,7 +273,7 @@ void saveCurrentStateControl(History root, History* current_state, char* fileNam
 
   FILE* f = fopen(fileStateControl, "w");
   if (f == NULL) {
-    printf("Impossible to save state control, couldn't open file %s.\r\n", fileStateControl);
+    fprintf(stderr, "Impossible to save state control, couldn't open file %s.\r\n", fileStateControl);
     return;
   }
 
@@ -379,8 +388,6 @@ void loadCurrentStateControl(History* root, History** current_state, IO_FileID i
       case ACTION_NONE:
         break;
       default:
-        printf("Current state : %c\r\n", isCurrentState);
-        printf("HERE %c\r\n", action.action);
         assert(false);
     }
 
