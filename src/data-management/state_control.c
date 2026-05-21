@@ -401,8 +401,9 @@ void loadCurrentStateControl(History* root, History** current_state, IO_FileID i
 void optimizeHistory(History* root, History** history_frame) {
   History* current = root;
 
-  while (current != NULL && current->next != NULL) {
+  while (current != NULL && current != *history_frame && current->next != NULL) {
     History* next = current->next;
+    bool merged = false;
     if (diff2Time(current->action.time, next->action.time) < TIME_CONSIDER_UNIQUE_UNDO && current != *history_frame) {
       bool is_pos_linked = false;
       switch (current->action.action) {
@@ -446,9 +447,14 @@ void optimizeHistory(History* root, History** history_frame) {
 
                 current->action.cur = next->action.cur;
                 current->action.time = next->action.time;
+                current->action.byte_start = next->action.byte_start;
                 current->next = next->next;
+                if (next->next != NULL) {
+                  next->next->prev = current;
+                }
                 destroyAction(next->action);
                 free(next);
+                merged = true;
               }
               break;
             default:
@@ -479,10 +485,14 @@ void optimizeHistory(History* root, History** history_frame) {
                 }
                 current->action.cur_end = next->action.cur_end;
                 current->action.time = next->action.time;
+                current->action.byte_end = next->action.byte_end;
                 current->next = next->next;
+                if (next->next != NULL) {
+                  next->next->prev = current;
+                }
                 destroyAction(next->action);
                 free(next);
-                return;
+                merged = true;
               }
               break;
 
@@ -495,7 +505,9 @@ void optimizeHistory(History* root, History** history_frame) {
           break;
       }
     }
-    current = current->next;
+    if (!merged) {
+      current = current->next;
+    }
   }
 }
 
