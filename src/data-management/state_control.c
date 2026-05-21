@@ -398,117 +398,143 @@ void loadCurrentStateControl(History* root, History** current_state, IO_FileID i
 /*
  * Replace multiple delete or multiple insert by one big insert and one big delete.
  */
+/*
+ * Checks if the doubly-linked history list is structurally sound.
+ */
+static bool checkHistoryIntegrity(History* root) {
+  History* current = root;
+  while (current != NULL) {
+    if (current->next != NULL) {
+      if (current->next->prev != current) {
+        return false;
+      }
+    }
+    current = current->next;
+  }
+  return true;
+}
+
+/*
+ * Checks if two deletion actions are contiguous and can be merged.
+ */
+static bool canMergeDeletes(const Action* current, const Action* next) {
+  if (next->action != DELETE_ONE) {
+    return false;
+  }
+
+  // We do not want to join/merge when a newline character is deleted.
+  if (next->unique_ch == '\n') {
+    return false;
+  }
+
+  // Deletions must occur on the exact same row and be horizontally contiguous.
+  return (current->cur.row == next->cur.row &&
+          current->cur.column - 1 == next->cur.column);
+}
+
+/*
+ * Checks if two insertion actions are contiguous and can be merged.
+ */
+static bool canMergeInserts(const Action* current, const Action* next) {
+  if (next->action != INSERT) {
+    return false;
+  }
+
+  // We do not want to join/merge when a newline character is inserted.
+  if (next->unique_ch == '\n') {
+    return false;
+  }
+
+  // The end cursor of the current insertion must match the start of the next insertion.
+  return (current->cur_end.row == next->cur.row &&
+          current->cur_end.column == next->cur.column);
+}
+
+/*
+ * Merges the `next` deletion action into the `current` deletion action.
+ */
+static void mergeDeleteActions(Action* current, const Action* next) {
+  if (current->action == DELETE_ONE) {
+    current->action = DELETE;
+    current->ch = malloc(3 * sizeof(char));
+    current->ch[0] = next->unique_ch;
+    current->ch[1] = current->unique_ch;
+    current->ch[2] = '\0';
+  } else {
+    int old_size = strlen(current->ch);
+    current->ch = realloc(current->ch, (old_size + 2) * sizeof(char));
+    memmove(current->ch + 1, current->ch, old_size);
+    current->ch[0] = next->unique_ch;
+    current->ch[old_size + 1] = '\0';
+  }
+
+  current->cur = next->cur;
+  current->time = next->time;
+  current->byte_start = next->byte_start;
+}
+
+/*
+ * Merges the `next` insertion action into the `current` insertion action.
+ */
+static void mergeInsertActions(Action* current, const Action* next) {
+  current->cur_end = next->cur_end;
+  current->time = next->time;
+  current->byte_end = next->byte_end;
+}
+
+/*
+ * Safely unlinks the `next` node from the history doubly-linked list,
+ * updates the `history_frame` reference if it was pointing to the removed node,
+ * destroys the action's resources, and frees the node's memory.
+ */
+static void unlinkAndFreeNextNode(History* current, History* next, History** history_frame) {
+  if (next == *history_frame) {
+    *history_frame = current;
+  }
+
+  current->next = next->next;
+  if (next->next != NULL) {
+    next->next->prev = current;
+  }
+
+  destroyAction(next->action);
+  free(next);
+}
+
+/*
+ * Optimizes the undo/redo history by merging contiguous deletions and insertions.
+ */
 void optimizeHistory(History* root, History** history_frame) {
   History* current = root;
 
   while (current != NULL && current != *history_frame && current->next != NULL) {
     History* next = current->next;
     bool merged = false;
-    if (diff2Time(current->action.time, next->action.time) < TIME_CONSIDER_UNIQUE_UNDO && current != *history_frame) {
-      bool is_pos_linked = false;
-      switch (current->action.action) {
-        case DELETE:
-        case DELETE_ONE:
-          switch (next->action.action) {
-            case DELETE_ONE:
-              if (next->action.unique_ch == '\n') {
-                if (current->action.cur.column == 0 && next->action.cur.column == current->action.cur.row - 1) {
-                  // We may don't want to join when line is removed.
-                  is_pos_linked = false;
-                }
-              }
-              else {
-                if (current->action.cur.row == next->action.cur.row &&
-                    current->action.cur.column - 1 == next->action.cur.column) {
-                  is_pos_linked = true;
-                }
-              }
 
-              if (is_pos_linked) {
-                if (next == *history_frame) {
-                  *history_frame = current;
-                }
-
-                if (current->action.action == DELETE_ONE) {
-                  current->action.action = DELETE;
-                  current->action.ch = malloc(3 * sizeof(char));
-                  current->action.ch[0] = next->action.unique_ch;
-                  current->action.ch[1] = current->action.unique_ch;
-                  current->action.ch[2] = '\0';
-                }
-                else {
-                  int old_size = strlen(current->action.ch);
-                  current->action.ch =
-                    realloc(current->action.ch, (old_size + 2 /*new char and null char*/) * sizeof(char));
-                  memmove(current->action.ch + 1, current->action.ch, old_size);
-                  current->action.ch[0] = next->action.unique_ch;
-                  current->action.ch[old_size + 1] = '\0';
-                }
-
-                current->action.cur = next->action.cur;
-                current->action.time = next->action.time;
-                current->action.byte_start = next->action.byte_start;
-                current->next = next->next;
-                if (next->next != NULL) {
-                  next->next->prev = current;
-                }
-                destroyAction(next->action);
-                free(next);
-                merged = true;
-              }
-              break;
-            default:
-              break;
-          }
-          break;
-
-        case INSERT:
-          switch (next->action.action) {
-            case INSERT:
-              if (next->action.unique_ch == '\n') {
-                // TODO change condition
-                // if (history->action.cur.column == 0 && action.cur.column ==
-                // history->action.cur.row - 1) { We may don't want to join when line is removed.
-                // is_pos_linked = false;
-                // }
-              }
-              else {
-                if (current->action.cur_end.row == next->action.cur.row &&
-                    current->action.cur_end.column == next->action.cur.column) {
-                  is_pos_linked = true;
-                }
-              }
-
-              if (is_pos_linked) {
-                if (next == *history_frame) {
-                  *history_frame = current;
-                }
-                current->action.cur_end = next->action.cur_end;
-                current->action.time = next->action.time;
-                current->action.byte_end = next->action.byte_end;
-                current->next = next->next;
-                if (next->next != NULL) {
-                  next->next->prev = current;
-                }
-                destroyAction(next->action);
-                free(next);
-                merged = true;
-              }
-              break;
-
-            default:
-              break;
-          }
-          break;
-
-        default:
-          break;
+    // Check if the two consecutive actions occurred within the threshold time limit
+    if (diff2Time(current->action.time, next->action.time) < TIME_CONSIDER_UNIQUE_UNDO) {
+      if ((current->action.action == DELETE || current->action.action == DELETE_ONE) &&
+          canMergeDeletes(&current->action, &next->action)) {
+        
+        mergeDeleteActions(&current->action, &next->action);
+        unlinkAndFreeNextNode(current, next, history_frame);
+        merged = true;
+      }
+      else if (current->action.action == INSERT &&
+               canMergeInserts(&current->action, &next->action)) {
+        
+        mergeInsertActions(&current->action, &next->action);
+        unlinkAndFreeNextNode(current, next, history_frame);
+        merged = true;
       }
     }
+
     if (!merged) {
       current = current->next;
     }
   }
+
+  assert(checkHistoryIntegrity(root));
 }
 
 
