@@ -428,8 +428,7 @@ static bool canMergeDeletes(const Action* current, const Action* next) {
   }
 
   // Deletions must occur on the exact same row and be horizontally contiguous.
-  return (current->cur.row == next->cur.row &&
-          current->cur.column - 1 == next->cur.column);
+  return (current->cur.row == next->cur.row && current->cur.column - 1 == next->cur.column);
 }
 
 /*
@@ -446,8 +445,7 @@ static bool canMergeInserts(const Action* current, const Action* next) {
   }
 
   // The end cursor of the current insertion must match the start of the next insertion.
-  return (current->cur_end.row == next->cur.row &&
-          current->cur_end.column == next->cur.column);
+  return (current->cur_end.row == next->cur.row && current->cur_end.column == next->cur.column);
 }
 
 /*
@@ -460,7 +458,8 @@ static void mergeDeleteActions(Action* current, const Action* next) {
     current->ch[0] = next->unique_ch;
     current->ch[1] = current->unique_ch;
     current->ch[2] = '\0';
-  } else {
+  }
+  else {
     int old_size = strlen(current->ch);
     current->ch = realloc(current->ch, (old_size + 2) * sizeof(char));
     memmove(current->ch + 1, current->ch, old_size);
@@ -515,14 +514,13 @@ void optimizeHistory(History* root, History** history_frame) {
     if (diff2Time(current->action.time, next->action.time) < TIME_CONSIDER_UNIQUE_UNDO) {
       if ((current->action.action == DELETE || current->action.action == DELETE_ONE) &&
           canMergeDeletes(&current->action, &next->action)) {
-        
+
         mergeDeleteActions(&current->action, &next->action);
         unlinkAndFreeNextNode(current, next, history_frame);
         merged = true;
       }
-      else if (current->action.action == INSERT &&
-               canMergeInserts(&current->action, &next->action)) {
-        
+      else if (current->action.action == INSERT && canMergeInserts(&current->action, &next->action)) {
+
         mergeInsertActions(&current->action, &next->action);
         unlinkAndFreeNextNode(current, next, history_frame);
         merged = true;

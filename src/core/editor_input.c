@@ -301,7 +301,8 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
                  (long*)&ctx->payload_state_change);
       setDesiredColumn(*cursor, desired_column);
       break;
-    case 0x1F: // CTRL('/') or CTRL('_')
+    case H_KEY_CTRL_MAJ_SLASH:
+    case CTRL('_'):
       ilj_toggleComments(fc, history_frame, &ctx->payload_state_change);
       gui_updateEDW(&ctx->gui_context);
       break;

@@ -29,21 +29,24 @@ time_val timeInMilliseconds(void) {
 
 time_val diff2Time(time_val start, time_val end) {
   time_val diff = start - end;
-  if (diff < 0)
+  if (diff < 0) {
     return -diff;
+  }
   return diff;
 }
 
 
 int min(int a, int b) {
-  if (a < b)
+  if (a < b) {
     return a;
+  }
   return b;
 }
 
 int max(int a, int b) {
-  if (a > b)
+  if (a > b) {
     return a;
+  }
   return b;
 }
 
@@ -123,8 +126,9 @@ void encodeURI(const char* src, char* dest, size_t dest_size) {
       written++;
     }
     else {
-      if (written + 4 > dest_size)
+      if (written + 4 > dest_size) {
         break;
+      }
       sprintf(dest, "%%%02X", (unsigned char)*p);
       dest += 3;
       written += 3;
@@ -155,8 +159,9 @@ int hashString(unsigned char* str) {
   unsigned long hash = 5381;
   int c;
 
-  while ((c = *str++))
+  while ((c = *str++)) {
     hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+  }
 
   return (int)hash;
 }
@@ -189,8 +194,9 @@ int mkdir_p(const char* path, mode_t mode) {
 
   snprintf(tmp, sizeof(tmp), "%s", path);
   len = strlen(tmp);
-  if (tmp[len - 1] == '/')
+  if (tmp[len - 1] == '/') {
     tmp[len - 1] = '\0';
+  }
 
   for (p = tmp + 1; *p; p++) {
     if (*p == '/') {
@@ -209,7 +215,8 @@ int mkdir_p(const char* path, mode_t mode) {
   return 0;
 }
 
-void countStringFrame(char* ch, int length, int* current_row, int* current_column, int* screen_max_width, int tab_size) {
+void countStringFrame(char* ch, int length, int* current_row, int* current_column, int* screen_max_width,
+                      int tab_size) {
   assert(current_row != NULL);
   assert(current_column != NULL);
 
@@ -259,12 +266,15 @@ char* trim(char* ch) {
 }
 
 static int hex_to_int(char c) {
-  if (c >= '0' && c <= '9')
+  if (c >= '0' && c <= '9') {
     return c - '0';
-  if (c >= 'A' && c <= 'F')
+  }
+  if (c >= 'A' && c <= 'F') {
     return c - 'A' + 10;
-  if (c >= 'a' && c <= 'f')
+  }
+  if (c >= 'a' && c <= 'f') {
     return c - 'a' + 10;
+  }
   return -1;
 }
 
@@ -277,8 +287,9 @@ void decodeURI(const char* src, char* dest, size_t dest_size) {
     // Handle 'file:///path' (empty authority) vs 'file://localhost/path' (with authority)
     if (*p != '/') {
       const char* first_slash = strchr(p, '/');
-      if (first_slash)
+      if (first_slash) {
         p = first_slash;
+      }
     }
   }
 
