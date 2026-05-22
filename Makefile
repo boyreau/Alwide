@@ -39,7 +39,7 @@ SRC_MODULES= \
 	src/terminal/windows/edw.c \
 	src/terminal/windows/ofw.c \
 	src/terminal/windows/pow.c \
-	src/terminal/windows/toplevel_popup.c \
+	src/terminal/windows/tpw.c \
 	src/config/config.c \
 	src/config/language_feature.c \
 	src/io-management/workspace_settings.c \

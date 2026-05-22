@@ -36,7 +36,7 @@ bool handlePopupInput(EditorContext* ctx, int c, int hash) {
 
   gui_TPW* popup = ctx->gui_context.toplevel_popups;
   while (popup != NULL) {
-    if (popup->visible && popup->has_focus && popup->on_input) {
+    if (popup->visible && popup->on_input) {
       if (popup->on_input(popup, c, hash, popup->payload)) {
         return true;
       }

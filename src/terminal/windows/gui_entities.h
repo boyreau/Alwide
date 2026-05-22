@@ -17,7 +17,6 @@ struct gui_TPW {
   int height;        // Window height
   int width;         // Window width
   bool visible;      // Is the popup currently displayed
-  bool has_focus;    // Does this popup currently capture keyboard input
   bool strong_focus; // Does the popup need to be closed to allow lower level to get input.
 
   gui_TPW_paintCallback on_paint;     // Paint callback
