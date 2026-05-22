@@ -123,9 +123,8 @@ void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
 
   if (mouse_drag) {
     FileIdentifier new_file_id = tryToReachAbsRow(cursor->file_id, *screen_y + m_event->y - edws_offset_y);
-    LineIdentifier new_line_id =
-      getLineIdForScreenX(moduloLineIdentifierR(getLineForFileIdentifier(new_file_id), 0), *screen_x,
-                          m_event->x - edws_offset_x, LF_tab_size(file->feature));
+    LineIdentifier new_line_id = getLineIdForScreenX(moduloLineIdentifierR(getLineForFileIdentifier(new_file_id), 0),
+                                                     *screen_x, m_event->x - edws_offset_x, LF_tab_size(file->feature));
 
     if (cursor_is_disabled(*select_cursor) == false) {
       *cursor = cursorOf(new_file_id, new_line_id);
@@ -230,8 +229,7 @@ void handleEditorClick(GUIContext* gui_context, Cursor* cursor, Cursor* select_c
         else if (file->lsp_datas.computed->hover.size != 0) {
           // We resume the hover data previously fetched.
           ViewPort view_port = (ViewPort){.gui = gui_context, .screen_x = screen_x, .screen_y = screen_y};
-          gui_resumeHoverInformation(cursor, &view_port, &file->lsp_datas.computed->hover,
-                                     LF_tab_size(file->feature));
+          gui_resumeHoverInformation(cursor, &view_port, &file->lsp_datas.computed->hover, LF_tab_size(file->feature));
         }
       }
     }

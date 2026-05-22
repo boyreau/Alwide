@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <libgen.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,7 +31,10 @@ void gui_initGUIContext(GUIContext* gui_context) {
 void gui_initNCurses(GUIContext* gui_context) {
   set_escdelay(25);
   // Init ncurses
-  initscr();
+  if (initscr() == NULL) {
+    fprintf(stderr, "Error: Could not initialize ncurses. Check your terminal settings.\n");
+    exit(EXIT_FAILURE);
+  }
   gui_resizeFEW(gui_context, -1);
   gui_resizeEDW(gui_context, -1);
   gui_resizeOFW(gui_context);
@@ -46,31 +50,37 @@ void gui_initNCurses(GUIContext* gui_context) {
   // and https://lists.gnu.org/archive/html/bug-ncurses/2026-04/msg00009.html
   mouseinterval(1);
   mousemask(BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON2_PRESSED | BUTTON2_RELEASED | BUTTON3_PRESSED |
-                BUTTON3_RELEASED | BUTTON4_PRESSED | BUTTON5_PRESSED | BUTTON_SHIFT | BUTTON_CTRL | BUTTON_ALT |
-                REPORT_MOUSE_POSITION,
+              BUTTON3_RELEASED | BUTTON4_PRESSED | BUTTON5_PRESSED | BUTTON_SHIFT | BUTTON_CTRL | BUTTON_ALT |
+              REPORT_MOUSE_POSITION,
             NULL);
   timeout(100);
   printf("\033[?1003h\033[5 q"); // enable mouse tracking and beam cursor
   fflush(stdout);
   // Color setup
-  start_color();
-  // Default color.
-  init_extended_color(BG_COLOR_DEFAULT, 50, 50, 50);
-  init_extended_color(BG_COLOR_HOVER, 200, 200, 200);
-  init_extended_color(BG_COLOR_POPUP, 100, 100, 100);
-  init_extended_color(COLOR_CYAN, 100, 700, 650);
+  if (has_colors()) {
+    start_color();
+    use_default_colors();
 
-  init_extended_pair(DEFAULT_COLOR_PAIR, COLOR_WHITE, BG_COLOR_DEFAULT);
-  init_extended_pair(DEFAULT_COLOR_HOVER_PAIR, COLOR_WHITE, BG_COLOR_HOVER);
+    // Check if we can change colors. If not, we'll stick to default palette.
+    if (can_change_color()) {
+      init_extended_color(BG_COLOR_DEFAULT, 50, 50, 50);
+      init_extended_color(BG_COLOR_HOVER, 200, 200, 200);
+      init_extended_color(BG_COLOR_POPUP, 100, 100, 100);
+      init_extended_color(COLOR_CYAN, 100, 700, 650);
+    }
 
-  init_extended_pair(ERROR_COLOR_PAIR, COLOR_RED, BG_COLOR_POPUP);
-  init_extended_pair(ERROR_COLOR_HOVER_PAIR, COLOR_RED, BG_COLOR_HOVER);
+    init_extended_pair(DEFAULT_COLOR_PAIR, COLOR_WHITE, BG_COLOR_DEFAULT);
+    init_extended_pair(DEFAULT_COLOR_HOVER_PAIR, COLOR_WHITE, BG_COLOR_HOVER);
 
-  init_extended_pair(WARNING_COLOR_PAIR, COLOR_YELLOW, BG_COLOR_POPUP);
-  init_extended_pair(WARNING_COLOR_HOVER_PAIR, COLOR_YELLOW, BG_COLOR_HOVER);
+    init_extended_pair(ERROR_COLOR_PAIR, COLOR_RED, BG_COLOR_POPUP);
+    init_extended_pair(ERROR_COLOR_HOVER_PAIR, COLOR_RED, BG_COLOR_HOVER);
 
-  init_extended_pair(INFO_COLOR_PAIR, COLOR_CYAN, BG_COLOR_POPUP);
-  init_extended_pair(INFO_COLOR_HOVER_PAIR, COLOR_CYAN, BG_COLOR_HOVER);
+    init_extended_pair(WARNING_COLOR_PAIR, COLOR_YELLOW, BG_COLOR_POPUP);
+    init_extended_pair(WARNING_COLOR_HOVER_PAIR, COLOR_YELLOW, BG_COLOR_HOVER);
+
+    init_extended_pair(INFO_COLOR_PAIR, COLOR_CYAN, BG_COLOR_POPUP);
+    init_extended_pair(INFO_COLOR_HOVER_PAIR, COLOR_CYAN, BG_COLOR_HOVER);
+  }
 }
 
 void gui_setFocus(GUIContext* gui_context, WINDOW* w) { gui_context->focus_w = w; }
@@ -81,7 +91,7 @@ void gui_resetFocus(GUIContext* gui_context) { gui_context->focus_w = NULL; }
 
 
 void gui_repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highlight_descriptor, ExplorerFolder* explorer,
-                FileContainer* files, int file_count, int current_file) {
+                    FileContainer* files, int file_count, int current_file) {
   wnoutrefresh(stdscr);
   gui_repaintEDW(&gui_context->edw_context, files[current_file].cursor, files[current_file].select_cursor,
                  files[current_file].screen_x, files[current_file].screen_y, highlight_descriptor,
@@ -94,14 +104,14 @@ void gui_repaintGUI(GUIContext* gui_context, WindowHighlightDescriptor* highligh
 
 void gui_printChar_U8ToNcurses(WINDOW* w, Char_U8 ch) {
   int size = sizeChar_U8(ch);
-  for (int i = 0; i < size; i++) {
-    wprintw(w, "%c", ch.t[i]);
+  if (size > 0) {
+    waddnstr(w, ch.t, size);
   }
 }
 
 
 LineMarker gui_getMarkerForCurrentLine(int row, WindowHighlightDescriptor* highlight_descriptor, int whd_offset,
-                                   void** diagnostic) {
+                                       void** diagnostic) {
   LineMarker marker = LINE_MARKER_NONE;
   if (diagnostic != NULL) {
     *diagnostic = NULL;
@@ -152,20 +162,23 @@ void moveScreenToMatchCursor(GUIContext* context, Cursor cursor, int* screen_x, 
 
   if (cursor.file_id.absolute_row - (*screen_y + current_lines) + 1 >= 0) {
     *screen_y = cursor.file_id.absolute_row - current_lines + 2;
-    if (*screen_y < 1)
+    if (*screen_y < 1) {
       *screen_y = 1;
+    }
   }
   else if (cursor.file_id.absolute_row < *screen_y + 1) {
     *screen_y = cursor.file_id.absolute_row - 1;
-    if (*screen_y < 1)
+    if (*screen_y < 1) {
       *screen_y = 1;
+    }
   }
 
   int screen_x_wide_char = getScreenXForCursor(cursor, *screen_x, tab_size) + *screen_x;
   if (screen_x_wide_char - (*screen_x + current_columns - 8) >= 0) {
     *screen_x = screen_x_wide_char - current_columns + 8;
-    if (*screen_x < 1)
+    if (*screen_x < 1) {
       *screen_x = 1;
+    }
   }
   else if (screen_x_wide_char - 5 < *screen_x) {
     *screen_x = screen_x_wide_char - 5;
@@ -180,10 +193,12 @@ void centerCursorOnScreen(GUIContext* context, Cursor cursor, int* screen_x, int
   *screen_x = cursor.line_id.absolute_column - (COLS /*/ 2*/);
   *screen_y = cursor.file_id.absolute_row - (LINES / 2);
 
-  if (*screen_x < 1)
+  if (*screen_x < 1) {
     *screen_x = 1;
-  if (*screen_y < 1)
+  }
+  if (*screen_y < 1) {
     *screen_y = 1;
+  }
 
   // To match right for x.
   moveScreenToMatchCursor(context, cursor, screen_x, screen_y, tab_size);
@@ -197,7 +212,8 @@ int getScreenXForCursor(Cursor cursor, int screen_x, int tab_size) {
   int size;
 
 
-  if (cursor.line_id.absolute_column != 0 && (size = charPrintSize(getCharForLineIdentifier(cursor.line_id), tab_size)) >= 2) {
+  if (cursor.line_id.absolute_column != 0 &&
+      (size = charPrintSize(getCharForLineIdentifier(cursor.line_id), tab_size)) >= 2) {
     atAdd += size - 1;
   }
   cursor = moveLeft(cursor);
@@ -227,14 +243,16 @@ LineIdentifier getLineIdForScreenX(LineIdentifier line_id, int screen_x, int x_c
   while (hasElementAfterLine(line_id) == true && current_column <= x_click) {
     line_id = tryToReachAbsColumn(line_id, line_id.absolute_column + 1);
     int size = charPrintSize(getCharForLineIdentifier(line_id), tab_size);
-    if (size <= 0)
+    if (size <= 0) {
       size = 1; // TODO handle non UTF_8 char.
+    }
     current_column += size;
     x_el++;
   }
 
-  if (x_click >= current_column)
+  if (x_click >= current_column) {
     x_el++;
+  }
 
   return tryToReachAbsColumn(line_id, screen_x + x_el - 2);
 }
@@ -243,7 +261,8 @@ LineIdentifier getLineIdForScreenX(LineIdentifier line_id, int screen_x, int x_c
 void setDesiredColumn(Cursor cursor, int* desired_column) { *desired_column = cursor.line_id.absolute_column; }
 
 
-void printToWindow(WINDOW* w, char* ch, int length, int offset_x, int offset_y, int line_length, int max_line_number, int tab_size) {
+void printToWindow(WINDOW* w, char* ch, int length, int offset_x, int offset_y, int line_length, int max_line_number,
+                   int tab_size) {
   if (length == -1) {
     length = strlen(ch);
   }

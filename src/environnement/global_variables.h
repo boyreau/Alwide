@@ -3,8 +3,8 @@
 
 #include "../advanced/lsp/lsp_handler.h"
 #include "../advanced/tree-sitter/tree_manager.h"
-#include "../io-management/workspace_settings.h"
 #include "../config/language_feature.h"
+#include "../io-management/workspace_settings.h"
 
 
 extern cJSON* config;

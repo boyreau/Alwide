@@ -2,8 +2,8 @@
 #define FILE_MANAGER_H
 #include <linux/limits.h>
 
-#include "../data-management/file_structure.h"
 #include "../config/language_feature.h"
+#include "../data-management/file_structure.h"
 
 typedef enum {
   NONE,

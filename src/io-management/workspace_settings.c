@@ -34,8 +34,10 @@ void destroyWorkspaceSettings(WorkspaceSettings* settings) {
 }
 
 void touchDirSettingsFolder() {
-  const char *home = getenv("HOME");
-  if (!home) return;
+  const char* home = getenv("HOME");
+  if (!home) {
+    return;
+  }
   char command[PATH_MAX + 100];
   snprintf(command, sizeof(command), "mkdir -p \"%s/%s\"", home, CONFIG_FOLDER);
   system(command);
@@ -51,10 +53,13 @@ void saveWorkspaceSettings(char* dir_path, WorkspaceSettings* settings) {
 
   unsigned long long hash_dir_path = hashFileName(abs_dir_path);
 
-  const char *home = getenv("HOME");
-  if (!home) return;
+  const char* home = getenv("HOME");
+  if (!home) {
+    return;
+  }
 
-  snprintf(abs_dir_path, sizeof(abs_dir_path), "%s/%s/%s/%llu", home, CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
+  snprintf(abs_dir_path, sizeof(abs_dir_path), "%s/%s/%s/%llu", home, CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME,
+           hash_dir_path);
 
   FILE* f = fopen(abs_dir_path, "w");
   if (f == NULL) {
@@ -79,10 +84,13 @@ bool loadWorkspaceSettings(char* dir_path, WorkspaceSettings* settings) {
 
   unsigned long long hash_dir_path = hashFileName(abs_dir_path);
 
-  const char *home = getenv("HOME");
-  if (!home) return false;
+  const char* home = getenv("HOME");
+  if (!home) {
+    return false;
+  }
 
-  snprintf(abs_dir_path, sizeof(abs_dir_path), "%s/%s/%s/%llu", home, CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME, hash_dir_path);
+  snprintf(abs_dir_path, sizeof(abs_dir_path), "%s/%s/%s/%llu", home, CONFIG_FOLDER, FOLDER_DIR_SETTINGS_NAME,
+           hash_dir_path);
 
   FILE* f = fopen(abs_dir_path, "r");
   if (f == NULL) {

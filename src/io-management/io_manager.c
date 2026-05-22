@@ -133,18 +133,20 @@ void setupFile(char* path, IO_FileID* file) {
       char path_copy2[PATH_MAX];
       strncpy(path_copy1, path, PATH_MAX);
       strncpy(path_copy2, path, PATH_MAX);
-      
+
       char* dname = dirname(path_copy1);
       char* bname = basename(path_copy2);
-      
+
       char dir_abs[PATH_MAX];
       if (realpath(dname, dir_abs) != NULL) {
         snprintf(file->path_abs, PATH_MAX, "%s/%s", dir_abs, bname);
-      } else {
+      }
+      else {
         // Fallback
         if (path[0] == '/') {
           strncpy(file->path_abs, path, PATH_MAX);
-        } else {
+        }
+        else {
           char cwd[PATH_MAX];
           getcwd(cwd, sizeof(cwd));
           snprintf(file->path_abs, PATH_MAX, "%s/%s", cwd, path);
@@ -159,4 +161,3 @@ void setupFile(char* path, IO_FileID* file) {
     strcpy(file->path_abs, "untitled");
   }
 }
-

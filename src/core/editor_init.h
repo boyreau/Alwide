@@ -6,4 +6,4 @@
 void initDefaultContext(int file_count, EditorContext* ctx);
 void setupFileExplorer(EditorContext* ctx);
 
-#endif //ALWIDE_EDITOR_FILE_EXPLORER_H
+#endif // ALWIDE_EDITOR_FILE_EXPLORER_H

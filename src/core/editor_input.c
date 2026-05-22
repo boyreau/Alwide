@@ -392,7 +392,8 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
       if (!cursor_is_disabled(*select_cursor) && cursor->file_id.absolute_row != select_cursor->file_id.absolute_row) {
         ilf_indentSelectedLines(fc, history_frame, &ctx->payload_state_change);
         gui_updateEDW(&ctx->gui_context);
-      } else {
+      }
+      else {
         deleteSelectionWithState(history_frame, cursor, select_cursor, ctx->payload_state_change);
         tmp = cursor_to_desc(*cursor);
         handleTabInsertion(fc, cursor);

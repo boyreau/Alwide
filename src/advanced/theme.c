@@ -10,7 +10,7 @@ bool getThemeFromFile(char* file_name, HighlightThemeList* list) {
 
   FILE* f = fopen(file_name, "r");
   if (f == NULL) {
-    printf("Unable to open file %s.\n\r", file_name);
+    fprintf(stderr, "Unable to open file %s.\n\r", file_name);
     return false;
   }
 

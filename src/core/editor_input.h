@@ -1,7 +1,7 @@
 #ifndef WISHWIM_EDITOR_INPUT_H
 #define WISHWIM_EDITOR_INPUT_H
-#include "editor_context.h"
 #include "../advanced/lsp/lsp_dispatcher.h"
+#include "editor_context.h"
 
 
 bool handlePopupInput(EditorContext* ctx, int c, int hash);

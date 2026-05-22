@@ -336,7 +336,7 @@ bool cursor_is_between(Cursor c, Cursor cur1, Cursor cur2);
 /**
  * Text highlighting range check (Exclusive-Inclusive): (start, end].
  * Returns true if c is strictly greater than start AND less than or equal to end (after sorting).
- * This is specifically designed for buffer rendering/highlighting where a character at index i 
+ * This is specifically designed for buffer rendering/highlighting where a character at index i
  * is logically located at column i+1.
  */
 bool cursor_is_inside(Cursor c, Cursor start, Cursor end);

@@ -22,8 +22,9 @@ void initFolder(char* path, ExplorerFolder* folder) {
 int strcicmp(char const* a, char const* b) {
   for (;; a++, b++) {
     int d = tolower((unsigned char)*a) - tolower((unsigned char)*b);
-    if (d != 0 || !*a)
+    if (d != 0 || !*a) {
       return d;
+    }
   }
 }
 
@@ -45,8 +46,8 @@ void discoverFolder(ExplorerFolder* folder) {
           folder->folder_count++;
           ExplorerFolder* new_folders = realloc(folder->folders, sizeof(ExplorerFolder) * folder->folder_count);
           if (new_folders == NULL) {
-             folder->folder_count--;
-             continue; 
+            folder->folder_count--;
+            continue;
           }
           folder->folders = new_folders;
           // insert in alphabet order
@@ -83,8 +84,9 @@ void discoverFolder(ExplorerFolder* folder) {
 
 
 void destroyFolder(ExplorerFolder* folder) {
-  if (folder == NULL)
+  if (folder == NULL) {
     return;
+  }
 
   free(folder->files);
   for (int i = 0; i < folder->folder_count; i++) {

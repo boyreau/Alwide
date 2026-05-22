@@ -8,8 +8,10 @@
 #include "io_manager.h"
 
 void createConfigDir() {
-  const char *home = getenv("HOME");
-  if (!home) return;
+  const char* home = getenv("HOME");
+  if (!home) {
+    return;
+  }
   char command[PATH_MAX];
   snprintf(command, sizeof(command), "mkdir -p \"%s%s\"", home, FILE_HISTORY_PATH);
   system(command);
@@ -19,7 +21,7 @@ void createConfigDir() {
 void getLastFilePosition(char* fileName, int* row, int* column, int* screen_x, int* screen_y) {
   createConfigDir();
 
-  const char *home = getenv("HOME");
+  const char* home = getenv("HOME");
   if (!home) {
     *row = 1;
     *column = 0;
@@ -46,8 +48,10 @@ void getLastFilePosition(char* fileName, int* row, int* column, int* screen_x, i
 void setlastFilePosition(char* fileName, int row, int column, int screen_x, int screen_y) {
   createConfigDir();
 
-  const char *home = getenv("HOME");
-  if (!home) return;
+  const char* home = getenv("HOME");
+  if (!home) {
+    return;
+  }
 
   int path_len = 20 /* Size of str can contain int */ + strlen(home) + strlen(FILE_HISTORY_PATH);
   char path[path_len + 10];

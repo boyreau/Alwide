@@ -48,8 +48,9 @@ bool saveToClipBoard(Cursor begin, Cursor end) {
     return true;
   }
 
-  if (cursor_eq(begin, end))
+  if (cursor_eq(begin, end)) {
     return true;
+  }
 
   if (cursor_le(end, begin)) {
     Cursor tmp = end;

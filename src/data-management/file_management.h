@@ -82,7 +82,7 @@ Cursor moveToPreviousWord(Cursor cursor);
 
 Cursor insertCharArrayAtCursor(Cursor cursor, char* chs, LF_Tabulation* tab);
 Cursor insertCharArrayAtCursorWithState(History** history_p, Cursor cursor, char* chs,
-                                       PayloadStateChange payload_state_change, LF_Tabulation* tab);
+                                        PayloadStateChange payload_state_change, LF_Tabulation* tab);
 
 Cursor byteCursorToCursor(Cursor cursor, int row, int byte_column);
 

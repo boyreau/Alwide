@@ -138,7 +138,9 @@ bool loadNewParser(ParserContainer* container, char* language) {
   getTSLanguageFromString(&container->lang, language);
 
   if (container->lang == NULL) {
-    fprintf(stderr, "Language : '%s' wasn't implemented !\n", container->lang_id);
+    if (strcmp("plain", container->lang_id) != 0) {
+      fprintf(stderr, "Language : '%s' tree-sitter wasn't implemented !\n", container->lang_id);
+    }
     return false;
   }
 
@@ -227,8 +229,9 @@ const char* internalReaderForTree(void* payload, uint32_t byte_index, TSPoint po
 }
 
 void parseTree(FileNode** root, History** history_frame, TS_Data* highlight_data, History** old_history_frame) {
-  if (highlight_data->is_active == false)
+  if (highlight_data->is_active == false) {
     return;
+  }
 
   ParserContainer* parser = getParserForLanguage(&parsers, highlight_data->lang_id);
 
