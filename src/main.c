@@ -96,31 +96,8 @@ int main(int file_count, char** args) {
 
     //// ---- END background / delayed operations BLOCK ----
 
-    // if input is empty, execute nothing and read again
-    if (hash == ERR) {
-      goto read_input;
-    }
-
-    // if input is mouse, fetch and detect mouse event
-    if (hash == KEY_MOUSE) {
-      if (getmouse(&ctx.m_event) != OK) {
-        fprintf(stderr, "MOUVE_EVENT_NOT_OK !\r\n");
-        goto read_input;
-      }
-      detectComplexMouseEvents(&ctx.m_event);
-    }
-
-    // setup default loop end behavior
-    EventLoopAction loopEnd = EVENT_READ_INPUT;
-
-    // first dispatch input to popup.
-    bool has_popup_handle_input = handlePopupInput(&ctx, c, hash);
-
-    // if popup hasn't consumed the input execute global key handling
-    if (!has_popup_handle_input) {
-      loopEnd = runKeyHandler(&ctx, c, hash);
-    }
-
+    // dispatch and process input
+    EventLoopAction loopEnd = dispatchInput(&ctx, c, hash);
 
     // process the loop end behavior
     switch (loopEnd) {

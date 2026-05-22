@@ -5,7 +5,6 @@
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/ttydefaults.h>
 #include <time.h>
 
@@ -23,7 +22,6 @@
 #include "../terminal/windows/few.h"
 #include "../terminal/windows/ofw.h"
 #include "../terminal/windows/pow.h"
-#include "../terminal/windows/tpw.h"
 #include "../terminal/windows/popups/search_popup.h"
 #include "../utils/clipboard_manager.h"
 #include "../utils/key_management.h"
@@ -31,17 +29,35 @@
 #include "editor_lsp.h"
 
 
-bool handlePopupInput(EditorContext* ctx, int c, int hash) {
-  // Centralized Ctrl+Q to close any active toplevel popup
-  if (c == CTRL('q')) {
-    gui_TPW* popup = ctx->gui_context.toplevel_popups;
-    if (popup != NULL) {
-      gui_destroyToplevelPopup(&ctx->gui_context, popup);
-      gui_updateGUI(&ctx->gui_context);
-      return true;
-    }
+EventLoopAction dispatchInput(EditorContext* ctx, int c, int hash) {
+  // if input is empty, execute nothing and read again
+  if (hash == ERR) {
+    return EVENT_READ_INPUT;
   }
 
+  // if input is mouse, fetch and detect mouse event
+  if (hash == KEY_MOUSE) {
+    if (getmouse(&ctx->m_event) != OK) {
+      fprintf(stderr, "MOUVE_EVENT_NOT_OK !\r\n");
+      return EVENT_READ_INPUT;
+    }
+    detectComplexMouseEvents(&ctx->m_event);
+  }
+
+  EventLoopAction loopEnd = EVENT_READ_INPUT;
+  if (runInternalLogic(ctx, c, hash, &loopEnd)) {
+    return loopEnd;
+  }
+
+  if (handlePopupInput(ctx, c, hash)) {
+    return EVENT_READ_INPUT;
+  }
+
+  return runKeyHandler(ctx, c, hash);
+}
+
+
+bool handlePopupInput(EditorContext* ctx, int c, int hash) {
   // Route keyboard input to the focused active toplevel popup first
   ModuleContext payload = buildModuleContext(ctx);
 
@@ -65,6 +81,33 @@ bool handlePopupInput(EditorContext* ctx, int c, int hash) {
 
   return result;
 }
+
+bool runInternalLogic(EditorContext* ctx, int c, int hash, EventLoopAction* out_action) {
+  if (c == CTRL('q')) {
+    *out_action = EVENT_QUIT;
+    return true;
+  }
+
+  switch (hash) {
+    case ONLY_REPAINT_INPUT:
+      gui_updateGUI(&ctx->gui_context);
+      *out_action = EVENT_CONTINUE;
+      return true;
+
+    case BEGIN_MOUSE_LISTEN:
+    case MOUSE_IN_OUT:
+    case H_KEY_RESIZE:
+      gui_resizeOFW(&ctx->gui_context);
+      gui_resizeEDW(&ctx->gui_context, -1);
+      gui_updateGUI(&ctx->gui_context);
+      *out_action = EVENT_CONTINUE;
+      return true;
+
+    default:
+      return false;
+  }
+}
+
 
 void readNextInput(EditorContext* ctx, int* out_c, int* out_hash) {
   int c;
@@ -159,18 +202,6 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
   ModuleContext lsp_ctx = buildModuleContext(ctx);
 
   switch (hash) {
-    case ONLY_REPAINT_INPUT:
-      gui_updateGUI(&ctx->gui_context);
-      break;
-
-    case BEGIN_MOUSE_LISTEN:
-    case MOUSE_IN_OUT:
-    case H_KEY_RESIZE:
-      gui_resizeOFW(&ctx->gui_context);
-      gui_resizeEDW(&ctx->gui_context, -1);
-      gui_updateGUI(&ctx->gui_context);
-      break;
-
     case KEY_MOUSE:
       handleClick(ctx, &c);
       break;
