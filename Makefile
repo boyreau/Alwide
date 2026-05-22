@@ -40,6 +40,7 @@ SRC_MODULES= \
 	src/terminal/windows/ofw.c \
 	src/terminal/windows/pow.c \
 	src/terminal/windows/tpw.c \
+	src/terminal/windows/popups/search_popup.c \
 	src/config/config.c \
 	src/config/language_feature.c \
 	src/io-management/workspace_settings.c \
@@ -57,6 +58,7 @@ SRC_MODULES= \
 	src/advanced/lsp/lsp_dispatcher.c \
 	src/advanced/lsp/lsp_emitter.c \
 	src/advanced/intelligence/auto_pairs.c \
+	src/advanced/intelligence/search.c \
 	src/advanced/intelligence/comments.c \
 	src/advanced/intelligence/indentation.c \
 	src/core/editor_context.c \

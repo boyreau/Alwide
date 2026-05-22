@@ -24,6 +24,7 @@
 #include "../terminal/windows/ofw.h"
 #include "../terminal/windows/pow.h"
 #include "../terminal/windows/tpw.h"
+#include "../terminal/windows/popups/search_popup.h"
 #include "../utils/clipboard_manager.h"
 #include "../utils/key_management.h"
 #include "../utils/tools.h"
@@ -31,6 +32,16 @@
 
 
 bool handlePopupInput(EditorContext* ctx, int c, int hash) {
+  // Centralized Ctrl+Q to close any active toplevel popup
+  if (c == CTRL('q')) {
+    gui_TPW* popup = ctx->gui_context.toplevel_popups;
+    if (popup != NULL) {
+      gui_destroyToplevelPopup(&ctx->gui_context, popup);
+      gui_updateGUI(&ctx->gui_context);
+      return true;
+    }
+  }
+
   // Route keyboard input to the focused active toplevel popup first
   ModuleContext payload = buildModuleContext(ctx);
 
@@ -307,6 +318,9 @@ EventLoopAction runKeyHandler(EditorContext* ctx, int c, int hash) {
     case CTRL('a'):
       *select_cursor = tryToReachAbsPosition(*cursor, 1, 0);
       *cursor = tryToReachAbsPosition(*cursor, INT_MAX, INT_MAX);
+      break;
+    case CTRL('f'):
+      gui_openSearchPopup(ctx);
       break;
     case CTRL('x'):
       saveToClipBoard(*cursor, *select_cursor);
