@@ -184,6 +184,12 @@ bool ilj_findPrev(FileContainer* fc, const char* query, bool case_sensitive, boo
   int start_row = cursor_row(fc->cursor);
   int start_col = cursor_col(fc->cursor);
 
+  if (!cursor_is_disabled(fc->select_cursor)) {
+    Cursor min_cur = cursor_min(fc->cursor, fc->select_cursor);
+    start_row = cursor_row(min_cur);
+    start_col = cursor_col(min_cur);
+  }
+
   int current_row = start_row;
   bool first_line = true;
   int query_char_len = ilj_byteCountToCharCount(query);
