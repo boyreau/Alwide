@@ -1529,6 +1529,19 @@ void LSP_notifyLspFileDidOpen(LSP_Server* lsp, char* file_name, char* file_conte
 }
 
 
+void LSP_notifyLspFileDidClose(LSP_Server* lsp, char* file_name) {
+  cJSON* request_content = cJSON_CreateObject();
+
+  cJSON* text_document = LSP_getJSONTextDocumentIdentifier(file_name);
+  cJSON_AddItemToObject(request_content, "textDocument", text_document);
+
+
+  LSP_sendPacketWithJSON(lsp, "textDocument/didClose", request_content, LSP_NOTIFICATION);
+
+  cJSON_Delete(request_content);
+}
+
+
 void LSP_notifyLspFileDidChange(LSP_Server* lsp, char* file_name, cJSON* array_of_changes, int version) {
   cJSON* request_content = cJSON_CreateObject();
 

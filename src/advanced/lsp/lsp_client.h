@@ -428,6 +428,7 @@ bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, LS
 
 
 void LSP_notifyLspFileDidOpen(LSP_Server* lsp, char* file_name, char* file_content);
+void LSP_notifyLspFileDidClose(LSP_Server* lsp, char* file_name);
 void LSP_notifyLspFileDidChange(LSP_Server* lsp, char* file_name, cJSON* array_of_changes, int version);
 
 

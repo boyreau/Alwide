@@ -1,10 +1,11 @@
 #include "language_popup.h"
 #include <stdlib.h>
-#include <string.h>
+#include <limits.h>
 #include <sys/ttydefaults.h>
 
 #include "../../../../lib/tree-sitter/lib/include/tree_sitter/api.h"
 #include "../../../advanced/lsp/lsp_handler.h"
+#include "../../../data-management/file_management.h"
 #include "../../../advanced/tree-sitter/tree_manager.h"
 #include "../../../core/editor_context.h"
 #include "../../../environnement/constants.h"
@@ -58,6 +59,14 @@ static void apply_language_change(EditorContext* ctx, int index) {
     return; // No change
   }
 
+  // Notify old LSP server that file is closed
+  if (fc->lsp_datas.is_enable) {
+    LSP_Server* old_server = getLSPServerForLanguage(&lsp_servers, fc->lsp_datas.lang_id);
+    if (old_server != NULL) {
+      LSP_notifyLspFileDidClose(old_server, fc->io_file.path_abs);
+    }
+  }
+
   // Free/Clean old LSP/Highlight data
   if (fc->highlight_data.tree != NULL) {
     ts_tree_delete(fc->highlight_data.tree);
@@ -72,6 +81,17 @@ static void apply_language_change(EditorContext* ctx, int index) {
   // Initialize highlighting/LSP with new feature
   setFileHighlightDatas(&fc->highlight_data, fc->feature);
   setLspDatas(&fc->lsp_datas, fc->io_file, fc->feature);
+
+  // Notify new LSP server that file is opened
+  if (fc->lsp_datas.is_enable) {
+    char* dump = dumpSelection(tryToReachAbsPosition(fc->cursor, 1, 0),
+                               tryToReachAbsPosition(fc->cursor, INT_MAX, INT_MAX));
+    LSP_Server* new_server = getLSPServerForLanguage(&lsp_servers, fc->lsp_datas.lang_id);
+    if (new_server != NULL) {
+      LSP_notifyLspFileDidOpen(new_server, fc->io_file.path_abs, dump);
+    }
+    free(dump);
+  }
 
   // Refresh the editor and status bar
   ctx->gui_context.edw_context.refresh_edw = true;
