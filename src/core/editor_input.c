@@ -469,6 +469,7 @@ EventLoopAction runSpecialKeyHandler(EditorContext* ctx, int key) {
       setlastFilePosition(io_file->path_abs, cursor_row(*cursor), cursor_col(*cursor), *screen_x, *screen_y);
       saveCurrentStateControl(**history_root, *history_frame, io_file->path_abs);
       break;
+    case H_KEY_CTRL_DELETE:
     case K_SPECIAL(K_MOD_CTRL, 'h'):
       {
         setSelectCursorOn(*cursor, select_cursor);
@@ -574,6 +575,7 @@ EventLoopAction runSpecialKeyHandler(EditorContext* ctx, int key) {
       break;
     default:
       /* Unmapped command, release, or hotkey sequence: safely ignore it */
+      logInput(key);
       break;
   }
   return EVENT_CONTINUE;
