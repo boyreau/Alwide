@@ -29,23 +29,23 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
   timeout(20);
 
   if (next == ERR) {
-    event->key_code  = 27;
+    event->key_code = 27;
     event->modifiers = 1;
-    event->type      = KITTY_EVENT_PRESS;
+    event->type = KITTY_EVENT_PRESS;
     return true;
   }
 
   if (next != '[' && next != 'O') {
-    *out_unread      = next;
-    event->key_code  = 27;
+    *out_unread = next;
+    event->key_code = 27;
     event->modifiers = 1;
-    event->type      = KITTY_EVENT_PRESS;
+    event->type = KITTY_EVENT_PRESS;
     return true;
   }
 
   /* We are inside a sequence (CSI or SS3). Consume until terminator. */
   char buf[64];
-  int  len        = 0;
+  int len = 0;
   char terminator = '\0';
 
   /* For the body of the sequence, wait up to 20ms per byte */
@@ -67,9 +67,9 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
 
   if (terminator == '\0') {
     /* Premature end: swallow what we have to avoid garbage */
-    event->key_code  = -2;
+    event->key_code = -2;
     event->modifiers = 1;
-    event->type      = KITTY_EVENT_PRESS;
+    event->type = KITTY_EVENT_PRESS;
     return true;
   }
 
@@ -91,7 +91,7 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
 
   /* 2. Map terminators */
   event->modifiers = p2;
-  event->type      = (KittyEventType)p3;
+  event->type = (KittyEventType)p3;
 
   if (terminator == 'u') {
     event->key_code = p1;
@@ -119,7 +119,7 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
       event->key_code = 57357;
       break; /* End */
     case 'Z':
-      event->key_code  = 57346;
+      event->key_code = 57346;
       event->modifiers = 2;
       break; /* Backtab */
     case '~':
@@ -156,13 +156,13 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
 }
 
 bool kitty_translate_event(const KittyKeyEvent* event, int* out_unified) {
-  int key  = event->key_code;
+  int key = event->key_code;
   int mods = event->modifiers;
 
-  int  val   = (mods > 0) ? mods - 1 : 0;
+  int val = (mods > 0) ? mods - 1 : 0;
   bool shift = (val & 1) != 0;
-  bool alt   = (val & 2) != 0;
-  bool ctrl  = (val & 4) != 0;
+  bool alt = (val & 2) != 0;
+  bool ctrl = (val & 4) != 0;
   bool super = (val & 8) != 0;
 
   int unified_mods = 0;
@@ -188,8 +188,8 @@ bool kitty_translate_event(const KittyKeyEvent* event, int* out_unified) {
     }
   }
 
-  bool is_functional  = false;
-  int  translated_key = key;
+  bool is_functional = false;
+  int translated_key = key;
 
   if (key >= 57344 && key <= 57387) {
     is_functional = true;
@@ -246,35 +246,105 @@ bool kitty_translate_event(const KittyKeyEvent* event, int* out_unified) {
   else if (key >= 57399 && key <= 57427) {
     /* Numpad Mapping */
     switch (key) {
-      case 57399: translated_key = '0'; break;
-      case 57400: translated_key = '1'; break;
-      case 57401: translated_key = '2'; break;
-      case 57402: translated_key = '3'; break;
-      case 57403: translated_key = '4'; break;
-      case 57404: translated_key = '5'; break;
-      case 57405: translated_key = '6'; break;
-      case 57406: translated_key = '7'; break;
-      case 57407: translated_key = '8'; break;
-      case 57408: translated_key = '9'; break;
-      case 57409: translated_key = '.'; break;
-      case 57410: translated_key = '/'; break;
-      case 57411: translated_key = '*'; break;
-      case 57412: translated_key = '-'; break;
-      case 57413: translated_key = '+'; break;
-      case 57414: translated_key = KEY_ENTER; is_functional = true; break;
-      case 57415: translated_key = '='; break;
-      case 57416: translated_key = ','; break;
-      case 57417: translated_key = KEY_LEFT;  is_functional = true; break;
-      case 57418: translated_key = KEY_RIGHT; is_functional = true; break;
-      case 57419: translated_key = KEY_UP;    is_functional = true; break;
-      case 57420: translated_key = KEY_DOWN;  is_functional = true; break;
-      case 57421: translated_key = KEY_PPAGE; is_functional = true; break;
-      case 57422: translated_key = KEY_NPAGE; is_functional = true; break;
-      case 57423: translated_key = KEY_HOME;  is_functional = true; break;
-      case 57424: translated_key = KEY_END;   is_functional = true; break;
-      case 57425: translated_key = 0x1B3;     is_functional = true; break; /* KEY_B2 / Begin */
-      case 57426: translated_key = KEY_IC;    is_functional = true; break;
-      case 57427: translated_key = KEY_DC;    is_functional = true; break;
+      case 57399:
+        translated_key = '0';
+        break;
+      case 57400:
+        translated_key = '1';
+        break;
+      case 57401:
+        translated_key = '2';
+        break;
+      case 57402:
+        translated_key = '3';
+        break;
+      case 57403:
+        translated_key = '4';
+        break;
+      case 57404:
+        translated_key = '5';
+        break;
+      case 57405:
+        translated_key = '6';
+        break;
+      case 57406:
+        translated_key = '7';
+        break;
+      case 57407:
+        translated_key = '8';
+        break;
+      case 57408:
+        translated_key = '9';
+        break;
+      case 57409:
+        translated_key = '.';
+        break;
+      case 57410:
+        translated_key = '/';
+        break;
+      case 57411:
+        translated_key = '*';
+        break;
+      case 57412:
+        translated_key = '-';
+        break;
+      case 57413:
+        translated_key = '+';
+        break;
+      case 57414:
+        translated_key = KEY_ENTER;
+        is_functional = true;
+        break;
+      case 57415:
+        translated_key = '=';
+        break;
+      case 57416:
+        translated_key = ',';
+        break;
+      case 57417:
+        translated_key = KEY_LEFT;
+        is_functional = true;
+        break;
+      case 57418:
+        translated_key = KEY_RIGHT;
+        is_functional = true;
+        break;
+      case 57419:
+        translated_key = KEY_UP;
+        is_functional = true;
+        break;
+      case 57420:
+        translated_key = KEY_DOWN;
+        is_functional = true;
+        break;
+      case 57421:
+        translated_key = KEY_PPAGE;
+        is_functional = true;
+        break;
+      case 57422:
+        translated_key = KEY_NPAGE;
+        is_functional = true;
+        break;
+      case 57423:
+        translated_key = KEY_HOME;
+        is_functional = true;
+        break;
+      case 57424:
+        translated_key = KEY_END;
+        is_functional = true;
+        break;
+      case 57425:
+        translated_key = 0x1B3;
+        is_functional = true;
+        break; /* KEY_B2 / Begin */
+      case 57426:
+        translated_key = KEY_IC;
+        is_functional = true;
+        break;
+      case 57427:
+        translated_key = KEY_DC;
+        is_functional = true;
+        break;
     }
   }
   else if (key == 27 || key == '\n' || key == '\r' || key == '\t' || key == 127 || key == 8) {

@@ -1,8 +1,8 @@
 #ifndef UTF8_H
 #define UTF8_H
 
-#include "unicode.h"
 #include <stdbool.h>
+#include "unicode.h"
 
 /**
  * @brief Represents a single UTF-8 encoded character (up to 4 bytes).

@@ -459,9 +459,9 @@ bool gui_handleCompletionInput(gui_Context* context, FileContainer* fc, int key,
           executeCodeAction(fc, cursor, &lsp_data->code_actions.items[context->edw_context.item_selected], payload);
         }
         else {
-          executeLSPCompletion(
-            cursor, lsp_data->completions.completions.items + (context->edw_context.item_selected - ca_size), history_p,
-            payload_state_change, LF_tab(fc->feature));
+          executeLSPCompletion(cursor,
+                               lsp_data->completions.completions.items + (context->edw_context.item_selected - ca_size),
+                               history_p, payload_state_change, LF_tab(fc->feature));
         }
       }
       gui_closePopup(context);
@@ -549,8 +549,8 @@ bool gui_handleGotoChoiceInput(gui_Context* context, FileContainer* fc, int key,
 }
 
 
-bool gui_handlePopupInput(gui_Context* context, FileContainer* fc, int key,
-                          PayloadStateChange payload_state_change, ModuleContext* payload, MEVENT* m_event) {
+bool gui_handlePopupInput(gui_Context* context, FileContainer* fc, int key, PayloadStateChange payload_state_change,
+                          ModuleContext* payload, MEVENT* m_event) {
   if (context->edw_context.show_pow == false || context->edw_context.pow == NULL) {
     return false;
   }

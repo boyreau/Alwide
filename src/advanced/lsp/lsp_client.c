@@ -135,7 +135,7 @@ void LSP_closeLSPServer(LSP_Server* server) {
 
 void skipUntilContent(LSP_Server* server) {}
 
-#define BUFF_SIZE 256
+#define BUFF_SIZE          256
 #define HEADER_FIRST_FIELD "Content-Length:"
 
 char* LSP_readPacket(LSP_Server* server) {

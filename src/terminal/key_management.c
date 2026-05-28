@@ -135,75 +135,138 @@ int normalize_legacy(int c) {
 
   /* 1. Handle Ncurses-translated shifted/modified keys */
   switch (c) {
-    case KEY_BTAB:   return K_SPECIAL(K_MOD_SHIFT, KEY_BTAB);
-    case KEY_SRIGHT: return K_SPECIAL(K_MOD_SHIFT, KEY_RIGHT);
-    case KEY_SLEFT:  return K_SPECIAL(K_MOD_SHIFT, KEY_LEFT);
-    case KEY_SHOME:  return K_SPECIAL(K_MOD_SHIFT, KEY_HOME);
-    case KEY_SEND:   return K_SPECIAL(K_MOD_SHIFT, KEY_END);
-    case KEY_SDC:    return K_SPECIAL(K_MOD_SHIFT, KEY_DC);
-    case KEY_SIC:    return K_SPECIAL(K_MOD_SHIFT, KEY_IC);
-    case KEY_SNEXT:  return K_SPECIAL(K_MOD_SHIFT, KEY_NPAGE);
-    case KEY_SR:     return K_SPECIAL(K_MOD_SHIFT, KEY_UP);
-    case KEY_SF:     return K_SPECIAL(K_MOD_SHIFT, KEY_DOWN);
+    case KEY_BTAB:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_BTAB);
+    case KEY_SRIGHT:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_RIGHT);
+    case KEY_SLEFT:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_LEFT);
+    case KEY_SHOME:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_HOME);
+    case KEY_SEND:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_END);
+    case KEY_SDC:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_DC);
+    case KEY_SIC:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_IC);
+    case KEY_SNEXT:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_NPAGE);
+    case KEY_SR:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_UP);
+    case KEY_SF:
+      return K_SPECIAL(K_MOD_SHIFT, KEY_DOWN);
 
     /* Hardcoded fallbacks for the logged system keycodes */
-    case 554: return K_SPECIAL(K_MOD_CTRL, KEY_LEFT);
-    case 569: return K_SPECIAL(K_MOD_CTRL, KEY_RIGHT);
-    case 575: return K_SPECIAL(K_MOD_CTRL, KEY_UP);
-    case 534: return K_SPECIAL(K_MOD_CTRL, KEY_DOWN);
+    case 554:
+      return K_SPECIAL(K_MOD_CTRL, KEY_LEFT);
+    case 569:
+      return K_SPECIAL(K_MOD_CTRL, KEY_RIGHT);
+    case 575:
+      return K_SPECIAL(K_MOD_CTRL, KEY_UP);
+    case 534:
+      return K_SPECIAL(K_MOD_CTRL, KEY_DOWN);
 
-    case 555: return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_LEFT);
-    case 570: return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_RIGHT);
-    case 576: return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_UP);
-    case 535: return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_DOWN);
+    case 555:
+      return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_LEFT);
+    case 570:
+      return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_RIGHT);
+    case 576:
+      return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_UP);
+    case 535:
+      return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_DOWN);
   }
 
   /* 2. Map ASCII control codes 1-31 to Unified format. */
   if (((c >= 1 && c <= 31) || c == 0) && c != 9 && c != 10 && c != 13) {
     int base;
-    if (c == 0)             base = ' ';
-    else if (c >= 1 && c <= 26)  base = c + 'a' - 1;
-    else if (c == 27)       return H_KEY_ESCAPE;
-    else if (c == 28)       base = '\\';
-    else if (c == 29)       base = ']';
-    else if (c == 30)       base = '^';
-    else if (c == 31)       base = '_';
-    else                    base = c;
+    if (c == 0) {
+      base = ' ';
+    }
+    else if (c >= 1 && c <= 26) {
+      base = c + 'a' - 1;
+    }
+    else if (c == 27) {
+      return H_KEY_ESCAPE;
+    }
+    else if (c == 28) {
+      base = '\\';
+    }
+    else if (c == 29) {
+      base = ']';
+    }
+    else if (c == 30) {
+      base = '^';
+    }
+    else if (c == 31) {
+      base = '_';
+    }
+    else {
+      base = c;
+    }
     return K_SPECIAL(K_MOD_CTRL, base);
   }
 
   /* 3. Standard keycodes */
   switch (c) {
-    case 9:      return H_KEY_TAB;
+    case 9:
+      return H_KEY_TAB;
     case 10:
-    case 13:     return H_KEY_ENTER;
-    case 127:    return K_SPECIAL(0, KEY_BACKSPACE);
+    case 13:
+      return H_KEY_ENTER;
+    case 127:
+      return K_SPECIAL(0, KEY_BACKSPACE);
     default:
       if (c > 255) {
         /* Ultimate fallback: parse dynamically via Ncurses terminfo keyname */
         const char* name = keyname(c);
         if (name && strlen(name) >= 4 && name[0] == 'k') {
           int target_key = 0;
-          if (strncmp(name, "kUP", 3) == 0)        target_key = KEY_UP;
-          else if (strncmp(name, "kDN", 3) == 0)   target_key = KEY_DOWN;
-          else if (strncmp(name, "kLFT", 4) == 0)  target_key = KEY_LEFT;
-          else if (strncmp(name, "kRGT", 4) == 0)  target_key = KEY_RIGHT;
-          else if (strncmp(name, "kHOM", 4) == 0)  target_key = KEY_HOME;
-          else if (strncmp(name, "kEND", 4) == 0)  target_key = KEY_END;
-          else if (strncmp(name, "kDC", 3) == 0)   target_key = KEY_DC;
-          else if (strncmp(name, "kIC", 3) == 0)   target_key = KEY_IC;
+          if (strncmp(name, "kUP", 3) == 0) {
+            target_key = KEY_UP;
+          }
+          else if (strncmp(name, "kDN", 3) == 0) {
+            target_key = KEY_DOWN;
+          }
+          else if (strncmp(name, "kLFT", 4) == 0) {
+            target_key = KEY_LEFT;
+          }
+          else if (strncmp(name, "kRGT", 4) == 0) {
+            target_key = KEY_RIGHT;
+          }
+          else if (strncmp(name, "kHOM", 4) == 0) {
+            target_key = KEY_HOME;
+          }
+          else if (strncmp(name, "kEND", 4) == 0) {
+            target_key = KEY_END;
+          }
+          else if (strncmp(name, "kDC", 3) == 0) {
+            target_key = KEY_DC;
+          }
+          else if (strncmp(name, "kIC", 3) == 0) {
+            target_key = KEY_IC;
+          }
 
           if (target_key != 0) {
             int len = strlen(name);
             char last_char = name[len - 1];
             if (isdigit((unsigned char)last_char)) {
               int val = (last_char - '0') - 1;
-              if (val < 0) val = 0;
+              if (val < 0) {
+                val = 0;
+              }
               int unified_mods = 0;
-              if (val & 1) unified_mods |= K_MOD_SHIFT;
-              if (val & 2) unified_mods |= K_MOD_ALT;
-              if (val & 4) unified_mods |= K_MOD_CTRL;
-              if (val & 8) unified_mods |= K_MOD_SUPER;
+              if (val & 1) {
+                unified_mods |= K_MOD_SHIFT;
+              }
+              if (val & 2) {
+                unified_mods |= K_MOD_ALT;
+              }
+              if (val & 4) {
+                unified_mods |= K_MOD_CTRL;
+              }
+              if (val & 8) {
+                unified_mods |= K_MOD_SUPER;
+              }
               return K_SPECIAL(unified_mods, target_key);
             }
           }
@@ -215,18 +278,30 @@ int normalize_legacy(int c) {
 }
 
 void logInput(int key) {
-  if (key == ERR) return;
+  if (key == ERR) {
+    return;
+  }
 
   FILE* f = fopen(".logs.txt", "a");
-  if (!f) return;
+  if (!f) {
+    return;
+  }
 
   fprintf(f, "[INPUT] Key: 0x%08X | ", key);
 
   /* Modifiers */
-  if (K_HAS_CTRL(key))  fprintf(f, "CTRL+");
-  if (K_HAS_ALT(key))   fprintf(f, "ALT+");
-  if (K_HAS_SHIFT(key)) fprintf(f, "SHIFT+");
-  if (K_HAS_SUPER(key)) fprintf(f, "SUPER+");
+  if (K_HAS_CTRL(key)) {
+    fprintf(f, "CTRL+");
+  }
+  if (K_HAS_ALT(key)) {
+    fprintf(f, "ALT+");
+  }
+  if (K_HAS_SHIFT(key)) {
+    fprintf(f, "SHIFT+");
+  }
+  if (K_HAS_SUPER(key)) {
+    fprintf(f, "SUPER+");
+  }
 
   int codepoint = K_CODE(key);
 
@@ -238,7 +313,7 @@ void logInput(int key) {
     else if (codepoint == 27) {
       fprintf(f, ": ESCAPE");
     }
-    
+
     if (codepoint >= 32 && codepoint <= 126) {
       fprintf(f, " : char : %c", (char)codepoint);
     }

@@ -18,9 +18,9 @@ gui_TPW* gui_createToplevelPopup(gui_Context* gui_context, int y, int x, int hei
                                  gui_TPW_paintCallback paint_cb, gui_TPW_inputCallback input_cb,
                                  gui_TPW_destroyCallback destroy_cb, void* payload);
 
-void gui_repaintTPW(gui_Context *gui_context);
+void gui_repaintTPW(gui_Context* gui_context);
 
-void gui_updateTPW(gui_Context *gui_context);
+void gui_updateTPW(gui_Context* gui_context);
 
 // Complete API for gui_TPW
 void gui_addNewTPW(gui_Context* gui_context, gui_TPW* popup);
@@ -31,7 +31,8 @@ void gui_moveTPW(gui_Context* gui_context, gui_TPW* popup, int y, int x);
 void gui_resizeTPW(gui_Context* gui_context, gui_TPW* popup, int height, int width);
 
 // Predefined positioning helpers
-void gui_calculateTPWPosition(gui_Context* gui_context, int height, int width, gui_TPW_Position pos, int* out_y, int* out_x);
+void gui_calculateTPWPosition(gui_Context* gui_context, int height, int width, gui_TPW_Position pos, int* out_y,
+                              int* out_x);
 gui_TPW* gui_createToplevelPopupPositioned(gui_Context* gui_context, int height, int width, gui_TPW_Position position,
                                            gui_TPW_paintCallback paint_cb, gui_TPW_inputCallback input_cb,
                                            gui_TPW_destroyCallback destroy_cb, void* payload);

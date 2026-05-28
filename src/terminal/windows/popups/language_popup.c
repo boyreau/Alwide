@@ -1,6 +1,6 @@
 #include "language_popup.h"
-#include <stdlib.h>
 #include <limits.h>
+#include <stdlib.h>
 #include <sys/ttydefaults.h>
 
 #include "../../../../lib/tree-sitter/lib/include/tree_sitter/api.h"
@@ -84,8 +84,8 @@ static void apply_language_change(EditorContext* ctx, int index) {
 
   // Notify new LSP server that file is opened
   if (fc->lsp_datas.is_enable) {
-    char* dump = dumpSelection(tryToReachAbsPosition(fc->cursor, 1, 0),
-                               tryToReachAbsPosition(fc->cursor, INT_MAX, INT_MAX));
+    char* dump =
+      dumpSelection(tryToReachAbsPosition(fc->cursor, 1, 0), tryToReachAbsPosition(fc->cursor, INT_MAX, INT_MAX));
     LSP_Server* new_server = getLSPServerForLanguage(&lsp_servers, fc->lsp_datas.lang_id);
     if (new_server != NULL) {
       LSP_notifyLspFileDidOpen(new_server, fc->io_file.path_abs, dump);

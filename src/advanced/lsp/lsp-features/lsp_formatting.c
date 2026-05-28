@@ -81,8 +81,6 @@ void askOnTypeFormatting(FileContainer* file, char* ch, ModuleContext* data) {
       .trimFinalNewlines = true,
     };
 
-    LSP_requestOnTypeFormatting(lsp, file->io_file.path_abs,
-                                LSP_pos_from_cursor(*data->cursor), ch, options);
-
+    LSP_requestOnTypeFormatting(lsp, file->io_file.path_abs, LSP_pos_from_cursor(*data->cursor), ch, options);
   }
 }

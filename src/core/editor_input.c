@@ -130,9 +130,18 @@ static int manualUtf8Decode(int first_byte) {
   int codepoint = 0;
   int bytes_to_read = 0;
 
-  if ((first & 0xE0) == 0xC0) { bytes_to_read = 1; codepoint = first & 0x1F; }
-  else if ((first & 0xF0) == 0xE0) { bytes_to_read = 2; codepoint = first & 0x0F; }
-  else if ((first & 0xF8) == 0xF0) { bytes_to_read = 3; codepoint = first & 0x07; }
+  if ((first & 0xE0) == 0xC0) {
+    bytes_to_read = 1;
+    codepoint = first & 0x1F;
+  }
+  else if ((first & 0xF0) == 0xE0) {
+    bytes_to_read = 2;
+    codepoint = first & 0x0F;
+  }
+  else if ((first & 0xF8) == 0xF0) {
+    bytes_to_read = 3;
+    codepoint = first & 0x07;
+  }
 
   if (bytes_to_read > 0) {
     bool valid = true;
@@ -146,13 +155,17 @@ static int manualUtf8Decode(int first_byte) {
       codepoint = (codepoint << 6) | (next_byte & 0x3F);
     }
     timeout(20);
-    if (valid) return codepoint;
+    if (valid) {
+      return codepoint;
+    }
   }
   return ERR;
 }
 
 static void processMouseInput(EditorContext* ctx) {
-  if (getmouse(&ctx->m_event) != OK) return;
+  if (getmouse(&ctx->m_event) != OK) {
+    return;
+  }
   detectComplexMouseEvents(&ctx->m_event);
 
 peek_mouse_event:;
@@ -176,7 +189,8 @@ peek_mouse_event:;
         ctx->peek_c = next_c;
       }
       timeout(20);
-    } else {
+    }
+    else {
       ctx->last_time_mouse_drag = current_time;
     }
   }
@@ -184,7 +198,9 @@ peek_mouse_event:;
 
 int readNextInput(EditorContext* ctx) {
   int c = getRawByte(ctx);
-  if (c == ERR) return ERR;
+  if (c == ERR) {
+    return ERR;
+  }
 
   ctx->t_date = timeInMilliseconds();
   ctx->t_clock = clock();
@@ -200,10 +216,14 @@ int readNextInput(EditorContext* ctx) {
   if (key == ERR) {
     if (c == KEY_MOUSE) {
       key = H_KEY_MOUSE;
-    } else if ((c & 0x80) != 0 && c <= 255) {
+    }
+    else if ((c & 0x80) != 0 && c <= 255) {
       key = manualUtf8Decode(c);
-      if (key == ERR) key = normalize_legacy(c);
-    } else {
+      if (key == ERR) {
+        key = normalize_legacy(c);
+      }
+    }
+    else {
       key = normalize_legacy(c);
     }
   }

@@ -1,6 +1,6 @@
 #include "tools.h"
-#include "../data-management/encoding/utf8.h"
 #include "../data-management/encoding/utf16.h"
+#include "../data-management/encoding/utf8.h"
 
 #include <asm-generic/errno-base.h>
 #include <assert.h>
@@ -347,7 +347,7 @@ int LSP_0_row_to_1_row(int lsp_row) {
 
 Cursor LSP_tryToReachCursorForLSPPosition(Cursor cursor, LSP_Position position) {
   Cursor target_row = tryToReachAbsPosition(cursor, LSP_0_row_to_1_row(position.row), 0);
-  int character_col = utf16_get_char_column(target_row.line_id.line->ch, target_row.line_id.line->element_number,
-                                                        position.column);
+  int character_col =
+    utf16_get_char_column(target_row.line_id.line->ch, target_row.line_id.line->element_number, position.column);
   return tryToReachAbsPosition(target_row, LSP_0_row_to_1_row(position.row), character_col);
 }

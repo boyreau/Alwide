@@ -29,7 +29,8 @@ void onStateChangeLSP(Action action, LSP_Data* data, Cursor* cursor) {
   // int new_end_lsp_col = start_lsp_col; // Currently not used directly for range
 
   if (action.action == INSERT) {
-    // new_end_lsp_col = getLSPColumnFromCursor(*cursor, action_change.new_end_point.row, action_change.new_end_point.column);
+    // new_end_lsp_col = getLSPColumnFromCursor(*cursor, action_change.new_end_point.row,
+    // action_change.new_end_point.column);
     old_end_lsp_col = start_lsp_col;
   }
   else if (action.action == DELETE || action.action == DELETE_ONE) {

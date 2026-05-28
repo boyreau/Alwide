@@ -404,7 +404,8 @@ void gui_repaintSBW(gui_EDW* context, FileContainer* fc) {
   char left_str[256];
   if (fc->io_file.status == NONE || strlen(fc->io_file.path_abs) == 0) {
     snprintf(left_str, sizeof(left_str), " [New File]");
-  } else {
+  }
+  else {
     const char* path_to_use = fc->io_file.path_abs;
     char path_display[256];
     char cwd[PATH_MAX];
@@ -417,11 +418,13 @@ void gui_repaintSBW(gui_EDW* context, FileContainer* fc) {
         }
         strncpy(path_display, rel_path, sizeof(path_display));
         path_display[sizeof(path_display) - 1] = '\0';
-      } else {
+      }
+      else {
         strncpy(path_display, path_to_use, sizeof(path_display));
         path_display[sizeof(path_display) - 1] = '\0';
       }
-    } else {
+    }
+    else {
       strncpy(path_display, path_to_use, sizeof(path_display));
       path_display[sizeof(path_display) - 1] = '\0';
     }
@@ -435,7 +438,8 @@ void gui_repaintSBW(gui_EDW* context, FileContainer* fc) {
       const char* slash = strchr(path_display + cut_index, '/');
       if (slash != NULL) {
         snprintf(temp, sizeof(temp), "...%s", slash);
-      } else {
+      }
+      else {
         snprintf(temp, sizeof(temp), "...%s", path_display + cut_index);
       }
       strncpy(path_display, temp, sizeof(path_display));
@@ -460,18 +464,19 @@ void gui_repaintSBW(gui_EDW* context, FileContainer* fc) {
   char size_str[32];
   if (total_bytes < 1024) {
     snprintf(size_str, sizeof(size_str), "%d B", total_bytes);
-  } else if (total_bytes < 1024 * 1024) {
+  }
+  else if (total_bytes < 1024 * 1024) {
     snprintf(size_str, sizeof(size_str), "%.1f KB", total_bytes / 1024.0);
-  } else {
+  }
+  else {
     snprintf(size_str, sizeof(size_str), "%.1f MB", total_bytes / (1024.0 * 1024.0));
   }
 
   int total_lines = sizeFileNode(fc->root);
 
   char status_str[512];
-  snprintf(status_str, sizeof(status_str), "%s  •  %d %s  •  %s  • %4d lines  • %4d:%-3d",
-           lang ? lang : "Plain Text", tab_size, use_space ? "sp" : "tb", size_str, total_lines,
-           cursor_row(fc->cursor), cursor_col(fc->cursor));
+  snprintf(status_str, sizeof(status_str), "%s  •  %d %s  •  %s  • %4d lines  • %4d:%-3d", lang ? lang : "Plain Text",
+           tab_size, use_space ? "sp" : "tb", size_str, total_lines, cursor_row(fc->cursor), cursor_col(fc->cursor));
 
   // Use countStringFrame to get the real screen column size of the right-aligned status string
   int rows = 0;
@@ -499,4 +504,3 @@ void gui_repaintSBW(gui_EDW* context, FileContainer* fc) {
 
   wnoutrefresh(context->sbw);
 }
-

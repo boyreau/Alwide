@@ -58,7 +58,7 @@ void gui_initNCurses(gui_Context* gui_context) {
             NULL);
   timeout(20);
   printf("\033[?1003h\033[5 q"); // enable mouse tracking and beam cursor
-  kitty_enable(); // Enable Kitty Keyboard Protocol (flags 1 and 2)
+  kitty_enable();                // Enable Kitty Keyboard Protocol (flags 1 and 2)
   fflush(stdout);
   // Color setup
   if (has_colors()) {
@@ -159,7 +159,7 @@ void gui_updateGUI(gui_Context* gui_context) {
 
 bool gui_doesGUINeedRepaint(gui_Context* gui_context) {
   return gui_context->edw_context.refresh_edw || gui_context->few_context.refresh_few ||
-    gui_context->ofw_context.refresh_ofw || gui_context->refresh_tpw;
+         gui_context->ofw_context.refresh_ofw || gui_context->refresh_tpw;
 }
 
 ////// -------------- UTILS FUNCTIONS --------------

@@ -48,7 +48,8 @@ static void paint_search_popup(gui_TPW* popup, void* payload) {
     wattron(w, COLOR_PAIR(ERROR_COLOR_PAIR) | A_BOLD);
     mvwprintw(w, 3, 2, "Status: No matches found!");
     wattroff(w, COLOR_PAIR(ERROR_COLOR_PAIR) | A_BOLD);
-  } else {
+  }
+  else {
     mvwprintw(w, 3, 2, "ENTER: Next | Ctrl+P: Prev | ESC: Close");
   }
 }
@@ -59,7 +60,8 @@ static void perform_incremental_search(SearchPopupContext* state) {
     fc->cursor = state->initial_cursor;
     fc->select_cursor = cursor_disable(fc->select_cursor);
     state->last_search_failed = false;
-    moveScreenToMatchCursor(&state->ctx->gui_context, fc->cursor, &fc->screen_x, &fc->screen_y, LF_tab_size(fc->feature));
+    moveScreenToMatchCursor(&state->ctx->gui_context, fc->cursor, &fc->screen_x, &fc->screen_y,
+                            LF_tab_size(fc->feature));
     return;
   }
 
@@ -71,14 +73,16 @@ static void perform_incremental_search(SearchPopupContext* state) {
     fc->select_cursor = start_cur;
     fc->cursor = end_cur;
     state->last_search_failed = false;
-    moveScreenToMatchCursor(&state->ctx->gui_context, fc->cursor, &fc->screen_x, &fc->screen_y, LF_tab_size(fc->feature));
-  } else {
+    moveScreenToMatchCursor(&state->ctx->gui_context, fc->cursor, &fc->screen_x, &fc->screen_y,
+                            LF_tab_size(fc->feature));
+  }
+  else {
     fc->cursor = orig_cursor;
     state->last_search_failed = true;
   }
 }
 
-static bool input_search_popup(gui_TPW* popup, int key, MEVENT *m_event, void* payload) {
+static bool input_search_popup(gui_TPW* popup, int key, MEVENT* m_event, void* payload) {
   SearchPopupContext* state = (SearchPopupContext*)payload;
   FileContainer* fc = &state->ctx->files[state->ctx->current_file_index];
 
@@ -106,8 +110,10 @@ static bool input_search_popup(gui_TPW* popup, int key, MEVENT *m_event, void* p
         fc->select_cursor = start_cur;
         fc->cursor = end_cur;
         state->last_search_failed = false;
-        moveScreenToMatchCursor(&state->ctx->gui_context, fc->cursor, &fc->screen_x, &fc->screen_y, LF_tab_size(fc->feature));
-      } else {
+        moveScreenToMatchCursor(&state->ctx->gui_context, fc->cursor, &fc->screen_x, &fc->screen_y,
+                                LF_tab_size(fc->feature));
+      }
+      else {
         state->last_search_failed = true;
       }
     }
@@ -123,8 +129,10 @@ static bool input_search_popup(gui_TPW* popup, int key, MEVENT *m_event, void* p
         fc->select_cursor = start_cur;
         fc->cursor = end_cur;
         state->last_search_failed = false;
-        moveScreenToMatchCursor(&state->ctx->gui_context, fc->cursor, &fc->screen_x, &fc->screen_y, LF_tab_size(fc->feature));
-      } else {
+        moveScreenToMatchCursor(&state->ctx->gui_context, fc->cursor, &fc->screen_x, &fc->screen_y,
+                                LF_tab_size(fc->feature));
+      }
+      else {
         state->last_search_failed = true;
       }
     }
@@ -169,7 +177,9 @@ static void destroy_search_popup(gui_TPW* popup, void* payload) {
 
 void gui_openSearchPopup(EditorContext* ctx) {
   SearchPopupContext* state = malloc(sizeof(SearchPopupContext));
-  if (!state) return;
+  if (!state) {
+    return;
+  }
 
   state->query[0] = '\0';
   state->query_len = 0;
@@ -182,7 +192,7 @@ void gui_openSearchPopup(EditorContext* ctx) {
   state->initial_cursor = fc->cursor;
 
   // Position at the bottom-right corner: height=5, width=50
-  gui_createToplevelPopupPositioned(&ctx->gui_context, 5, 50, GUI_TPW_POS_BOTTOM_RIGHT,
-                                     paint_search_popup, input_search_popup, destroy_search_popup, state);
+  gui_createToplevelPopupPositioned(&ctx->gui_context, 5, 50, GUI_TPW_POS_BOTTOM_RIGHT, paint_search_popup,
+                                    input_search_popup, destroy_search_popup, state);
   gui_updateGUI(&ctx->gui_context);
 }

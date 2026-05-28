@@ -1,6 +1,6 @@
 #include "utf16.h"
-#include "../../data-management/utf_8_extractor.h" // For reading chars from string if needed, or I can use utf8.h functions
 #include <stddef.h>
+#include "../../data-management/utf_8_extractor.h" // For reading chars from string if needed, or I can use utf8.h functions
 
 int utf16_length(Char_U8 ch) {
   Unicode codepoint = utf8_to_unicode(ch);
@@ -8,7 +8,9 @@ int utf16_length(Char_U8 ch) {
 }
 
 int utf16_string_length(const char* s, int byte_len) {
-  if (s == NULL) return 0;
+  if (s == NULL) {
+    return 0;
+  }
   int index = 0;
   int utf16_len = 0;
   while (index < byte_len && s[index] != '\0') {

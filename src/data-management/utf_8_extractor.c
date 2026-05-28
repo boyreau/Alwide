@@ -36,7 +36,7 @@ Char_U8 readChar_U8FromFile(FILE* f) {
 
 Char_U8 readChar_U8FromFileWithFirst(FILE* f, char c) {
   Char_U8 ch;
-  ch.t[0]  = c;
+  ch.t[0] = c;
   int size = utf8_size(ch);
 
   for (char i = 1; i < size; i++) {
@@ -53,7 +53,7 @@ Char_U8 readChar_U8FromFileWithFirst(FILE* f, char c) {
 
 Char_U8 readChar_U8FromFileWithFirstUsingFd(int fd, char c) {
   Char_U8 ch;
-  ch.t[0]  = c;
+  ch.t[0] = c;
   int size = utf8_size(ch);
 
   for (char i = 1; i < size; i++) {
@@ -72,7 +72,7 @@ Char_U8 readChar_U8FromInput(int codepoint) { return unicode_to_utf8((Unicode)co
 
 Char_U8 readChar_U8FromCharArray(char* array) {
   Char_U8 ch;
-  ch.t[0]  = array[0];
+  ch.t[0] = array[0];
   int size = utf8_size(ch);
 
   for (char i = 1; i < size; i++) {
@@ -87,7 +87,7 @@ Char_U8 readChar_U8FromCharArray(char* array) {
 
 Char_U8 readChar_U8FromCharArrayWithFirst(char* array, char c) {
   Char_U8 ch;
-  ch.t[0]  = c;
+  ch.t[0] = c;
   int size = utf8_size(ch);
 
   for (char i = 1; i < size; i++) {

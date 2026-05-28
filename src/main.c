@@ -19,13 +19,13 @@
 #include "environnement/setup.h"
 
 // Global vars.
-int                    color_pair  = 6;
-int                    color_index = 20;
-cJSON*                 config;
+int color_pair = 6;
+int color_index = 20;
+cJSON* config;
 LF_LanguageFeatureList language_features;
-ParserList             parsers;
-LSPServerLinkedList    lsp_servers;
-WorkspaceSettings      workspace_settings;
+ParserList parsers;
+LSPServerLinkedList lsp_servers;
+WorkspaceSettings workspace_settings;
 
 
 int main(int file_count, char** args) {

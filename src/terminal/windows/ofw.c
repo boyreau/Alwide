@@ -41,19 +41,23 @@ void gui_repaintOFW(gui_OFW* context, FileContainer* files, int file_count, int 
   // Move to the top left corner.
   for (int i = context->current_file_offset; i < file_count; i++) {
     // Style file names.
-    if (i == current_file)
+    if (i == current_file) {
       wattron(context->ofw, A_BOLD);
-    else
+    }
+    else {
       wattron(context->ofw, A_DIM);
+    }
     // Print file name
     char* file_name = basename(files[i].io_file.path_args);
     current_offset += strlen(file_name);
     wprintw(context->ofw, "%s", file_name);
     // Style file names.
-    if (i == current_file)
+    if (i == current_file) {
       wattroff(context->ofw, A_BOLD);
-    else
+    }
+    else {
       wattroff(context->ofw, A_DIM);
+    }
     // Print file name separator
     if (i < file_count - 1) {
       wprintw(context->ofw, FILE_NAME_SEPARATOR);

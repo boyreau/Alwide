@@ -1,9 +1,9 @@
 #include "lsp_tools.h"
 
 #include <string.h>
+#include "../../../data-management/encoding/utf16.h"
 #include "../../../data-management/file_management.h"
 #include "../../../environnement/global_variables.h"
-#include "../../../data-management/encoding/utf16.h"
 
 void applyTextEdit(Cursor* cursor, LSP_TextEdit* text_edit, History** history_p,
                    PayloadStateChange payload_state_change, LF_Tabulation* tab) {

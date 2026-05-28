@@ -142,7 +142,7 @@ void detectComplexMouseEvents(MEVENT* event);
 void printEventList(MEVENT* event);
 
 /* Key Processing and Logging */
-int  normalize_legacy(int c);
+int normalize_legacy(int c);
 void logInput(int key);
 
 #endif // KEY_MANAGEMENT_H

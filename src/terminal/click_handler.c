@@ -19,7 +19,7 @@
 
 bool isClickInsideWindow(WINDOW* w, MEVENT* m_event) {
   return getbegx(w) <= m_event->x && m_event->x < getbegx(w) + getmaxx(w) && getbegy(w) <= m_event->y &&
-    m_event->y < getbegy(w) + getmaxy(w);
+         m_event->y < getbegy(w) + getmaxy(w);
 }
 
 Cursor getCursorForEDWClick(Cursor* cursor, MEVENT* m_event, int screen_x, int screen_y, int edws_offset_x,
@@ -60,7 +60,8 @@ void handleClick(EditorContext* ctx) {
   }
   else {
     bool consumed = false;
-    if (ctx->gui_context.edw_context.show_sbw && ctx->gui_context.edw_context.sbw != NULL && isClickInsideWindow(ctx->gui_context.edw_context.sbw, &ctx->m_event)) {
+    if (ctx->gui_context.edw_context.show_sbw && ctx->gui_context.edw_context.sbw != NULL &&
+        isClickInsideWindow(ctx->gui_context.edw_context.sbw, &ctx->m_event)) {
       if (ctx->m_event.bstate & BUTTON1_PRESSED || ctx->m_event.bstate & BUTTON1_CLICKED) {
         // click inside the status bar
         consumed = true;
@@ -215,9 +216,8 @@ void handleEditorClick(gui_Context* gui_context, Cursor* cursor, Cursor* select_
       }
     }
   }
-  else if (gui_context->edw_context.show_pow == true &&
-           (gui_context->edw_context.pow_owner == DIAGNOSTICS ||
-            gui_context->edw_context.pow_owner == HOVER_DIAGNOSTICS)) {
+  else if (gui_context->edw_context.show_pow == true && (gui_context->edw_context.pow_owner == DIAGNOSTICS ||
+                                                         gui_context->edw_context.pow_owner == HOVER_DIAGNOSTICS)) {
     gui_closePopup(gui_context);
   }
 }
@@ -427,7 +427,6 @@ bool getFileClickedFileExplorer(ExplorerFolder* pwd, int y_click, int few_x_offs
   y_click += few_y_offset;
   return internalGetClickedExplorerFile(pwd, &y_click, few_x_offset, few_y_offset, res_folder, file_index);
 }
-
 
 
 bool dispatchInputToTPW(EditorContext* ctx, int key) {
