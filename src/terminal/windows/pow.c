@@ -8,8 +8,8 @@
 #include "../../advanced/lsp/lsp-features/lsp_completion.h"
 #include "../../advanced/lsp/lsp-features/lsp_goto.h"
 #include "../../io-management/viewport_history.h"
-#include "../../utils/key_management.h"
 #include "../click_handler.h"
+#include "../key_management.h"
 #include "../term_handler.h"
 #include "edw.h"
 

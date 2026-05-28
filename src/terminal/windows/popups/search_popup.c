@@ -4,7 +4,7 @@
 #include <sys/ttydefaults.h>
 #include "../../../advanced/intelligence/search.h"
 #include "../../../environnement/constants.h"
-#include "../../../utils/key_management.h"
+#include "../../key_management.h"
 #include "../../term_handler.h"
 #include "../tpw.h"
 

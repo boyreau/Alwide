@@ -24,7 +24,7 @@ SRC_MODULES= \
 	src/data-management/file_management.c \
 	src/utils/tools.c \
 	src/io-management/io_manager.c \
-	src/utils/key_management.c \
+	src/terminal/key_management.c \
 	src/utils/clipboard_manager.c \
 	src/io-management/viewport_history.c \
 	src/data-management/state_control.c \

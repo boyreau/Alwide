@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "../environnement/constants.h"
-#include "tools.h"
+#include "../utils/tools.h"
 
 time_val lastPress = 0;
 int last_press_x = 0;

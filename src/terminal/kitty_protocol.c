@@ -1,13 +1,13 @@
+#include "kitty_protocol.h"
 #include <ctype.h>
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../utils/key_management.h"
-#include "kitty_protocol.h"
+#include "key_management.h"
 
 void kitty_enable(void) {
-  /* Use Push (>) flag 3 (1|2) to set disambiguate and event types */
-  printf("\033[>3u");
+  /* Use Push (>) flag 1 to set disambiguate (No event types/releases for now) */
+  printf("\033[>1u");
   fflush(stdout);
 }
 
@@ -198,7 +198,7 @@ bool kitty_translate_event(const KittyKeyEvent* event, int* out_unified) {
         translated_key = 27;
         break; /* Escape */
       case 57345:
-        translated_key = '\n';
+        translated_key = KEY_ENTER;
         break; /* Enter */
       case 57346:
         translated_key = KEY_TAB;
@@ -241,6 +241,40 @@ bool kitty_translate_event(const KittyKeyEvent* event, int* out_unified) {
           translated_key = KEY_F(key - 57364 + 1);
         }
         break;
+    }
+  }
+  else if (key >= 57399 && key <= 57427) {
+    /* Numpad Mapping */
+    switch (key) {
+      case 57399: translated_key = '0'; break;
+      case 57400: translated_key = '1'; break;
+      case 57401: translated_key = '2'; break;
+      case 57402: translated_key = '3'; break;
+      case 57403: translated_key = '4'; break;
+      case 57404: translated_key = '5'; break;
+      case 57405: translated_key = '6'; break;
+      case 57406: translated_key = '7'; break;
+      case 57407: translated_key = '8'; break;
+      case 57408: translated_key = '9'; break;
+      case 57409: translated_key = '.'; break;
+      case 57410: translated_key = '/'; break;
+      case 57411: translated_key = '*'; break;
+      case 57412: translated_key = '-'; break;
+      case 57413: translated_key = '+'; break;
+      case 57414: translated_key = KEY_ENTER; is_functional = true; break;
+      case 57415: translated_key = '='; break;
+      case 57416: translated_key = ','; break;
+      case 57417: translated_key = KEY_LEFT;  is_functional = true; break;
+      case 57418: translated_key = KEY_RIGHT; is_functional = true; break;
+      case 57419: translated_key = KEY_UP;    is_functional = true; break;
+      case 57420: translated_key = KEY_DOWN;  is_functional = true; break;
+      case 57421: translated_key = KEY_PPAGE; is_functional = true; break;
+      case 57422: translated_key = KEY_NPAGE; is_functional = true; break;
+      case 57423: translated_key = KEY_HOME;  is_functional = true; break;
+      case 57424: translated_key = KEY_END;   is_functional = true; break;
+      case 57425: translated_key = 0x1B3;     is_functional = true; break; /* KEY_B2 / Begin */
+      case 57426: translated_key = KEY_IC;    is_functional = true; break;
+      case 57427: translated_key = KEY_DC;    is_functional = true; break;
     }
   }
   else if (key == 27 || key == '\n' || key == '\r' || key == '\t' || key == 127 || key == 8) {

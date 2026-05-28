@@ -9,11 +9,11 @@
 #include "../data-management/file_management.h"
 #include "../environnement/constants.h"
 #include "../environnement/global_variables.h"
-#include "../utils/key_management.h"
+#include "key_management.h"
 #include "term_handler.h"
 #include "windows/edw.h"
-#include "windows/popups/language_popup.h"
 #include "windows/few.h"
+#include "windows/popups/language_popup.h"
 #include "windows/pow.h"
 
 

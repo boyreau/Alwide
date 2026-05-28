@@ -5,13 +5,13 @@
 
 #include "../../../../lib/tree-sitter/lib/include/tree_sitter/api.h"
 #include "../../../advanced/lsp/lsp_handler.h"
-#include "../../../data-management/file_management.h"
 #include "../../../advanced/tree-sitter/tree_manager.h"
 #include "../../../core/editor_context.h"
+#include "../../../data-management/file_management.h"
 #include "../../../environnement/constants.h"
 #include "../../../environnement/global_variables.h"
-#include "../../../utils/key_management.h"
 #include "../../click_handler.h"
+#include "../../key_management.h"
 #include "../../term_handler.h"
 #include "../tpw.h"
 

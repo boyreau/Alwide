@@ -1,9 +1,9 @@
 #include "lsp_emitter.h"
 
-#include "../../environnement/global_variables.h"
-#include "../../utils/tools.h"
-#include "../../utils/key_management.h"
 #include "../../data-management/encoding/utf16.h"
+#include "../../environnement/global_variables.h"
+#include "../../terminal/key_management.h"
+#include "../../utils/tools.h"
 
 int global_version = 2;
 

@@ -8,7 +8,7 @@
 #include "../advanced/lsp/lsp-features/lsp_signature_help.h"
 #include "../advanced/lsp/lsp_client.h"
 #include "../environnement/global_variables.h"
-#include "../utils/key_management.h"
+#include "../terminal/key_management.h"
 #include "../utils/tools.h"
 
 ModuleContext buildModuleContext(EditorContext* ctx) {
