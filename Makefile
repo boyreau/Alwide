@@ -16,6 +16,8 @@ executable=al # lsp_test test_line test_file
 
 # C sources files
 SRC_MODULES= \
+	src/data-management/encoding/utf8.c \
+	src/data-management/encoding/utf16.c \
 	src/data-management/utf_8_extractor.c \
 	src/advanced/shared.c \
 	src/data-management/file_structure.c \

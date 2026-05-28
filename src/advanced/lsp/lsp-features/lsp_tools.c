@@ -3,6 +3,7 @@
 #include <string.h>
 #include "../../../data-management/file_management.h"
 #include "../../../environnement/global_variables.h"
+#include "../../../data-management/encoding/utf16.h"
 
 void applyTextEdit(Cursor* cursor, LSP_TextEdit* text_edit, History** history_p,
                    PayloadStateChange payload_state_change, LF_Tabulation* tab) {
@@ -117,8 +118,8 @@ LSP_Position calculateEndPos(LSP_Position start, const char* text) {
     }
     else {
       Char_U8 u8 = readChar_U8FromCharArrayWithFirst((char*)text + index, text[index]);
-      index += sizeChar_U8(u8);
-      end.column += getUTF16Length(u8);
+      index += utf8_size(u8);
+      end.column += utf16_length(u8);
     }
   }
   return end;

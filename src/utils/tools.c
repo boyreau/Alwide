@@ -1,11 +1,11 @@
 #include "tools.h"
-#include "../config/language_feature.h"
+#include "../data-management/encoding/utf8.h"
+#include "../data-management/encoding/utf16.h"
 
 #include <asm-generic/errno-base.h>
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#include <libgen.h>
 #include <limits.h>
 #include <linux/limits.h>
 #include <stdio.h>
@@ -15,7 +15,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "../environnement/constants.h"
 #include "key_management.h"
 
 bool areStringEquals(String str1, String str2) { return strcmp(str1.content, str2.content) == 0; }
@@ -259,41 +258,10 @@ void countStringFrame(char* ch, int length, int* current_row, int* current_colum
   }
 }
 
-int countStringUTF16Length(const char* ch, int length) {
-  if (ch == NULL) {
-    return 0;
-  }
-  int index = 0;
-  int utf16_len = 0;
-  while (index < length && ch[index] != '\0') {
-    Char_U8 u8 = readChar_U8FromCharArrayWithFirst((char*)ch + index, ch[index]);
-    index += sizeChar_U8(u8);
-    utf16_len += getUTF16Length(u8);
-  }
-  return utf16_len;
-}
-
-int getUTF16Offset(Char_U8* ch, int element_number, int character_column) {
-  int utf16_offset = 0;
-  for (int i = 0; i < character_column && i < element_number; i++) {
-    utf16_offset += getUTF16Length(ch[i]);
-  }
-  return utf16_offset;
-}
-
-int getCharacterColumnFromUTF16Offset(Char_U8* ch, int element_number, int utf16_offset) {
-  int current_utf16 = 0;
-  int i = 0;
-  for (; i < element_number && current_utf16 < utf16_offset; i++) {
-    current_utf16 += getUTF16Length(ch[i]);
-  }
-  return i;
-}
-
-int getByteOffset(Char_U8* ch, int element_number, int character_column) {
+int utf8_get_byte_offset(Char_U8* ch, int element_number, int character_column) {
   int byte_offset = 0;
   for (int i = 0; i < character_column && i < element_number; i++) {
-    byte_offset += sizeChar_U8(ch[i]);
+    byte_offset += utf8_size(ch[i]);
   }
   return byte_offset;
 }
@@ -361,7 +329,7 @@ CursorDescriptor positionToCursorDescriptor(LSP_Position position) {
 LSP_Position LSP_pos_from_cursor(Cursor cursor) {
   int character_col = cursor.line_id.absolute_column;
   LineNode* line = cursor.line_id.line;
-  int utf16_col = getUTF16Offset(line->ch, line->element_number, character_col);
+  int utf16_col = utf16_get_offset(line->ch, line->element_number, character_col);
   return (LSP_Position){.row = cursor.file_id.absolute_row - 1, .column = utf16_col};
 }
 
@@ -379,7 +347,7 @@ int LSP_0_row_to_1_row(int lsp_row) {
 
 Cursor LSP_tryToReachCursorForLSPPosition(Cursor cursor, LSP_Position position) {
   Cursor target_row = tryToReachAbsPosition(cursor, LSP_0_row_to_1_row(position.row), 0);
-  int character_col = getCharacterColumnFromUTF16Offset(target_row.line_id.line->ch, target_row.line_id.line->element_number,
+  int character_col = utf16_get_char_column(target_row.line_id.line->ch, target_row.line_id.line->element_number,
                                                         position.column);
   return tryToReachAbsPosition(target_row, LSP_0_row_to_1_row(position.row), character_col);
 }

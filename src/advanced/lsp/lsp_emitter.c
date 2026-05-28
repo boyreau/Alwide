@@ -3,13 +3,14 @@
 #include "../../environnement/global_variables.h"
 #include "../../utils/tools.h"
 #include "../../utils/key_management.h"
+#include "../../data-management/encoding/utf16.h"
 
 int global_version = 2;
 
 static int getLSPColumnFromCursor(Cursor cursor, int row, int character_column) {
   Cursor target = tryToReachAbsPosition(cursor, row + 1, 0);
   LineNode* line = target.line_id.line;
-  return getUTF16Offset(line->ch, line->element_number, character_column);
+  return utf16_get_offset(line->ch, line->element_number, character_column);
 }
 
 void onStateChangeLSP(Action action, LSP_Data* data, Cursor* cursor) {
@@ -46,8 +47,8 @@ void onStateChangeLSP(Action action, LSP_Data* data, Cursor* cursor) {
         }
         else {
           Char_U8 u8 = readChar_U8FromCharArrayWithFirst((char*)action.ch + index, action.ch[index]);
-          index += sizeChar_U8(u8);
-          last_line_utf16_len += getUTF16Length(u8);
+          index += utf8_size(u8);
+          last_line_utf16_len += utf16_length(u8);
         }
       }
 
@@ -59,12 +60,12 @@ void onStateChangeLSP(Action action, LSP_Data* data, Cursor* cursor) {
       }
     }
     else {
-      Char_U8 u8 = readChar_U8FromInput(K_CODE(action.unique_ch));
+      Char_U8 u8 = unicode_to_utf8(K_CODE(action.unique_ch));
       if (action.unique_ch == '\n') {
         old_end_lsp_col = 0;
       }
       else {
-        old_end_lsp_col = start_lsp_col + getUTF16Length(u8);
+        old_end_lsp_col = start_lsp_col + utf16_length(u8);
       }
     }
   }

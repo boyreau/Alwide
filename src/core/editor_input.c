@@ -1,7 +1,6 @@
 #include "editor_input.h"
 
 #include <assert.h>
-#include <ctype.h>
 #include <limits.h>
 #include <ncurses.h>
 #include <stdio.h>
@@ -228,7 +227,7 @@ void handleCharInsertion(EditorContext* ctx, int key) {
 
   deleteSelectionWithState(history_frame, cursor, select_cursor, ctx->payload_state_change);
   CursorDescriptor tmp = cursor_to_desc(*cursor);
-  Char_U8 u8 = readChar_U8FromInput(codepoint);
+  Char_U8 u8 = unicode_to_utf8(codepoint);
 
   if (!ilj_handleAutoPairs(fc, u8, history_frame, ctx->payload_state_change)) {
     *cursor = insertCharInLineC(*cursor, u8);
@@ -249,12 +248,12 @@ void handleCharInsertion(EditorContext* ctx, int key) {
 
 static void handleTabInsertion(FileContainer* fc, Cursor* cursor) {
   if (!LF_tab_use_space(fc->feature)) {
-    *cursor = insertCharInLineC(*cursor, readChar_U8FromInput('\t'));
+    *cursor = insertCharInLineC(*cursor, unicode_to_utf8('\t'));
   }
   else {
     int tab_size = LF_tab_size(fc->feature);
     for (int i = 0; i < tab_size; i++) {
-      *cursor = insertCharInLineC(*cursor, readChar_U8FromInput(' '));
+      *cursor = insertCharInLineC(*cursor, unicode_to_utf8(' '));
     }
   }
 }

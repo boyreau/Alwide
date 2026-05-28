@@ -244,7 +244,7 @@ void logInput(int key) {
     }
   }
   else {
-    Char_U8 u8 = readChar_U8FromInput(codepoint);
+    Char_U8 u8 = unicode_to_utf8(codepoint);
     fprintf(f, "CHAR: '");
     for (int i = 0; i < 4 && u8.t[i]; i++) {
       fprintf(f, "%c", u8.t[i]);

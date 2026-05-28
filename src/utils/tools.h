@@ -49,13 +49,7 @@ int mkdir_p(const char* path, mode_t mode);
 
 void countStringFrame(char* ch, int length, int* current_row, int* current_column, int* screen_max_width, int tab_size);
 
-int countStringUTF16Length(const char* ch, int length);
-
-int getUTF16Offset(Char_U8* ch, int element_number, int character_column);
-
-int getCharacterColumnFromUTF16Offset(Char_U8* ch, int element_number, int utf16_offset);
-
-int getByteOffset(Char_U8* ch, int element_number, int character_column);
+int utf8_get_byte_offset(Char_U8* ch, int element_number, int character_column);
 
 char* trim(char* ch);
 
