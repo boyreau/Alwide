@@ -6,14 +6,14 @@
 #include "key_management.h"
 
 void kitty_enable(void) {
-  /* Use Push (>) flag 1 to set disambiguate (No event types/releases for now) */
-  printf("\033[>1u");
+  /* Enable flag 1 (disambiguate) and flag 2 (event types/releases) */
+  printf("\033[=1u");
   fflush(stdout);
 }
 
 void kitty_disable(void) {
-  /* Pop (<) keyboard mode from stack */
-  printf("\033[<u");
+  /* Reset keyboard mode */
+  printf("\033[0u");
   fflush(stdout);
 }
 
@@ -23,8 +23,8 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
     return false;
   }
 
-  /* Patience: Wait up to 50ms for the very first char after Escape */
-  timeout(50);
+  /* Patience: Wait up to 100ms for the very first char after Escape */
+  timeout(100);
   int next = getch();
   timeout(20);
 
@@ -36,6 +36,13 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
   }
 
   if (next != '[' && next != 'O') {
+    /* Legacy Fallback: ESC + Enter/Newline is often Shift+Enter or Alt+Enter */
+    if (next == '\r' || next == '\n') {
+      event->key_code = 13;
+      event->modifiers = 2; /* Map to Shift bitmask */
+      event->type = KITTY_EVENT_PRESS;
+      return true;
+    }
     *out_unread = next;
     event->key_code = 27;
     event->modifiers = 1;
@@ -182,8 +189,9 @@ bool kitty_translate_event(const KittyKeyEvent* event, int* out_unified) {
   /* Filter releases: pass only modifier key state changes or Ctrl releases */
   bool is_release = (event->type == KITTY_EVENT_RELEASE);
   if (is_release) {
-    bool is_mod_key = (key >= 57441 && key <= 57448);
-    if (!is_mod_key && !ctrl) {
+    bool is_mod_key = (key >= 57441 && key <= 57452);
+    bool is_ctrl_event = (key == 57443 || key == 57444);
+    if (!is_mod_key && !is_ctrl_event) {
       return false;
     }
   }
@@ -349,8 +357,8 @@ bool kitty_translate_event(const KittyKeyEvent* event, int* out_unified) {
   }
   else if (key == 27 || key == '\n' || key == '\r' || key == '\t' || key == 127 || key == 8) {
     is_functional = true;
-    if (key == '\r') {
-      translated_key = '\n';
+    if (key == '\r' || key == '\n') {
+      translated_key = KEY_ENTER;
     }
     else if (key == 127 || key == 8) {
       translated_key = KEY_BACKSPACE;

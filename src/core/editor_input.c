@@ -307,7 +307,7 @@ EventLoopAction runSpecialKeyHandler(EditorContext* ctx, int key) {
     case H_KEY_MOUSE:
       handleClick(ctx);
       break;
-
+    case K_SPECIAL(K_MOD_CTRL, 'k'):
     case H_KEY_RIGHT:
       if (cursor_is_disabled(*select_cursor)) {
         *cursor = moveRight(*cursor);
@@ -320,6 +320,7 @@ EventLoopAction runSpecialKeyHandler(EditorContext* ctx, int key) {
       setDesiredColumn(*cursor, desired_column);
       askCompletion(&ctx->gui_context, fc, false, false);
       break;
+    case K_SPECIAL(K_MOD_CTRL, 'j'):
     case H_KEY_LEFT:
       if (cursor_is_disabled(*select_cursor)) {
         if (areChar_U8Equals(getCharAtCursor(*cursor), readChar_U8FromCharArray("(")) &&
@@ -332,31 +333,37 @@ EventLoopAction runSpecialKeyHandler(EditorContext* ctx, int key) {
       setDesiredColumn(*cursor, desired_column);
       askCompletion(&ctx->gui_context, fc, false, false);
       break;
+    case K_SPECIAL(K_MOD_CTRL, 'i'):
     case H_KEY_UP:
       *cursor = moveUp(*cursor, *desired_column);
       setSelectCursorOff(cursor, select_cursor, SELECT_OFF_LEFT);
       gui_closePopup(&ctx->gui_context);
       break;
+    case K_SPECIAL(K_MOD_CTRL, 'n'):
     case H_KEY_DOWN:
       *cursor = moveDown(*cursor, *desired_column);
       setSelectCursorOff(cursor, select_cursor, SELECT_OFF_RIGHT);
       gui_closePopup(&ctx->gui_context);
       break;
+    case K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, 'k'):
     case H_KEY_MAJ_RIGHT:
       setSelectCursorOn(*cursor, select_cursor);
       *cursor = moveRight(*cursor);
       setDesiredColumn(*cursor, desired_column);
       break;
+    case K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, 'j'):
     case H_KEY_MAJ_LEFT:
       setSelectCursorOn(*cursor, select_cursor);
       *cursor = moveLeft(*cursor);
       setDesiredColumn(*cursor, desired_column);
       break;
+    case K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, 'i'):
     case H_KEY_MAJ_UP:
       setSelectCursorOn(*cursor, select_cursor);
       *cursor = moveUp(*cursor, *desired_column);
       gui_closePopup(&ctx->gui_context);
       break;
+    case K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, 'n'):
     case H_KEY_MAJ_DOWN:
       setSelectCursorOn(*cursor, select_cursor);
       *cursor = moveDown(*cursor, *desired_column);
@@ -522,7 +529,10 @@ EventLoopAction runSpecialKeyHandler(EditorContext* ctx, int key) {
         askCompletion(&ctx->gui_context, fc, false, false);
       }
       break;
+    case H_KEY_SHIFT_ENTER:
+      *cursor = goToEnd(*cursor);
     case H_KEY_ENTER:
+      gui_closePopup(&ctx->gui_context);
       deleteSelectionWithState(history_frame, cursor, select_cursor, ctx->payload_state_change);
       tmp = cursor_to_desc(*cursor);
       *cursor = insertNewLineInLineC(*cursor);

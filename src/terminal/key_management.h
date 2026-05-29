@@ -84,21 +84,23 @@
 
 /* Macros for defining and checking keys */
 #define K_SPECIAL(mods, key)         ((mods) | (key) | K_FLAG_SPECIAL)
-#define K_SPECIAL_RELEASE(mods, key) (K(mods, key) | K_FLAG_RELEASE)
+#define K_SPECIAL_RELEASE(mods, key) (K_SPECIAL(mods, key) | K_FLAG_RELEASE)
 
 #define TIME_BETWEEN_EVENT 200 /*ms*/
 
 // --- Unified Key Binds ---
 
-#define H_KEY_RESIZE    K_SPECIAL(0, KEY_RESIZE)
-#define H_KEY_MOUSE     K_SPECIAL(0, KEY_MOUSE)
-#define H_KEY_ESCAPE    K_SPECIAL(0, 27)
-#define KEY_TAB         '\t'
-#define H_KEY_TAB       K_SPECIAL(0, KEY_TAB)
-#define H_KEY_SHIFT_TAB K_SPECIAL(K_MOD_SHIFT, KEY_BTAB)
-#define H_KEY_ENTER     K_SPECIAL(0, KEY_ENTER)
-#define H_KEY_BACKSPACE K_SPECIAL(0, KEY_BACKSPACE)
-#define H_KEY_DELETE    H_KEY_BACKSPACE /* Alias for consistency */
+#define H_KEY_RESIZE      K_SPECIAL(0, KEY_RESIZE)
+#define H_KEY_MOUSE       K_SPECIAL(0, KEY_MOUSE)
+#define H_KEY_ESCAPE      K_SPECIAL(0, 27)
+#define KEY_TAB           '\t'
+#define H_KEY_TAB         K_SPECIAL(0, KEY_TAB)
+#define H_KEY_SHIFT_TAB   K_SPECIAL(K_MOD_SHIFT, KEY_BTAB)
+#define H_KEY_ENTER       K_SPECIAL(0, KEY_ENTER)
+#define H_KEY_SHIFT_ENTER K_SPECIAL(K_MOD_SHIFT, KEY_ENTER)
+#define H_KEY_BACKSPACE   K_SPECIAL(0, KEY_BACKSPACE)
+
+#define H_KEY_DELETE H_KEY_BACKSPACE /* Alias for consistency */
 
 #define H_KEY_SUPPR       K_SPECIAL(0, KEY_DC)
 #define H_KEY_CTRL_SUPPR  K_SPECIAL(K_MOD_CTRL, KEY_DC)
