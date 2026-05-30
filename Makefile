@@ -8,8 +8,10 @@ ifeq ($(shell expr $(CLANG_VERSION) \< $(MIN_CLANG_VERSION)), 1)
 $(error Clang version $(CLANG_VERSION) is too old. Please update to at least version $(MIN_CLANG_VERSION))
 endif
 
-#CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -DNDEBUG -O3
-CFLAGS=-g -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -D_SHOW_ERROR -fsanitize=address
+#CFLAGS=-DNDEBUG -O3
+CFLAGS=-g -D_SHOW_ERROR -fsanitize=address
+
+CFLAGS +=-Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600
 
 BUILD_DIR=build
 executable=al # lsp_test test_line test_file
@@ -94,7 +96,7 @@ RUST_MODULES= \
 	lib/tree-sitter-json/target/release/libtree_sitter_json.rlib \
 	lib/tree-sitter-bash/target/release/libtree_sitter_bash.rlib \
 	lib/tree-sitter-markdown/target/release/libtree_sitter_md.rlib \
-	lib/tree-sitter-query/target/release/libtree_sitter_query.rlib \
+	lib/tree-sitter-query/target/release/libtree_sitter_tsquery.rlib \
 	lib/tree-sitter-vhdl/target/release/libtree_sitter_vhdl.rlib \
 	lib/tree-sitter-lua/target/release/libtree_sitter_lua.rlib \
 	lib/tree-sitter-asm/target/release/libtree_sitter_asm.rlib \
