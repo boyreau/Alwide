@@ -283,7 +283,15 @@ static int _LSP_sendPacketInternal(LSP_Server* server, char* method, char* param
   snprintf(atSend, sizeof(atSend), "Content-Length: %d\r\n\r\n%s", content_length, content_str);
   int head_length = strlen(atSend) - content_length;
 
-  write(server->outpipefd[1], atSend, head_length + content_length);
+  if (write(server->outpipefd[1], atSend, head_length + content_length) < 0) {
+    server->pid = -1;
+    server->is_init_done = false;
+    free(content_str);
+    if (json_request_obj) {
+      cJSON_Delete(json_request_obj);
+    }
+    return 0;
+  }
 
   // Logging
   if (type == LSP_RESPONSE) {
@@ -618,6 +626,9 @@ void LSP_initializeServer(LSP_Server* lsp, char* client_name, char* client_versi
   cJSON_Delete(content);
   lsp->is_init_done = true;
   pthread_mutex_unlock(&lsp->initDone);
+
+  // Mandatory 'initialized' notification after initialization handshake
+  LSP_sendPacket(lsp, "initialized", "{}", LSP_NOTIFICATION);
 
   // Flush pending packet to send
   pthread_mutex_lock(&lsp->pending_lock);
@@ -1514,7 +1525,7 @@ void LSP_destroySignatureHelp(LSP_SignatureHelp* help) {
 
 bool LSP_dispatchOnReceive(LSP_Server* lsp, void (*dispatcher)(cJSON* packet, LSP_Server* lsp, void* payload),
                            void* payload) {
-  if (lsp == NULL || !lsp->is_init_done) {
+  if (lsp == NULL || lsp->pid == -1 || !lsp->is_init_done) {
     return false;
   }
 
