@@ -116,6 +116,9 @@ lib/tree-sitter-markdown/tree-sitter-markdown/libtree-sitter-markdown.a:
 lib/tree-sitter-markdown/tree-sitter-markdown-inline/libtree-sitter-markdown-inline.a:
 	cd lib/tree-sitter-markdown/tree-sitter-markdown-inline/ && tree-sitter generate && $(MAKE)
 
+lib/tree-sitter-latex/target/release/libtree_sitter_latex.rlib:
+	cd lib/tree-sitter-latex && (test -f src/parser.c || tree-sitter generate) && cargo build --release
+
 %.rlib:
 	cd  $(shell echo $@ | cut -d/ -f1-2) && cargo build --release
 
