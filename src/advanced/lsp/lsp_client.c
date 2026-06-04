@@ -242,7 +242,7 @@ cJSON* LSP_readPacketAsJSON(LSP_Server* server, bool block) {
   if (LSP_getPacketType(at_return) != LSP_RESPONSE) {
     if (strcmp("window/logMessage", LSP_getPacketMethod(at_return)) == 0) {
       cJSON* message_obj = cJSON_GetObjectItem(LSP_getNotificationParams(at_return), "message");
-      printf("Server log : %s\n", cJSON_GetStringValue(message_obj));
+      fprintf(stderr, "Server log : %s\n", cJSON_GetStringValue(message_obj));
       cJSON_Delete(at_return);
       free(content_str);
       return LSP_readPacketAsJSON(server, block);
