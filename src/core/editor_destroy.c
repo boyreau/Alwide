@@ -19,7 +19,7 @@
 static void finalizeTerminal() {
   /// --- Teardown Terminal ---
   // Restore terminal state (cursor and mouse) and disable Kitty Keyboard Protocol
-  printf("\033[?1003l\033[0 q\n");
+  printf("\033[?1003l\033[?1006l\033[0 q\n");
   fflush(stdout);
   kitty_disable();
 

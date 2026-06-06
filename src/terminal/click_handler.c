@@ -27,6 +27,8 @@ static inline bool is_left_double_click(const MEVENT* m) { return m->bstate & BU
 
 static inline bool is_scroll_up(const MEVENT* m) { return m->bstate & BUTTON4_PRESSED; }
 static inline bool is_scroll_down(const MEVENT* m) { return m->bstate & BUTTON5_PRESSED; }
+static inline bool is_scroll_left(const MEVENT* m) { return m->bstate & BUTTON6_PRESSED; }
+static inline bool is_scroll_right(const MEVENT* m) { return m->bstate & BUTTON7_PRESSED; }
 
 static inline bool is_shift_active(const MEVENT* m) { return m->bstate & BUTTON_SHIFT; }
 static inline bool is_ctrl_active(const MEVENT* m) { return m->bstate & BUTTON_CTRL; }
@@ -177,25 +179,25 @@ static void handle_editor_scrolling(gui_Context* gui, int* screen_x, int* screen
                                     const Cursor* cursor) {
   bool shifted = is_shift_active(m);
 
-  if (is_scroll_up(m)) {
-    if (!shifted) {
-      *screen_y = (*screen_y > SCROLL_SPEED) ? *screen_y - SCROLL_SPEED : 1;
+  if (is_scroll_up(m) || is_scroll_left(m)) {
+    if (is_scroll_left(m) || shifted) {
+      *screen_x = (*screen_x > SCROLL_SPEED) ? *screen_x - SCROLL_SPEED : 1;
     }
     else {
-      *screen_x = (*screen_x > SCROLL_SPEED) ? *screen_x - SCROLL_SPEED : 1;
+      *screen_y = (*screen_y > SCROLL_SPEED) ? *screen_y - SCROLL_SPEED : 1;
     }
     gui_updateEDW(gui);
   }
-  else if (is_scroll_down(m)) {
-    if (!shifted) {
+  else if (is_scroll_down(m) || is_scroll_right(m)) {
+    if (is_scroll_right(m) || shifted) {
+      *screen_x += SCROLL_SPEED;
+    }
+    else {
       *screen_y += SCROLL_SPEED;
       FileIdentifier last = tryToReachAbsRow(cursor->file_id, *screen_y + 2);
       if (*screen_y + 2 != last.absolute_row) {
         *screen_y = (last.absolute_row > 2) ? last.absolute_row - 2 : 1;
       }
-    }
-    else {
-      *screen_x += SCROLL_SPEED;
     }
     gui_updateEDW(gui);
   }
@@ -334,7 +336,7 @@ void handleOpenedFileClick(gui_Context* gui, FileContainer* files, int* file_cou
                            bool* refresh_local_vars, bool mouse_drag) {
   gui_OFW* ofw = &gui->ofw_context;
 
-  if (is_scroll_up(&m)) {
+  if (is_scroll_up(&m) || is_scroll_left(&m)) {
     if (ofw->current_file_offset > 0) {
       ofw->current_file_offset--;
       gui_updateOFW(gui);
@@ -342,7 +344,7 @@ void handleOpenedFileClick(gui_Context* gui, FileContainer* files, int* file_cou
     return;
   }
 
-  if (is_scroll_down(&m)) {
+  if (is_scroll_down(&m) || is_scroll_right(&m)) {
     if (ofw->current_file_offset < *file_count - 1) {
       ofw->current_file_offset++;
       gui_updateOFW(gui);
@@ -420,23 +422,25 @@ void handleFileExplorerClick(gui_Context* gui, FileContainer** files, int* file_
   gui_FEW* few = &gui->few_context;
 
   // Scrolling and Resizing
-  if (is_scroll_up(&m)) {
-    if (!is_shift_active(&m)) {
-      few->few_y_offset = (few->few_y_offset > SCROLL_SPEED) ? few->few_y_offset - SCROLL_SPEED : 0;
+  if (is_scroll_up(&m) || is_scroll_left(&m)) {
+    if (is_scroll_left(&m) || is_shift_active(&m)) {
+      gui_resizeFEW(gui, few->few_width + 1);
     }
     else {
-      gui_resizeFEW(gui, few->few_width - 1);
+      few->few_y_offset = (few->few_y_offset > SCROLL_SPEED) ? few->few_y_offset - SCROLL_SPEED : 0;
     }
     gui_updateFEW(gui);
     return;
   }
 
-  if (is_scroll_down(&m)) {
-    if (!is_shift_active(&m)) {
-      few->few_y_offset += SCROLL_SPEED;
+  if (is_scroll_down(&m) || is_scroll_right(&m)) {
+    if (is_scroll_right(&m) || is_shift_active(&m)) {
+      if (few->few_width < COLS - 8) {
+        gui_resizeFEW(gui, few->few_width - 1);
+      }
     }
-    else if (few->few_width < COLS - 8) {
-      gui_resizeFEW(gui, few->few_width + 1);
+    else {
+      few->few_y_offset += SCROLL_SPEED;
     }
     gui_updateFEW(gui);
     return;

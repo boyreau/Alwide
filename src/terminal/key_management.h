@@ -140,6 +140,13 @@
 #define BEGIN_MOUSE_LISTEN 588
 #define MOUSE_IN_OUT       589
 
+#ifndef BUTTON6_PRESSED
+#define BUTTON6_PRESSED 0x40000000
+#endif
+#ifndef BUTTON7_PRESSED
+#define BUTTON7_PRESSED 0x80000000
+#endif
+
 void detectComplexMouseEvents(MEVENT* event);
 void printEventList(MEVENT* event);
 

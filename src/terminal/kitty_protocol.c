@@ -17,7 +17,7 @@ void kitty_disable(void) {
   fflush(stdout);
 }
 
-bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread) {
+bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, MEVENT* mouse_event, int* out_unread) {
   *out_unread = ERR;
   if (first_char != 27) {
     return false;
@@ -55,9 +55,9 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
   int len = 0;
   char terminator = '\0';
 
-  /* For the body of the sequence, wait up to 20ms per byte */
+  /* For the body of the sequence, wait up to 100ms per byte */
+  timeout(100);
   while (len < (int)sizeof(buf) - 1) {
-    timeout(20);
     int c = getch();
     if (c == ERR) {
       break; /* Sequence ended prematurely */
@@ -78,6 +78,128 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
     event->modifiers = 1;
     event->type = KITTY_EVENT_PRESS;
     return true;
+  }
+
+  /* 1.5 Parse SGR mouse sequence */
+  if (buf[0] == '<') {
+    int button = 0, x = 0, y = 0;
+    if (sscanf(buf + 1, "%d;%d;%d", &button, &x, &y) == 3) {
+      mouse_event->x = x - 1;
+      mouse_event->y = y - 1;
+      mouse_event->z = 0;
+      mouse_event->id = 0;
+      mouse_event->bstate = 0;
+
+      int base_button = button;
+      if (button >= 64) {
+        base_button = (button & 3) + 64;
+      } else {
+        base_button = button & (3 | 32);
+      }
+
+      if (button & 4) {
+        mouse_event->bstate |= BUTTON_SHIFT;
+      }
+      if (button & 8) {
+        mouse_event->bstate |= BUTTON_ALT;
+      }
+      if (button & 16) {
+        mouse_event->bstate |= BUTTON_CTRL;
+      }
+
+      if (base_button == 64) {
+        mouse_event->bstate |= BUTTON4_PRESSED;
+      } else if (base_button == 65) {
+        mouse_event->bstate |= BUTTON5_PRESSED;
+      } else if (base_button == 66) {
+        mouse_event->bstate |= BUTTON6_PRESSED;
+      } else if (base_button == 67) {
+        mouse_event->bstate |= BUTTON7_PRESSED;
+      } else if (base_button == 0) {
+        if (terminator == 'M') {
+          mouse_event->bstate |= BUTTON1_PRESSED;
+        } else {
+          mouse_event->bstate |= BUTTON1_RELEASED;
+        }
+      } else if (base_button == 1) {
+        if (terminator == 'M') {
+          mouse_event->bstate |= BUTTON2_PRESSED;
+        } else {
+          mouse_event->bstate |= BUTTON2_RELEASED;
+        }
+      } else if (base_button == 2) {
+        if (terminator == 'M') {
+          mouse_event->bstate |= BUTTON3_PRESSED;
+        } else {
+          mouse_event->bstate |= BUTTON3_RELEASED;
+        }
+      } else if (base_button >= 32 && base_button <= 35) {
+        mouse_event->bstate |= REPORT_MOUSE_POSITION;
+      }
+
+      event->key_code = H_KEY_MOUSE;
+      event->modifiers = 1;
+      event->type = KITTY_EVENT_PRESS;
+      return true;
+    }
+  }
+  else if (terminator == 'M' && len == 0) {
+    /* Legacy X10/Xterm mouse sequence: \033[M + 3 bytes */
+    timeout(100);
+    int b = getch();
+    int x = getch();
+    int y = getch();
+    timeout(20);
+    if (b != ERR && x != ERR && y != ERR) {
+      mouse_event->x = x - 33;
+      mouse_event->y = y - 33;
+      mouse_event->z = 0;
+      mouse_event->id = 0;
+      mouse_event->bstate = 0;
+
+      int button = b - 32;
+      int base_button = button;
+      if (button >= 64) {
+        base_button = (button & 3) + 64;
+      } else {
+        base_button = button & (3 | 32);
+      }
+
+      if (button & 4) {
+        mouse_event->bstate |= BUTTON_SHIFT;
+      }
+      if (button & 8) {
+        mouse_event->bstate |= BUTTON_ALT;
+      }
+      if (button & 16) {
+        mouse_event->bstate |= BUTTON_CTRL;
+      }
+
+      if (base_button == 64) {
+        mouse_event->bstate |= BUTTON4_PRESSED;
+      } else if (base_button == 65) {
+        mouse_event->bstate |= BUTTON5_PRESSED;
+      } else if (base_button == 66) {
+        mouse_event->bstate |= BUTTON6_PRESSED;
+      } else if (base_button == 67) {
+        mouse_event->bstate |= BUTTON7_PRESSED;
+      } else if (base_button == 0) {
+        mouse_event->bstate |= BUTTON1_PRESSED;
+      } else if (base_button == 1) {
+        mouse_event->bstate |= BUTTON2_PRESSED;
+      } else if (base_button == 2) {
+        mouse_event->bstate |= BUTTON3_PRESSED;
+      } else if (base_button == 3) {
+        mouse_event->bstate |= BUTTON1_RELEASED;
+      } else if (base_button >= 32 && base_button <= 35) {
+        mouse_event->bstate |= REPORT_MOUSE_POSITION;
+      }
+
+      event->key_code = H_KEY_MOUSE;
+      event->modifiers = 1;
+      event->type = KITTY_EVENT_PRESS;
+      return true;
+    }
   }
 
   /* 1. Parse parameters */
@@ -164,6 +286,10 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread)
 
 bool kitty_translate_event(const KittyKeyEvent* event, int* out_unified) {
   int key = event->key_code;
+  if (key == H_KEY_MOUSE) {
+    *out_unified = H_KEY_MOUSE;
+    return true;
+  }
   int mods = event->modifiers;
 
   int val = (mods > 0) ? mods - 1 : 0;

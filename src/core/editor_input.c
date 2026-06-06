@@ -114,7 +114,7 @@ static int parseEscapeSequence(EditorContext* ctx, int first_char) {
   int unread = ERR;
   int key = ERR;
 
-  if (kitty_parse_sequence(first_char, &kitty_event, &unread)) {
+  if (kitty_parse_sequence(first_char, &kitty_event, &ctx->m_event, &unread)) {
     if (unread != ERR) {
       ctx->peek_c = unread;
     }

@@ -47,18 +47,11 @@ void gui_initNCurses(gui_Context* gui_context) {
   noecho();
   curs_set(0);
   // Mouse setup
-  // Setting mouseinterval to 1 is a workaround for a bug in some ncurses versions (like 6.6)
-  // where mouseinterval(0) causes mouse events to be delayed until the next input.
-  // see https://github.com/termux/termux-packages/issues/28372
-  // and https://lists.gnu.org/archive/html/bug-ncurses/2026-04/msg00009.html
-  mouseinterval(1);
-  mousemask(BUTTON1_PRESSED | BUTTON1_RELEASED | BUTTON2_PRESSED | BUTTON2_RELEASED | BUTTON3_PRESSED |
-              BUTTON3_RELEASED | BUTTON4_PRESSED | BUTTON5_PRESSED | BUTTON_SHIFT | BUTTON_CTRL | BUTTON_ALT |
-              REPORT_MOUSE_POSITION,
-            NULL);
+  mousemask(0, NULL);
+  keyok(KEY_MOUSE, FALSE);
   timeout(20);
-  printf("\033[?1003h\033[5 q"); // enable mouse tracking and beam cursor
-  kitty_enable();                // Enable Kitty Keyboard Protocol (flags 1 and 2)
+  printf("\033[?1003h\033[?1006h\033[5 q"); // enable mouse tracking (including SGR 1006) and beam cursor
+  kitty_enable();                           // Enable Kitty Keyboard Protocol (flags 1 and 2)
   fflush(stdout);
   // Color setup
   if (has_colors()) {

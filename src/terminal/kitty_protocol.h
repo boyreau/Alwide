@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <ncurses.h>
 
 /* Event types reported by the Kitty keyboard protocol */
 typedef enum { KITTY_EVENT_PRESS = 1, KITTY_EVENT_REPEAT = 2, KITTY_EVENT_RELEASE = 3 } KittyEventType;
@@ -32,10 +33,11 @@ void kitty_disable(void);
  *
  * @param first_char The initial character read (should be 27/Escape).
  * @param event Pointer to a KittyKeyEvent structure to populate.
+ * @param mouse_event Pointer to an MEVENT structure to populate if SGR mouse is parsed.
  * @param out_unread Pointer to write a peeked byte that should be "unread" (if not a sequence).
  * @return true if a valid sequence (or raw legacy ESC) was successfully parsed, false otherwise.
  */
-bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, int* out_unread);
+bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, MEVENT* mouse_event, int* out_unread);
 
 
 /**

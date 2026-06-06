@@ -47,6 +47,9 @@ void printEventList(MEVENT* event) {
   printIfPresent(event, BUTTON5_PRESSED, "BUTTON5_PRESSED");
   printIfPresent(event, BUTTON5_RELEASED, "BUTTON5_RELEASED");
   printIfPresent(event, BUTTON5_CLICKED, "BUTTON5_CLICKED");
+
+  printIfPresent(event, BUTTON6_PRESSED, "BUTTON6_PRESSED");
+  printIfPresent(event, BUTTON7_PRESSED, "BUTTON7_PRESSED");
 }
 
 
