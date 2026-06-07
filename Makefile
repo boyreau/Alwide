@@ -35,7 +35,12 @@ else
   MODE_CFLAGS = -g -D_SHOW_ERROR -fsanitize=address
 endif
 
-CFLAGS = $(MODE_CFLAGS) -Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600
+# Use pkg-config for dependencies
+PKG_CONFIG ?= pkg-config
+NCURSES_CFLAGS := $(shell $(PKG_CONFIG) --cflags ncursesw 2>/dev/null || echo "")
+NCURSES_LIBS := $(shell $(PKG_CONFIG) --libs ncursesw 2>/dev/null || echo "-lncursesw -ltinfo")
+
+CFLAGS = $(MODE_CFLAGS) -Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 $(NCURSES_CFLAGS)
 
 # Write the mode and CFLAGS tracking files at parse time if they have changed
 $(shell mkdir -p $(BUILD_DIR))
@@ -134,7 +139,7 @@ RUST_MODULES= \
 # Map sources to objects in BUILD_DIR
 OBJECTS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRC_MODULES) $(LIB_C_MODULES))
 
-SHARED_LIBS = -lncursesw -ltinfo
+SHARED_LIBS = $(NCURSES_LIBS)
 
 all: $(OBJECTS) $(RUST_MODULES) $(executable)
 
@@ -179,7 +184,27 @@ clean_all: clean
 	find . -type d -name "target" -exec rm -rf {} +
 
 
-# !! DO NOT EXECUTE AS SUDO !!. To generate config you have to be as user. sudo will be asked to cp to
-# /bin/al
-install: al
-	mkdir -p ~/.config/al && cp -r ./assets/* ~/.config/al && ./generate_config.sh && sudo cp al /bin/al
+# Installation configuration
+PREFIX ?= /usr/local
+BINDIR ?= $(PREFIX)/bin
+DATADIR ?= $(PREFIX)/share/alwide
+
+# Combined install target
+install: install-config install-bin install-data
+
+# Install the binary
+install-bin: al
+	install -v -D al $(DESTDIR)$(BINDIR)/al
+
+# Install system-wide assets
+install-data:
+	mkdir -p $(DESTDIR)$(DATADIR)
+	cp -rv assets/* $(DESTDIR)$(DATADIR)/
+
+# Initialize user-specific configuration (run as normal user)
+install-config:
+	mkdir -p $(HOME)/.config/al
+	cp -rv assets/* $(HOME)/.config/al
+	./generate_config.sh
+
+.PHONY: all release clean clean_all install install-bin install-data install-config
