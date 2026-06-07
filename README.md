@@ -98,9 +98,8 @@ al  # Open current directory
 ## Configuration
 
 Your preferences live in `~/.config/al/`:
-- `config.json`: Themes, tab defaults, and global settings.
 - `languages-features.json`: Custom LSP commands and per-language tweaks.
-
+- `theme`: Color for alwide.
 ---
 
 ## Contributing & Reporting Issues
