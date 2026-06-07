@@ -8,12 +8,40 @@ ifeq ($(shell expr $(CLANG_VERSION) \< $(MIN_CLANG_VERSION)), 1)
 $(error Clang version $(CLANG_VERSION) is too old. Please update to at least version $(MIN_CLANG_VERSION))
 endif
 
-CFLAGS=-DNDEBUG -O3
-#CFLAGS=-g -D_SHOW_ERROR -fsanitize=address
+# Default mode is debug
+MODE ?= debug
 
-CFLAGS +=-Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600
+# If the target is 'release', override MODE to release
+ifeq ($(MAKECMDGOALS),release)
+  MODE = release
+endif
 
+# Target files for tracking configuration changes
 BUILD_DIR=build
+MODE_FILE=$(BUILD_DIR)/.mode
+TRACK_FILE=$(BUILD_DIR)/.cflags
+
+LAST_MODE := $(shell cat $(MODE_FILE) 2>/dev/null)
+ifneq ($(filter install,$(MAKECMDGOALS)),)
+  ifneq ($(LAST_MODE),)
+    MODE = $(LAST_MODE)
+  endif
+endif
+
+# Set CFLAGS based on the selected mode
+ifeq ($(MODE),release)
+  MODE_CFLAGS = -DNDEBUG -O3
+else
+  MODE_CFLAGS = -g -D_SHOW_ERROR -fsanitize=address
+endif
+
+CFLAGS = $(MODE_CFLAGS) -Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600
+
+# Write the mode and CFLAGS tracking files at parse time if they have changed
+$(shell mkdir -p $(BUILD_DIR))
+$(shell echo '$(MODE)' | cmp -s - $(MODE_FILE) || echo '$(MODE)' > $(MODE_FILE))
+$(shell echo '$(CFLAGS)' | cmp -s - $(TRACK_FILE) || echo '$(CFLAGS)' > $(TRACK_FILE))
+
 executable=al # lsp_test test_line test_file
 
 # C sources files
@@ -110,6 +138,11 @@ SHARED_LIBS = -lncursesw -ltinfo
 
 all: $(OBJECTS) $(RUST_MODULES) $(executable)
 
+release: all
+
+# Make all objects depend on mode and flags tracking files to trigger rebuild on configuration change
+$(OBJECTS): $(MODE_FILE) $(TRACK_FILE)
+
 lib/tree-sitter-markdown/tree-sitter-markdown/libtree-sitter-markdown.a:
 	cd lib/tree-sitter-markdown/tree-sitter-markdown/ && tree-sitter generate && $(MAKE)
 
@@ -148,5 +181,5 @@ clean_all: clean
 
 # !! DO NOT EXECUTE AS SUDO !!. To generate config you have to be as user. sudo will be asked to cp to
 # /bin/al
-install:
-	make && mkdir -p ~/.config/al && cp -r ./assets/* ~/.config/al && ./generate_config.sh && sudo cp al /bin/al
+install: al
+	mkdir -p ~/.config/al && cp -r ./assets/* ~/.config/al && ./generate_config.sh && sudo cp al /bin/al

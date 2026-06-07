@@ -36,45 +36,118 @@ Many languages are supported out of the box. If your preferred language is missi
 
 **C/C++, Python, Java, Go, Rust, JavaScript/TypeScript, Dart, Lua, Bash, HTML, CSS, JSON, Markdown, VHDL, Assembly, and more.**
 
+#### LSP Server Installation
+
+To enable optional language intelligence (auto-completion, hover definitions, go-to-definition), you can install the corresponding Language Server (LSP) on your system.
+
+> [!NOTE]
+> LSPs are **completely optional** and are not required for Alwide to function. The editor will run perfectly fine without any LSP installed. Additionally, you are free to use any LSP server of your choice and configure its binary name and command-line arguments in `~/.config/al/languages-features.json`.
+
+Here are some example of lsp servers : 
+
+| Language | LSP Server | Command/Package Example |
+| :--- | :--- | :--- |
+| **C / C++** | `clangd` | `apt install clangd` or `dnf install clangd` |
+| **Python** | `pylsp` | `pip install python-lsp-server` |
+| **Java** | `jdtls` | `eclipse-jdtls` package |
+| **Go** | `gopls` | `go install golang.org/x/tools/gopls@latest` |
+| **JavaScript / TypeScript** | `typescript-language-server` | `npm install -g typescript-language-server` |
+| **HTML** | `html-languageserver` | `npm install -g vscode-langservers-extracted` |
+| **CSS / SCSS** | `css-languageserver` | `npm install -g vscode-langservers-extracted` |
+| **JSON** | `json-languageserver` | `npm install -g vscode-langservers-extracted` |
+| **Bash** | `bash-language-server` | `npm install -g bash-language-server` |
+| **Markdown** | `marksman` | `marksman` binary |
+| **Lua** | `lua-language-server` | `lua-language-server` package |
+| **Dart** | `dart` | Included in Dart SDK (`dart language-server`) |
+| **C#** | `omnisharp` | `omnisharp` package |
+| **Makefile** | `makefile-language-server` | `npm install -g makefile-language-server` |
+| **VHDL** | `vhdl-ls` | `vhdl-ls` cargo crate |
+| **Assembly** | `asm-lsp` | `asm-lsp` binary |
+| **Latex** | `texlab` | `texlab` package |
+
+
 ---
 
 ## Getting Started
 
 Currently, you need to compile Alwide from source to use it.
 
-### 1. Clone the Source
+### Submodules
+
+This project is based on many "lib" as submodule, you have to execute at the root folder to checkout submodules :
+
+Clone using : 
 ```bash
 git clone --recursive https://github.com/arnauda-gh/Alwide.git
 cd Alwide
 ```
 
-### 2. Install Dependencies
-**Ubuntu / Debian:**
+Or afterward use :
 ```bash
-# Core build tools
-sudo apt install make clang libncursesw5-dev rustup
-
-# Ensure Clang 18+ and Rust are ready
-rustup update stable
-# (If clang < 18) Visit https://apt.llvm.org/ for the latest version
+git submodule update --init --recursive
 ```
 
-**Install Tree-Sitter C API:**
-```bash
-sudo make -C lib/tree-sitter/ install
-```
+### Dependencies :
 
-### 3. Build & Install
-```bash
-make
-# manage the config setup
-make install  # Note: Run as a regular user (do NOT use sudo make install). The Makefile handles ~/.config/al/ and prompts for sudo copy internally.
-```
+#### Ubuntu/Debian :
 
-Now launch it:
-```bash
-al  # Open current directory
-```
+ - `apt install make gcc libncursesw5-dev`
+
+#### Clang version 18 >=
+
+Install the 18 only if you are currently under the requirement if you are above skip this step.
+
+ - `wget https://apt.llvm.org/llvm.sh`
+ - `chmod +x llvm.sh`
+ - `sudo ./llvm.sh 18` (check result you may be asked to add some dependencies).
+
+#### Install tree-sitter api.h
+
+May be useless now. Skip for first try.
+
+ - Be in the root folder
+ - `make -C lib/tree-sitter/ install`
+
+#### Install tree-sitter cli
+
+Some tree-sitter parsers need to use `tree-sitter generate` to convert grammars to `parser.c` (for now only latex need it).
+
+use :
+- `npm install -g tree-sitter-cli`
+
+#### Install rust/rustup/cargo packages
+
+ - `rustc --version`
+
+It's really important to be up to date ! You will be in most cases not up to date.
+
+Ubuntu :
+ - `apt install rustup`
+ - `rustup update stable`
+
+Others distro may not have rustup package. Check for your personnal distro.
+You might find this useful : https://rustup.rs/
+
+#### Compile :
+
+In the root folder, compile the default debug/development version:
+  - `make`
+
+Or compile the production/release version:
+  - `make release`
+
+> [!WARNING]
+> The default debug/development mode (`make`) compiles with address sanitizers (`-fsanitize=address`) and verbose logging enabled. This makes the editor **extremely slow**. For daily use or production, you should compile the release version instead using:
+> ```bash
+> make release
+> ```
+
+
+#### To install and generate the config use :
+ - do not use sudo, the generation of the config need to be in user mode.
+ - you will be prompted for sudo in the make install it-self.
+ - check by yourself the use of sudo (used to cp al /bin/al).
+ - `make install`
 
 ---
 
@@ -88,7 +161,7 @@ al  # Open current directory
 | `Ctrl + O` | **Open File** toggle |
 | `Ctrl + Space` | **Completion Popup** toggle |
 | `Ctrl + W` | **Close** Current Tab |
-| `Ctrl + /` | **Toggle Comment** |
+| `Ctrl + Shift + /` | **Toggle Comment** |
 | `Ctrl + R` | **Format** Code (LSP) |
 | `Ctrl + Z/Y` | **Undo / Redo** |
 | `Shift + Arrows` | **Select Text** |
@@ -98,9 +171,8 @@ al  # Open current directory
 ## Configuration
 
 Your preferences live in `~/.config/al/`:
-- `config.json`: Themes, tab defaults, and global settings.
 - `languages-features.json`: Custom LSP commands and per-language tweaks.
-
+- `theme`: Color for alwide.
 ---
 
 ## Contributing & Reporting Issues
@@ -112,27 +184,19 @@ Alwide needs testing across different terminal emulators, mouse drivers, and dis
 If you encounter crashes, bugs, or unexpected behavior, please report them! To help us debug, compile Alwide with logging enabled.
 
 The [Makefile](file:///home/arno/dev/Alwide/Makefile) has two build configurations:
-1. **Release Build (Default):** Optimized for speed, with asserts and logging disabled.
-2. **Debug & Logging Build:** Compiles with debug symbols (`-g`), AddressSanitizer (`-fsanitize=address`) to catch memory bugs, and redirects standard error to log files.
+1. **Debug & Logging Build (Default):** Compiles with debug symbols (`-g`), AddressSanitizer (`-fsanitize=address`) to catch memory bugs, and redirects standard error to log files.
+2. **Release Build:** Optimized for speed (`-O3`), with asserts and logging disabled (`-DNDEBUG`).
+
+*Note: The build system automatically tracks configuration/mode changes. You don't need to run `make clean` or use `-B` when switching between debug and release builds; it will detect changes and rebuild accordingly.*
 
 #### Steps to Generate Logs
 
-1. Open the [Makefile](file:///home/arno/dev/Alwide/Makefile) and switch the compiler flags:
-    * Comment out the release flags:
-      ```makefile
-      #CFLAGS=-DNDEBUG -O3
-      ```
-    * Uncomment the debug and logging flags:
-      ```makefile
-      CFLAGS=-g -D_SHOW_ERROR -fsanitize=address
-      ```
-2. Recompile:
+1. Compile the default debug version:
    ```bash
-   make clean
    make
    ```
-3. Run the compiled editor (`./al` or `al`) and reproduce the issue.
-4. Locate the log files in the directory where you ran `al`:
+2. Run the compiled editor (`./al` or `al`) and reproduce the issue.
+3. Locate the log files in the directory where you ran `al`:
     * **Application Logs:** `.logs.txt` (captures editor warnings, errors, and crashes)
     * **LSP Logs:** `.lsp_logs.txt` (captures Language Server Protocol communication)
 
