@@ -42,39 +42,66 @@ Many languages are supported out of the box. If your preferred language is missi
 
 Currently, you need to compile Alwide from source to use it.
 
-### 1. Clone the Source
+### Submodules
+
+This project is based on many "lib" as submodule, you have to execute at the root folder to checkout submodules :
+
+Clone using : 
 ```bash
 git clone --recursive https://github.com/arnauda-gh/Alwide.git
 cd Alwide
 ```
 
-### 2. Install Dependencies
-**Ubuntu / Debian:**
+Or afterward use :
 ```bash
-# Core build tools
-sudo apt install make clang libncursesw5-dev rustup
-
-# Ensure Clang 18+ and Rust are ready
-rustup update stable
-# (If clang < 18) Visit https://apt.llvm.org/ for the latest version
+git submodule update --init --recursive
 ```
 
-**Install Tree-Sitter C API:**
-```bash
-sudo make -C lib/tree-sitter/ install
-```
+### Dependencies :
 
-### 3. Build & Install
-```bash
-make
-# manage the config setup
-make install  # Note: Run as a regular user (do NOT use sudo make install). The Makefile handles ~/.config/al/ and prompts for sudo copy internally.
-```
+#### Ubuntu/Debian :
 
-Now launch it:
-```bash
-al  # Open current directory
-```
+ - `apt install make gcc libncursesw5-dev`
+
+#### Clang version 18 >=
+
+Install the 18 only if you are currently under the requirement if you are above skip this step.
+
+ - `wget https://apt.llvm.org/llvm.sh`
+ - `chmod +x llvm.sh`
+ - `sudo ./llvm.sh 18` (check result you may be asked to add some dependencies).
+
+#### Install tree-sitter api.h
+
+May be useless now. Skip for first try.
+
+ - Be in the root folder
+ - `make -C lib/tree-sitter/ install`
+
+#### Install rust/rustup/cargo packages
+
+ - `rustc --version`
+
+It's really important to be up to date ! You will be in most cases not up to date.
+
+Ubuntu :
+ - `apt install rustup`
+ - `rustup update stable`
+
+Others distro may not have rustup package. Check for your personnal distro.
+You might find this useful : https://rustup.rs/
+
+#### Compile :
+
+In the root folder :
+  - `make`
+
+
+#### To install and generate the config use :
+ - do not use sudo, the generation of the config need to be in user mode.
+ - you will be prompted for sudo in the make install it-self.
+ - check by yourself the use of sudo (used to cp al /bin/al).
+ - `make install`
 
 ---
 
