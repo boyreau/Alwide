@@ -36,6 +36,36 @@ Many languages are supported out of the box. If your preferred language is missi
 
 **C/C++, Python, Java, Go, Rust, JavaScript/TypeScript, Dart, Lua, Bash, HTML, CSS, JSON, Markdown, VHDL, Assembly, and more.**
 
+#### LSP Server Installation
+
+To enable optional language intelligence (auto-completion, hover definitions, go-to-definition), you can install the corresponding Language Server (LSP) on your system.
+
+> [!NOTE]
+> LSPs are **completely optional** and are not required for Alwide to function. The editor will run perfectly fine without any LSP installed. Additionally, you are free to use any LSP server of your choice and configure its binary name and command-line arguments in `~/.config/al/languages-features.json`.
+
+Here are some example of lsp servers : 
+
+| Language | LSP Server | Command/Package Example |
+| :--- | :--- | :--- |
+| **C / C++** | `clangd` | `apt install clangd` or `dnf install clangd` |
+| **Python** | `pylsp` | `pip install python-lsp-server` |
+| **Java** | `jdtls` | `eclipse-jdtls` package |
+| **Go** | `gopls` | `go install golang.org/x/tools/gopls@latest` |
+| **JavaScript / TypeScript** | `typescript-language-server` | `npm install -g typescript-language-server` |
+| **HTML** | `html-languageserver` | `npm install -g vscode-langservers-extracted` |
+| **CSS / SCSS** | `css-languageserver` | `npm install -g vscode-langservers-extracted` |
+| **JSON** | `json-languageserver` | `npm install -g vscode-langservers-extracted` |
+| **Bash** | `bash-language-server` | `npm install -g bash-language-server` |
+| **Markdown** | `marksman` | `marksman` binary |
+| **Lua** | `lua-language-server` | `lua-language-server` package |
+| **Dart** | `dart` | Included in Dart SDK (`dart language-server`) |
+| **C#** | `omnisharp` | `omnisharp` package |
+| **Makefile** | `makefile-language-server` | `npm install -g makefile-language-server` |
+| **VHDL** | `vhdl-ls` | `vhdl-ls` cargo crate |
+| **Assembly** | `asm-lsp` | `asm-lsp` binary |
+| **Latex** | `texlab` | `texlab` package |
+
+
 ---
 
 ## Getting Started
