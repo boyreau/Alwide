@@ -171,10 +171,18 @@ Or compile the production/release version:
 
 
 #### To install and generate the config use :
- - do not use sudo, the generation of the config need to be in user mode.
- - you will be prompted for sudo in the make install it-self.
- - check by yourself the use of sudo (used to cp al /bin/al).
- - `make install`
+ - The configuration generation must be run as a normal user (not sudo).
+ - `make install-config`
+
+#### To make Alwide available globally:
+You can either install it to your system:
+```bash
+sudo make install-bin install-data
+```
+Or simply add the Alwide directory to your `PATH` (recommended for developers):
+```bash
+export PATH=$PATH:$(pwd)
+```
 
 ---
 
