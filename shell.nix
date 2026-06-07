@@ -9,7 +9,9 @@ pkgs.mkShell {
 			pkgs.rustup
 			pkgs.tree-sitter
 			pkgs.nodejs
-			pkgs.python313Packages.python-lsp-server
+			# Add your LSPs here : 
+			pkgs.python313Packages.python-lsp-server # pylsp for instance
+			# ...
 	];
 
 }
