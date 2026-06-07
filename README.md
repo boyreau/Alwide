@@ -158,7 +158,7 @@ Or compile the production/release version:
 | `Ctrl + S` | **Save** & Auto-format |
 | `Ctrl + Q` | **Quit** Alwide |
 | `Ctrl + E` | **File Explorer** toggle |
-| `Ctrl + O` | **Open File** toggle |
+| `Ctrl + L` | **Open File** toggle |
 | `Ctrl + Space` | **Completion Popup** toggle |
 | `Ctrl + W` | **Close** Current Tab |
 | `Ctrl + Shift + /` | **Toggle Comment** |
