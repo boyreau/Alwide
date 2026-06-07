@@ -8,8 +8,8 @@ ifeq ($(shell expr $(CLANG_VERSION) \< $(MIN_CLANG_VERSION)), 1)
 $(error Clang version $(CLANG_VERSION) is too old. Please update to at least version $(MIN_CLANG_VERSION))
 endif
 
-#CFLAGS=-DNDEBUG -O3
-CFLAGS=-g -D_SHOW_ERROR -fsanitize=address
+CFLAGS=-DNDEBUG -O3
+#CFLAGS=-g -D_SHOW_ERROR -fsanitize=address
 
 CFLAGS +=-Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600
 
