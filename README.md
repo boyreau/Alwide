@@ -41,7 +41,7 @@ Many languages are supported out of the box. If your preferred language is missi
 To enable optional language intelligence (auto-completion, hover definitions, go-to-definition), you can install the corresponding Language Server (LSP) on your system.
 
 > [!NOTE]
-> LSPs are **completely optional** and are not required for Alwide to function. The editor will run perfectly fine without any LSP installed. Additionally, you are free to use any LSP server of your choice and configure its binary name and command-line arguments in `~/.config/al/languages-features.json`.
+> LSPs are **completely optional** and are not required for Alwide to function. The editor will run perfectly fine without any LSP installed. Additionally, you are free to use any LSP server of your choice and configure its binary name and command-line arguments in `~/.config/alwide/languages-features.json`.
 
 Here are some example of lsp servers : 
 
