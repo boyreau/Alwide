@@ -163,6 +163,7 @@ Or compile the production/release version:
 | `Ctrl + W` | **Close** Current Tab |
 | `Ctrl + Shift + /` | **Toggle Comment** |
 | `Ctrl + R` | **Format** Code (LSP) |
+| `Ctrl + F` | **Search** popup |
 | `Ctrl + Z/Y` | **Undo / Redo** |
 | `Shift + Arrows` | **Select Text** |
 
