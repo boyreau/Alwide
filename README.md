@@ -134,7 +134,7 @@ As always :
 
 ```bash
 git clone --recursive https://github.com/arnauda-gh/Alwide.git
-cd systems
+cd Alwide
 ```
 And then, depending on your preferences :
 ```
