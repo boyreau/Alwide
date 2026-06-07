@@ -100,8 +100,17 @@ You might find this useful : https://rustup.rs/
 
 #### Compile :
 
-In the root folder :
+In the root folder, compile the default debug/development version:
   - `make`
+
+Or compile the production/release version:
+  - `make release`
+
+> [!WARNING]
+> The default debug/development mode (`make`) compiles with address sanitizers (`-fsanitize=address`) and verbose logging enabled. This makes the editor **extremely slow**. For daily use or production, you should compile the release version instead using:
+> ```bash
+> make release
+> ```
 
 
 #### To install and generate the config use :
@@ -145,27 +154,19 @@ Alwide needs testing across different terminal emulators, mouse drivers, and dis
 If you encounter crashes, bugs, or unexpected behavior, please report them! To help us debug, compile Alwide with logging enabled.
 
 The [Makefile](file:///home/arno/dev/Alwide/Makefile) has two build configurations:
-1. **Release Build (Default):** Optimized for speed, with asserts and logging disabled.
-2. **Debug & Logging Build:** Compiles with debug symbols (`-g`), AddressSanitizer (`-fsanitize=address`) to catch memory bugs, and redirects standard error to log files.
+1. **Debug & Logging Build (Default):** Compiles with debug symbols (`-g`), AddressSanitizer (`-fsanitize=address`) to catch memory bugs, and redirects standard error to log files.
+2. **Release Build:** Optimized for speed (`-O3`), with asserts and logging disabled (`-DNDEBUG`).
+
+*Note: The build system automatically tracks configuration/mode changes. You don't need to run `make clean` or use `-B` when switching between debug and release builds; it will detect changes and rebuild accordingly.*
 
 #### Steps to Generate Logs
 
-1. Open the [Makefile](file:///home/arno/dev/Alwide/Makefile) and switch the compiler flags:
-    * Comment out the release flags:
-      ```makefile
-      #CFLAGS=-DNDEBUG -O3
-      ```
-    * Uncomment the debug and logging flags:
-      ```makefile
-      CFLAGS=-g -D_SHOW_ERROR -fsanitize=address
-      ```
-2. Recompile:
+1. Compile the default debug version:
    ```bash
-   make clean
    make
    ```
-3. Run the compiled editor (`./al` or `al`) and reproduce the issue.
-4. Locate the log files in the directory where you ran `al`:
+2. Run the compiled editor (`./al` or `al`) and reproduce the issue.
+3. Locate the log files in the directory where you ran `al`:
     * **Application Logs:** `.logs.txt` (captures editor warnings, errors, and crashes)
     * **LSP Logs:** `.lsp_logs.txt` (captures Language Server Protocol communication)
 
