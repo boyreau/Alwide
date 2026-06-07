@@ -1,9 +1,29 @@
+# IDE and editor files
 .idea
-target
-lib/tree-sitter-make/target/.rustc_info.json
-lib/tree-sitter-markdown_useless/
-*.o
-al
 .cache
-lsp_test
+compile_commands.json
+
+# Build artifacts
 build/
+target/
+**/target/
+Cargo.lock
+**/Cargo.lock
+*.o
+**/*.rlib
+al
+lsp_test
+test_line
+test_file
+
+# Logs
+.logs.txt
+.lsp_logs.txt
+
+# Media and temporary files
+*.mp4
+*.mkv
+test.c
+
+# Submodule specific ignores
+lib/tree-sitter-markdown_useless/
