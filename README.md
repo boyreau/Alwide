@@ -1,299 +1,118 @@
 # Alwide — A LightWeight IDE
 
-> A terminal-based code editor and IDE written in C, built around speed, simplicity, and real IDE capabilities — without the weight of Electron or JVM runtimes.
+> **"Sublime Text" in the terminal.** Alwide is a strong and powerful TUI IDE which is user friendly. It aims to give the same user experience of graphical IDE but in terminal. Though a simple SSH connection but want an easy tool ? Or you need something lighter than VSC or Jetbrain suite ? Vim may be a bit rought sometimes to do simple actions ?
 
-<img width="500"  alt="image" src="https://github.com/user-attachments/assets/f73b961f-0fc2-4c0a-81b6-3e391a96031b" />
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![C](https://img.shields.io/badge/language-C-orange.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![Tree-Sitter](https://img.shields.io/badge/highlighting-Tree--Sitter-green.svg)](https://tree-sitter.github.io/tree-sitter/)
+[![LSP](https://img.shields.io/badge/intelligence-LSP-yellow.svg)](https://microsoft.github.io/language-server-protocol/)
+
+<p align="center">
+  <img width="700" alt="Alwide Screenshot" src="https://github.com/user-attachments/assets/f73b961f-0fc2-4c0a-81b6-3e391a96031b" />
+</p>
+
+https://github.com/user-attachments/assets/c6f40db1-bc5e-4c90-88a5-c7e5a5c72059
+
+
 
 ---
 
-## Philosophy
+## The Modern Terminal Experience
 
-Most modern editors are powerful but **heavy**. Alwide is built on a different premise:
+Alwide is designed for users who want more than `nano` but find `vim` or `emacs` too rusty. It’s the perfect companion for everything from quick config file, bash/python scripts to bigger projects.
 
-- **Speed over abstraction** — The editor is written in C and speaks directly to the terminal via `ncursesw`. No frameworks, no garbage collectors, no virtual machines.
-- **Real IDE, not just a text editor** — Alwide integrates Tree-Sitter for accurate syntax highlighting and speaks LSP to provide completions, diagnostics, hover docs, goto definition, and formatting — the same protocol used by VS Code.
-- **Lightweight by design** — A single binary, a small config folder, no daemon required. It starts instantly and stays out of your way.
-- **Hackable and auditable** — The codebase is kept deliberately small and modular. If you want to understand how an editor works at the systems level, Alwide is a good place to start.
+- **Zero Learning Curve:** Full mouse support means you can click, drag-select, and scroll just like a desktop app. It’s the friendliest way to work in a terminal.
+- **Sublime-Inspired:** We aim to bring the speed and "vibe" of Sublime Text into the terminal, extended with powerful modern features like LSP.
+- **Fast & Lightweight:** Written in pure C. It starts in milliseconds, a single binary around 10Mb.
+- **Advanced Features:** Built-in **Treesitter** for hight quality highlight and **LSP** support gives you VS Code-like intelligence (completions, hover docs, goto definition) in your terminal.
+- **Open & Close:** Alwide provide persistent experience for everyfiles. Quit and Reopen as nothing happens (reopen previous files, cursor position, workspace setup). Undo/Redo available when reopening the file. Copy in Alwide, paste in your terminal.
+- **Easy and clear code base:** Want to understand how it works ? Add a feature ? Clone, Read, Write, Compile. Can be used for education/curiosity.
 
----
-
-## Features
-
-| Feature | Details |
-| :--- | :--- |
-| **Syntax Highlighting** | Powered by [Tree-Sitter](https://tree-sitter.github.io/tree-sitter/) — accurate, incremental, and fast |
-| **LSP Integration** | Completions, hover, goto definition, formatting, diagnostics, signature help, code actions |
-| **File Explorer** | Sidebar tree view of your project directory |
-| **Multi-buffer** | Open multiple files as tabs, switch instantly |
-| **Selection & Clipboard** | Full text selection with shift+arrows, system clipboard integration |
-| **Undo / Redo** | Coalescing history with persistent session state |
-| **Auto-pairs** | Auto-closes brackets, quotes, and braces per language |
-| **Comment Toggling** | `Ctrl+/` comments/uncomments line or block selection |
-| **Mouse Support** | Click, drag-select, double-click to open files |
-| **Popup UI** | Floating windows for completions, hover, signatures, diagnostics |
-| **Workspace Persistence** | Reopen your previous session (files, windows, and layout) by simply running `al` without arguments |
 
 ### Supported Languages
 
-| Language | Highlighting | LSP Server |
-| :--- | :---: | :--- |
-| C / C++ | ✅ | `clangd` |
-| Python | ✅ | `pylsp` |
-| Java | ✅ | `jdtls` |
-| C# | ✅ | `omnisharp` |
-| JavaScript | ✅ | `typescript-language-server` |
-| Go | ✅ | `gopls` |
-| Dart | ✅ | `dart language-server` |
-| Lua | ✅ | `lua-language-server` |
-| Bash / Shell | ✅ | `bash-language-server` |
-| HTML | ✅ | `html-languageserver` |
-| CSS / SCSS | ✅ | `css-languageserver` |
-| JSON | ✅ | `json-languageserver` |
-| Markdown | ✅ | `marksman` |
-| VHDL | ✅ | `vhdl-ls` |
-| Assembly | ✅ | `asm-lsp` |
-| Makefile | ✅ | `makefile-language-server` |
-| Tree-Sitter Query | ✅ | — |
+Large built-int supported language. Your preferred language is missing ? You can add it in few minutes, clone and ask your best llm friend to add it and it will work !
 
-> LSP servers are optional. The editor works without them — you just won't get code intelligence for that language. Each server must be installed separately.
+**C/C++, Python, Java, Go, Rust, JavaScript/TypeScript, Dart, Lua, Bash, HTML, CSS, JSON, Markdown, VHDL, Assembly, and more.**
 
 ---
 
 ## Getting Started
 
-### 1. Clone the Repository
+For now to use al you have to compile it !
 
+### 1. Clone the Source
 ```bash
-git clone https://github.com/arnauda-gh/Alwide.git
+git clone --recursive https://github.com/arnauda-gh/Alwide.git
 cd Alwide
-git submodule update --init --recursive
 ```
 
-The `--recursive` flag is **required** — Alwide depends on several submodules for language parsers and the Tree-Sitter runtime.
-
-### 2. Install Build Dependencies
-
-#### Ubuntu / Debian
-
+### 2. Install Dependencies
+**Ubuntu / Debian:**
 ```bash
-sudo apt install make clang libncursesw5-dev
-```
+# Core build tools
+sudo apt install make clang libncursesw5-dev rustup
 
-#### Clang ≥ 18 (required)
-
-The project requires Clang 18 or newer. Check your version:
-
-```bash
-clang --version
-```
-
-If it's older than 18, install it from LLVM's official script:
-
-```bash
-wget https://apt.llvm.org/llvm.sh
-chmod +x llvm.sh
-sudo ./llvm.sh 18
-```
-
-#### Rust toolchain (required for grammar parsers)
-
-Tree-Sitter language grammars are compiled from Rust crates. You need an up-to-date Rust toolchain:
-
-```bash
-# Ubuntu
-sudo apt install rustup
+# Ensure Clang 18+ and Rust are ready
 rustup update stable
-
-# Or via rustup.rs (all distros)
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# (If clang < 18) Visit https://apt.llvm.org/ for the latest version
 ```
 
-#### Tree-Sitter C API
-
-Install the Tree-Sitter C headers (run from the repo root):
-
+**Install Tree-Sitter C API:**
 ```bash
 sudo make -C lib/tree-sitter/ install
 ```
 
-### 3. Build
-
+### 3. Build & Install
 ```bash
 make
+# manage the config setup
+make install  # Note: No sudo needed! It handles ~/.config/al/ for you.
 ```
 
-This compiles all Rust grammar crates, the C library modules, and links the final `al` binary.
-
-### 4. Install
-
+Now launch it:
 ```bash
-make install
+al  # Open current directory
 ```
 
-> ⚠️ **Do not run `make install` with `sudo`.** The install script generates your user config (`~/.config/al/`) under your home directory and will prompt for `sudo` only to copy the binary to `/bin/al`.
+---
 
-After installation, launch the editor with:
+## Essential Shortcuts
 
-```bash
-al path/to/file.c
-# or open multiple files
-al src/main.c src/utils.c
-```
+| Shortcut | Action |
+| :--- | :--- |
+| `Ctrl + S` | **Save** & Auto-format |
+| `Ctrl + Q` | **Quit** Alwide |
+| `Ctrl + E` | **File Explorer** toggle |
+| `Ctrl + O` | **Open File** toggle |
+| `Ctrl + Space` | **Completion Popup** toggle |
+| `Ctrl + W` | **Close** Current Tab |
+| `Ctrl + /` | **Toggle Comment** |
+| `Ctrl + R` | **Format** Code (LSP) |
+| `Ctrl + Z/Y` | **Undo / Redo** |
+| `Shift + Arrows` | **Select Text** |
 
 ---
 
 ## Configuration
 
-User configuration lives in `~/.config/al/`. It is generated by `make install`.
-
-- **`config`** — Global editor preferences (theme, tab defaults, LSP overrides)
-- **`languages-features.json`** — Per-language settings: LSP server command, tab style, auto-pairs, comment characters, file extensions
-
-You can edit `languages-features.json` directly to add new LSP servers or change tab sizes for specific languages.
-
----
-
-## Keyboard Shortcuts
-
-| Key | Action |
-| :--- | :--- |
-| `Ctrl+S` | Save file (auto-formats if LSP is active) |
-| `Ctrl+Q` | Quit |
-| `Ctrl+W` | Close current tab |
-| `Ctrl+Z` | Undo |
-| `Ctrl+Y` | Redo |
-| `Ctrl+C` | Copy selection |
-| `Ctrl+X` | Cut selection |
-| `Ctrl+V` | Paste |
-| `Ctrl+A` | Select all |
-| `Ctrl+/` | Toggle line/block comment |
-| `Ctrl+R` | Format file (LSP) |
-| `Ctrl+D` | Delete line |
-| `Ctrl+←/→` | Jump word left/right |
-| `Ctrl+↑/↓` | Select word under cursor |
-| `Ctrl+Shift+↑/↓` | Switch between open tabs |
-| `Shift+Arrows` | Extend text selection |
-| `Home` | Jump to first non-whitespace character |
-| `End` | Jump to end of line |
-| `Tab` | Insert indent (spaces or tab, per language config) |
-
----
-
-## Code Style
-
-Alwide is formatted using **clang-format**. The configuration is in [`.clang-format`](.clang-format) at the root of the project. Key rules:
-
-| Rule | Value |
-| :--- | :--- |
-| Base style | LLVM |
-| Column limit | 120 characters |
-| Indentation | 2 spaces |
-| Pointer alignment | Left (`int* p`) |
-| Brace style | Custom (K&R-like, no brace on new line for functions) |
-| Trailing comments | Aligned |
-| Max empty lines | 2 |
-
-**Before submitting a PR**, format your changes:
-
-```bash
-clang-format -i src/**/*.c src/**/*.h
-```
-
-Beyond formatting, keep these principles in mind:
-
-- **Keep functions short and focused.** If a function exceeds ~50 lines, consider splitting it.
-- **Avoid dynamic allocation in hot paths.** Prefer stack-allocated structs where possible.
-- **Name clearly.** Prefer `descriptiveVariableName` over abbreviations. Module-level functions are prefixed (e.g., `gui_`, `LSP_`, `ft_`).
-- **Comment intent, not mechanics.** Explain *why*, not *what*. The code shows the what.
-- **No global mutable state except the declared globals** in `main.c` (`config`, `parsers`, `lsp_servers`, etc.).
-
----
-
-## Project Structure
-
-```
-Alwide/
-├── src/
-│   ├── core/           # Editor lifecycle: context, init, input dispatch, render, destroy
-│   ├── terminal/       # NCurses windows (EDW, FEW, OFW, POW), click handler, highlight
-│   ├── data-management/# Buffer (unrolled linked list), file ops, undo/redo history
-│   ├── advanced/
-│   │   ├── lsp/        # LSP client (JSON-RPC over Unix pipes), dispatcher, features
-│   │   ├── tree-sitter/# Parser integration, AST query engine, incremental highlighting
-│   │   └── intelligence/ # Auto-pairs, comment toggling
-│   ├── config/         # Language feature loading, config parsing
-│   ├── environnement/  # Constants, global variable declarations, setup
-│   └── utils/          # Key management, clipboard, general tools
-├── lib/                # Git submodules: tree-sitter runtime + language grammars, cJSON
-├── assets/             # Default config, language-features.json, highlight query files
-├── examples/           # Sample files for testing highlighting and editor behaviour
-└── Makefile
-```
-
-For a deeper dive, see the [technical documentation](doc/architecture.md).
+Your preferences live in `~/.config/al/`:
+- `config.json`: Themes, tab defaults, and global settings.
+- `languages-features.json`: Custom LSP commands and per-language tweaks.
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Here's the workflow:
+For now Alwide need to be tested on differents mouse drivers, and distributions. Any help will be usefull !
 
-### Branches
-
-| Branch | Purpose |
-| :--- | :--- |
-| `main` | Stable releases only |
-| `dev` | Active development — open PRs here |
-| `feature/*` | Feature branches, branched off `dev` |
-| `fix/*` | Bug fix branches, branched off `dev` |
-
-### Opening a Pull Request
-
-1. **Fork** the repository and create your branch from `dev`:
-   ```bash
-   git checkout dev
-   git pull origin dev
-   git checkout -b feature/my-feature
-   ```
-2. **Write your changes.** Keep commits focused — one logical change per commit.
-3. **Format your code** with `clang-format` (see Code Style above).
-4. **Make sure it compiles** — the CI will run `make` and `make install` on every PR.
-5. **Open a PR** targeting the `dev` branch with a clear description of what changed and why.
-
-### CI / GitHub Actions
-
-Every push and pull request triggers the [editor compilation workflow](.github/workflows/editor-compilation.yml), which:
-- Checks out the repo with all submodules
-- Installs the Tree-Sitter C API
-- Runs `make` (builds parsers, cJSON, and the `al` binary)
-- Runs `make install`
-
-A PR that fails CI will not be merged.
-
-### Bug Reports
-
-Open a GitHub Issue with:
-- Your OS and distribution
-- Clang version (`clang --version`)
-- Steps to reproduce
-- Any output from `.logs.txt` or `.lsp_logs.txt` at the project root (these are written at runtime)
-
----
-
-## 📚 Technical Documentation
-
-For contributors and developers who want to understand the internals:
-
-| Document | Contents |
-| :--- | :--- |
-| [Architecture & Control Flow](doc/architecture.md) | System diagram, main event loop, module breakdown |
-| [Buffer Data Structures](doc/data_structures.md) | Unrolled linked list, cursor coordinates, undo/redo |
-| [Tree-Sitter Engine](doc/tree_sitter.md) | C/Rust parser bridge, query compilation, incremental parsing |
-| [LSP Client](doc/lsp_client.md) | Unix pipe IPC, JSON-RPC, capabilities, async dispatch |
-| [UI Windows & Features](doc/features.md) | Window layout, keybindings, auto-pairs, config |
+Check out our [**Technical Documentation**](doc/architecture.md) to dive into the internals.
 
 ---
 
 ## License
 
-See [LICENSE](LICENSE) for details.
+Distributed under the **MIT License**. See `LICENSE` for more information.
+
+
