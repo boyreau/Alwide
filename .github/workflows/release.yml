@@ -1,0 +1,58 @@
+name: Release Alwide
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libncursesw5-dev clang-18
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
+          sudo update-alternatives --install /usr/bin/cc cc /usr/bin/clang-18 100
+
+      - name: Install tree-sitter CLI
+        run: npm install -g tree-sitter-cli
+
+      - name: Build tree-sitter library
+        run: sudo make -C lib/tree-sitter/ install
+
+      - name: Build Alwide (Release)
+        run: make release -j$(nproc)
+
+      - name: Prepare Assets
+        run: |
+          mkdir -p dist
+          cp al dist/
+          zip -r alwide-assets.zip assets/
+          tar -czvf alwide-linux-x86_64.tar.gz -C dist al
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            alwide-linux-x86_64.tar.gz
+            alwide-assets.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
