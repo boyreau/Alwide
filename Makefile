@@ -8,12 +8,45 @@ ifeq ($(shell expr $(CLANG_VERSION) \< $(MIN_CLANG_VERSION)), 1)
 $(error Clang version $(CLANG_VERSION) is too old. Please update to at least version $(MIN_CLANG_VERSION))
 endif
 
-#CFLAGS=-DNDEBUG -O3
-CFLAGS=-g -D_SHOW_ERROR -fsanitize=address
+# Default mode is debug
+MODE ?= debug
 
-CFLAGS +=-Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600
+# If the target is 'release', override MODE to release
+ifeq ($(MAKECMDGOALS),release)
+  MODE = release
+endif
 
+# Target files for tracking configuration changes
 BUILD_DIR=build
+MODE_FILE=$(BUILD_DIR)/.mode
+TRACK_FILE=$(BUILD_DIR)/.cflags
+
+LAST_MODE := $(shell cat $(MODE_FILE) 2>/dev/null)
+ifneq ($(filter install,$(MAKECMDGOALS)),)
+  ifneq ($(LAST_MODE),)
+    MODE = $(LAST_MODE)
+  endif
+endif
+
+# Set CFLAGS based on the selected mode
+ifeq ($(MODE),release)
+  MODE_CFLAGS = -DNDEBUG -O3
+else
+  MODE_CFLAGS = -g -D_SHOW_ERROR -fsanitize=address
+endif
+
+# Use pkg-config for dependencies
+PKG_CONFIG ?= pkg-config
+NCURSES_CFLAGS := $(shell $(PKG_CONFIG) --cflags ncursesw 2>/dev/null || echo "")
+NCURSES_LIBS := $(shell $(PKG_CONFIG) --libs ncursesw 2>/dev/null || echo "-lncursesw -ltinfo")
+
+CFLAGS = $(MODE_CFLAGS) -Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 $(NCURSES_CFLAGS)
+
+# Write the mode and CFLAGS tracking files at parse time if they have changed
+$(shell mkdir -p $(BUILD_DIR))
+$(shell echo '$(MODE)' | cmp -s - $(MODE_FILE) || echo '$(MODE)' > $(MODE_FILE))
+$(shell echo '$(CFLAGS)' | cmp -s - $(TRACK_FILE) || echo '$(CFLAGS)' > $(TRACK_FILE))
+
 executable=al # lsp_test test_line test_file
 
 # C sources files
@@ -106,9 +139,14 @@ RUST_MODULES= \
 # Map sources to objects in BUILD_DIR
 OBJECTS = $(patsubst %.c, $(BUILD_DIR)/%.o, $(SRC_MODULES) $(LIB_C_MODULES))
 
-SHARED_LIBS = -lncursesw -ltinfo
+SHARED_LIBS = $(NCURSES_LIBS)
 
 all: $(OBJECTS) $(RUST_MODULES) $(executable)
+
+release: all
+
+# Make all objects depend on mode and flags tracking files to trigger rebuild on configuration change
+$(OBJECTS): $(MODE_FILE) $(TRACK_FILE)
 
 lib/tree-sitter-markdown/tree-sitter-markdown/libtree-sitter-markdown.a:
 	cd lib/tree-sitter-markdown/tree-sitter-markdown/ && tree-sitter generate && $(MAKE)
@@ -146,7 +184,26 @@ clean_all: clean
 	find . -type d -name "target" -exec rm -rf {} +
 
 
-# !! DO NOT EXECUTE AS SUDO !!. To generate config you have to be as user. sudo will be asked to cp to
-# /bin/al
-install:
-	make && mkdir -p ~/.config/al && cp -r ./assets/* ~/.config/al && ./generate_config.sh && sudo cp al /bin/al
+# Installation configuration
+PREFIX ?= /usr/local
+BINDIR ?= $(PREFIX)/bin
+DATADIR ?= $(PREFIX)/share/alwide
+
+# Combined install target
+install: install-config install-bin install-data
+
+# Install the binary
+install-bin: al
+	install -v -D al $(DESTDIR)$(BINDIR)/al
+
+# Install system-wide assets
+install-data:
+	mkdir -p $(DESTDIR)$(DATADIR)
+	cp -rv assets/* $(DESTDIR)$(DATADIR)/
+
+# Initialize user-specific configuration (run as normal user)
+install-config:
+	mkdir -p $(HOME)/.config/alwide
+	cp -rv assets/* $(HOME)/.config/alwide
+
+.PHONY: all release clean clean_all install install-bin install-data install-config

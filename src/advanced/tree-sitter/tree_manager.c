@@ -148,7 +148,9 @@ bool loadNewParser(ParserContainer* container, char* language) {
   }
 
   // Fetching the folder where to load theme and queries.
-  char* load_path = cJSON_GetStringValue(cJSON_GetObjectItem(config, "default_path"));
+  char* load_path_raw = cJSON_GetStringValue(cJSON_GetObjectItem(config, "default_path"));
+  char load_path[PATH_MAX];
+  resolvePath(load_path, sizeof(load_path), load_path_raw);
 
   char path[PATH_MAX];
   // Loading Theme

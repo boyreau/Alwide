@@ -4,11 +4,12 @@
 
 #include "../../lib/cJSON/cJSON.h"
 
-#define CONFIG_PATH      ".config/al/config"
-#define CONFIG_FOLDER    ".config/al/"
-#define CONFIG_FILE_NAME "config"
+#define CONFIG_PATH      ".config/alwide/config"
+#define CONFIG_FOLDER    ".config/alwide/"
+#define CONFIG_FILENAME  "config"
 
-#define DEFAULT_CONFIG "{\n    \"default_path\": \"%s/.config/al\"\n}\n"
+#define DEFAULT_CONFIG "{\n    \"default_path\": \"~/.config/alwide\"\n}\n"
+
 
 // TODO implement a config file for theme and parser highlight.scm. Using JSON.
 bool configExist();

@@ -6,7 +6,7 @@
 #include "io_manager.h"
 
 
-#define FILE_HISTORY_PATH "/.config/al/.file_history/"
+#define FILE_HISTORY_PATH "/.config/alwide/.file_history/"
 
 typedef struct {
   gui_Context* gui;

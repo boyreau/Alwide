@@ -13,6 +13,7 @@
 [submodule "lib/tree-sitter-cpp"]
 	path = lib/tree-sitter-cpp
 	url = https://github.com/tree-sitter/tree-sitter-cpp.git
+	ignore = untracked
 [submodule "lib/tree-sitter-dart"]
 	path = lib/tree-sitter-dart
 	url = https://github.com/UserNobody14/tree-sitter-dart.git
@@ -40,6 +41,7 @@
 [submodule "lib/tree-sitter-make"]
 	path = lib/tree-sitter-make
 	url = https://github.com/arnauda-gh/tree-sitter-make.git
+	ignore = untracked
 [submodule "lib/tree-sitter-query"]
 	path = lib/tree-sitter-query
 	url = https://github.com/tree-sitter-grammars/tree-sitter-query.git
@@ -52,12 +54,15 @@
 [submodule "lib/tree-sitter-markdown"]
 	path = lib/tree-sitter-markdown
 	url = https://github.com/tree-sitter-grammars/tree-sitter-markdown.git
+	ignore = untracked
 [submodule "lib/tree-sitter-vhdl"]
 	path = lib/tree-sitter-vhdl
 	url = https://github.com/jpt13653903/tree-sitter-vhdl.git
+	ignore = untracked
 [submodule "lib/cJSON"]
 	path = lib/cJSON
 	url = https://github.com/DaveGamble/cJSON.git
 [submodule "lib/tree-sitter-latex"]
 	path = lib/tree-sitter-latex
 	url = https://github.com/latex-lsp/tree-sitter-latex
+	ignore = untracked
