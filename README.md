@@ -100,7 +100,25 @@ Here are some example of lsp servers :
 
 ## Installation
 
-Currently, you need to compile Alwide from source to use it.
+### Quick Install (Linux x86_64)
+
+The easiest way to install Alwide and its assets is using the official installation script. Open your terminal and run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/arnauda-gh/Alwide/main/install.sh | bash
+```
+
+> **Note:** This script will download the latest binary and assets, place the binary in `~/.local/bin/al`, and setup the configuration in `~/.config/alwide/`. Make sure `~/.local/bin` is in your `PATH`.
+
+### Manual Installation & Packages
+
+You can also find pre-built binaries, AppImage, `.deb`, and `.rpm` packages in the [Releases section](https://github.com/arnauda-gh/Alwide/releases).
+
+---
+
+## Compilation from Source
+
+If you prefer to compile Alwide yourself or use an unsupported architecture, follow the instructions below:
 
 ### Submodules
 
