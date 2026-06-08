@@ -1,6 +1,8 @@
 # Alwide — A LightWeight IDE
 
-> **"Sublime Text" in the terminal.** Alwide is a fast, powerful, and user-friendly TUI IDE. It aims to provide the same user experience as a graphical IDE, but right in your terminal. Need an easy editor over a simple SSH connection? Looking for something lighter than VS Code or the JetBrains suite? Or is Vim sometimes too rough for quick actions?
+> **"Sublime Text" in the terminal.** Alwide is a fast, powerful, and user-friendly TUI IDE. It aims to provide the same
+> user experience as a graphical IDE, but right in your terminal. Need an easy editor over a simple SSH connection?
+> Looking for something lighter than VS Code or the JetBrains suite? Or is Vim sometimes too rough for quick actions?
 
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -20,69 +22,118 @@ https://github.com/user-attachments/assets/c6f40db1-bc5e-4c90-88a5-c7e5a5c72059
 
 ## The Modern Terminal Experience
 
-Alwide is designed for users who want more than `nano` but find `vim` or `emacs` too complex or rusty. It’s the perfect companion for everything from editing quick configuration files and scripts (Bash, Python, etc.) to working on larger projects.
+Alwide is designed for users who want more than `nano` but find `vim` or `emacs` too complex or rusty. It’s the perfect
+companion for everything from editing quick configuration files and scripts (Bash, Python, etc.) to working on larger
+projects.
 
-- **Zero Learning Curve:** Full mouse support means you can click, drag-select, and scroll just like in a desktop app. It’s the friendliest way to work in a terminal.
-- **Sublime-Inspired:** We aim to bring the speed and "vibe" of Sublime Text to the terminal, extended with powerful modern features like LSP.
+- **Zero Learning Curve:** Full mouse support means you can click, drag-select, and scroll just like in a desktop app.
+  It’s the friendliest way to work in a terminal.
+- **Sublime-Inspired:** We aim to bring the speed and "vibe" of Sublime Text to the terminal, extended with powerful
+  modern features like LSP.
 - **Fast & Lightweight:** Written in pure C. It starts in milliseconds, with a single binary size of around 10MB.
-- **Advanced Features:** Built-in **Tree-sitter** for high-quality syntax highlighting and **LSP** support for VS Code-like intelligence (completions, hover docs, and goto definition) directly in your terminal.
-- **Persistent State:** Alwide provides a fully persistent experience. Quit and reopen files as if nothing happened—your tabs, cursor positions, workspace setup, and even undo/redo history are fully preserved. Copy in Alwide, paste into your terminal.
-- **Clean Codebase:** Want to understand how it works or add a feature? Clone, read, write, and compile. It is highly readable and perfect for education or curiosity.
-
+- **Advanced Features:** Built-in **Tree-sitter** for high-quality syntax highlighting and **LSP** support for VS
+  Code-like intelligence (completions, hover docs, and goto definition) directly in your terminal.
+- **Persistent State:** Alwide provides a fully persistent experience. Quit and reopen files as if nothing happened—your
+  tabs, cursor positions, workspace setup, and even undo/redo history are fully preserved. Copy in Alwide, paste into
+  your terminal.
+- **Clean Codebase:** Want to understand how it works or add a feature? Clone, read, write, and compile. It is highly
+  readable and perfect for education or curiosity.
 
 ### Supported Languages
 
-Many languages are supported out of the box. If your preferred language is missing, you can add support in just a few minutes by cloning the repo and updating the configuration (ask you best llm friend)!
+Many languages are supported out of the box. If your preferred language is missing, you can add support in just a few
+minutes by cloning the repo and updating the configuration (ask you best llm friend)!
 
-**C/C++, Python, Java, Go, Rust, JavaScript/TypeScript, Dart, Lua, Bash, HTML, CSS, JSON, Markdown, VHDL, Assembly, and more.**
+**C/C++, Python, Java, Go, Rust, JavaScript/TypeScript, Dart, Lua, Bash, HTML, CSS, JSON, Markdown, VHDL, Assembly, and
+more.**
 
 #### LSP Server Installation
 
-To enable optional language intelligence (auto-completion, hover definitions, go-to-definition), you can install the corresponding Language Server (LSP) on your system.
+To enable optional language intelligence (auto-completion, hover definitions, go-to-definition), you can install the
+corresponding Language Server (LSP) on your system.
 
 > [!NOTE]
-> LSPs are **completely optional** and are not required for Alwide to function. The editor will run perfectly fine without any LSP installed. Additionally, you are free to use any LSP server of your choice and configure its binary name and command-line arguments in `~/.config/al/languages-features.json`.
+> LSPs are **completely optional** and are not required for Alwide to function. The editor will run perfectly fine
+> without any LSP installed. Additionally, you are free to use any LSP server of your choice and configure its binary name
+> and command-line arguments in `~/.config/alwide/languages-features.json`.
 
-Here are some example of lsp servers : 
+Here are some example of lsp servers :
 
-| Language | LSP Server | Command/Package Example |
-| :--- | :--- | :--- |
-| **C / C++** | `clangd` | `apt install clangd` or `dnf install clangd` |
-| **Python** | `pylsp` | `pip install python-lsp-server` |
-| **Java** | `jdtls` | `eclipse-jdtls` package |
-| **Go** | `gopls` | `go install golang.org/x/tools/gopls@latest` |
-| **JavaScript / TypeScript** | `typescript-language-server` | `npm install -g typescript-language-server` |
-| **HTML** | `html-languageserver` | `npm install -g vscode-langservers-extracted` |
-| **CSS / SCSS** | `css-languageserver` | `npm install -g vscode-langservers-extracted` |
-| **JSON** | `json-languageserver` | `npm install -g vscode-langservers-extracted` |
-| **Bash** | `bash-language-server` | `npm install -g bash-language-server` |
-| **Markdown** | `marksman` | `marksman` binary |
-| **Lua** | `lua-language-server` | `lua-language-server` package |
-| **Dart** | `dart` | Included in Dart SDK (`dart language-server`) |
-| **C#** | `omnisharp` | `omnisharp` package |
-| **Makefile** | `makefile-language-server` | `npm install -g makefile-language-server` |
-| **VHDL** | `vhdl-ls` | `vhdl-ls` cargo crate |
-| **Assembly** | `asm-lsp` | `asm-lsp` binary |
-| **Latex** | `texlab` | `texlab` package |
-
+| Language                    | LSP Server                   | Command/Package Example                       |
+|:----------------------------|:-----------------------------|:----------------------------------------------|
+| **C / C++**                 | `clangd`                     | `apt install clangd` or `dnf install clangd`  |
+| **Python**                  | `pylsp`                      | `pip install python-lsp-server`               |
+| **Java**                    | `jdtls`                      | `eclipse-jdtls` package                       |
+| **Go**                      | `gopls`                      | `go install golang.org/x/tools/gopls@latest`  |
+| **JavaScript / TypeScript** | `typescript-language-server` | `npm install -g typescript-language-server`   |
+| **HTML**                    | `html-languageserver`        | `npm install -g vscode-langservers-extracted` |
+| **CSS / SCSS**              | `css-languageserver`         | `npm install -g vscode-langservers-extracted` |
+| **JSON**                    | `json-languageserver`        | `npm install -g vscode-langservers-extracted` |
+| **Bash**                    | `bash-language-server`       | `npm install -g bash-language-server`         |
+| **Markdown**                | `marksman`                   | `marksman` binary                             |
+| **Lua**                     | `lua-language-server`        | `lua-language-server` package                 |
+| **Dart**                    | `dart`                       | Included in Dart SDK (`dart language-server`) |
+| **C#**                      | `omnisharp`                  | `omnisharp` package                           |
+| **Makefile**                | `makefile-language-server`   | `npm install -g makefile-language-server`     |
+| **VHDL**                    | `vhdl-ls`                    | `vhdl-ls` cargo crate                         |
+| **Assembly**                | `asm-lsp`                    | `asm-lsp` binary                              |
+| **Latex**                   | `texlab`                     | `texlab` package                              |
 
 ---
 
-## Getting Started
+## Essential Shortcuts
 
-Currently, you need to compile Alwide from source to use it.
+| Shortcut           | Action                      |
+|:-------------------|:----------------------------|
+| `Ctrl + S`         | **Save** & Auto-format      |
+| `Ctrl + Q`         | **Quit** Alwide             |
+| `Ctrl + E`         | **File Explorer** toggle    |
+| `Ctrl + O`         | **Open File** toggle        |
+| `Ctrl + Space`     | **Completion Popup** toggle |
+| `Ctrl + W`         | **Close** Current Tab       |
+| `Ctrl + Shift + /` | **Toggle Comment**          |
+| `Ctrl + R`         | **Format** Code (LSP)       |
+| `Ctrl + Z/Y`       | **Undo / Redo**             |
+| `Shift + Arrows`   | **Select Text**             |
+
+---
+
+## Installation
+
+### Quick Install (Linux x86_64)
+
+The easiest way to install Alwide and its assets is using the official installation script. Open your terminal and run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/arnauda-gh/Alwide/main/install.sh | bash
+```
+
+> **Note:** This script will download the latest binary and assets, place the binary in `~/.local/bin/al`, and setup the configuration in `~/.config/alwide/`. Make sure `~/.local/bin` is in your `PATH`.
+
+### Manual Installation & Packages
+
+You can also find pre-built binaries, AppImage, `.deb`, and `.rpm` packages in the [Releases section](https://github.com/arnauda-gh/Alwide/releases).
+
+---
+
+## Compilation from Source
+
+If you prefer to compile Alwide yourself or use an unsupported architecture, follow the instructions below:
 
 ### Submodules
 
-This project depends on several external libraries as submodules. To make the checkout much faster, you can perform a **shallow clone** (only pulling the latest commit history) and download submodules in **parallel**:
+This project depends on several external libraries as submodules. To make the checkout much faster, you can perform a
+**shallow clone** (only pulling the latest commit history) and download submodules in **parallel**:
 
 To clone the repository and its submodules quickly:
+
 ```bash
 git clone --recurse-submodules --shallow-submodules --depth 1 https://github.com/arnauda-gh/Alwide.git
 cd Alwide
 ```
 
 Or if you have already cloned the repository and want to fetch the submodules quickly:
+
 ```bash
 git submodule update --init --recursive --depth 1 --jobs 8
 ```
@@ -91,104 +142,148 @@ git submodule update --init --recursive --depth 1 --jobs 8
 
 #### Ubuntu/Debian :
 
- - `apt install make gcc libncursesw5-dev`
+- `apt install make gcc libncursesw5-dev`
 
 #### Clang version 18 >=
 
 Install the 18 only if you are currently under the requirement if you are above skip this step.
 
- - `wget https://apt.llvm.org/llvm.sh`
- - `chmod +x llvm.sh`
- - `sudo ./llvm.sh 18` (check result you may be asked to add some dependencies).
+- `wget https://apt.llvm.org/llvm.sh`
+- `chmod +x llvm.sh`
+- `sudo ./llvm.sh 18` (check result you may be asked to add some dependencies).
 
 #### Install tree-sitter api.h
 
 May be useless now. Skip for first try.
 
- - Be in the root folder
- - `make -C lib/tree-sitter/ install`
+- Be in the root folder
+- `make -C lib/tree-sitter/ install`
 
 #### Install tree-sitter cli
 
-Some tree-sitter parsers need to use `tree-sitter generate` to convert grammars to `parser.c` (for now only latex need it).
+Some tree-sitter parsers need to use `tree-sitter generate` to convert grammars to `parser.c` (for now only latex need
+it).
 
 use :
+
 - `npm install -g tree-sitter-cli`
 
 #### Install rust/rustup/cargo packages
 
- - `rustc --version`
+- `rustc --version`
 
 It's really important to be up to date ! You will be in most cases not up to date.
 
 Ubuntu :
- - `apt install rustup`
- - `rustup update stable`
 
-Others distro may not have rustup package. Check for your personnal distro.
-You might find this useful : https://rustup.rs/
+- `apt install rustup`
+- `rustup update stable`
+
+Others distro may not have rustup package. Check for your personnal distro. You might find this
+useful : https://rustup.rs/
 
 #### Compile :
 
 In the root folder, compile the default debug/development version:
-  - `make`
+
+- `make`
 
 Or compile the production/release version:
-  - `make release`
+
+- `make release`
 
 > [!WARNING]
-> The default debug/development mode (`make`) compiles with address sanitizers (`-fsanitize=address`) and verbose logging enabled. This makes the editor **extremely slow**. For daily use or production, you should compile the release version instead using:
+> The default debug/development mode (`make`) compiles with address sanitizers (`-fsanitize=address`) and verbose
+> logging enabled. This makes the editor **extremely slow**. For daily use or production, you should compile the release
+> version instead using:
 > ```bash
 > make release
 > ```
 
-
 #### To install and generate the config use :
- - do not use sudo, the generation of the config need to be in user mode.
- - you will be prompted for sudo in the make install it-self.
- - check by yourself the use of sudo (used to cp al /bin/al).
- - `make install`
 
----
+> [!WARNING]
+> Install the config is required to get coloration and LSP.
 
-## Essential Shortcuts
+- The configuration generation must be run as a normal user (not sudo).
+- `make install-config`
 
-| Shortcut | Action |
-| :--- | :--- |
-| `Ctrl + S` | **Save** & Auto-format |
-| `Ctrl + Q` | **Quit** Alwide |
-| `Ctrl + E` | **File Explorer** toggle |
-| `Ctrl + L` | **Open File** toggle |
-| `Ctrl + Space` | **Completion Popup** toggle |
-| `Ctrl + W` | **Close** Current Tab |
-| `Ctrl + Shift + /` | **Toggle Comment** |
-| `Ctrl + R` | **Format** Code (LSP) |
-| `Ctrl + F` | **Search** popup |
-| `Ctrl + Z/Y` | **Undo / Redo** |
-| `Shift + Arrows` | **Select Text** |
+#### To make Alwide available globally:
+
+You can either install it to your system:
+
+```bash
+sudo make install-bin install-data
+```
+
+Or simply add the Alwide directory to your `PATH` (recommended for developers):
+
+```bash
+export PATH=$PATH:$(pwd)
+```
+
+___
+
+### Nix-based systems
+
+Alwide provides a `flake.nix` and `shell.nix` for a reproducible development environment.
+
+```bash
+git clone --recursive https://github.com/arnauda-gh/Alwide.git
+cd Alwide
+```
+
+To enter the development environment:
+
+```bash
+nix develop  # If using Nix flakes
+# OR
+nix-shell    # If not using flakes
+```
+
+Once inside the shell, you have all the necessary tools (`clang`, `make`, `ncurses`, `rustup`, etc.). You can then
+compile and run Alwide:
+
+```bash
+rustup update stable
+make release
+./al
+```
+
+> [!TIP]
+> You don't need to install `tree-sitter` or other dependencies via `sudo` when using the Nix environment.
+
+
 
 ---
 
 ## Configuration
 
 Your preferences live in `~/.config/al/`:
+
 - `languages-features.json`: Custom LSP commands and per-language tweaks.
 - `theme`: Color for alwide.
+
 ---
 
 ## Contributing & Reporting Issues
 
-Alwide needs testing across different terminal emulators, mouse drivers, and distributions. Any feedback, bug reports, or contributions are highly appreciated!
+Alwide needs testing across different terminal emulators, mouse drivers, and distributions. Any feedback, bug reports,
+or contributions are highly appreciated!
 
 ### How to Report Issues
 
-If you encounter crashes, bugs, or unexpected behavior, please report them! To help us debug, compile Alwide with logging enabled.
+If you encounter crashes, bugs, or unexpected behavior, please report them! To help us debug, compile Alwide with
+logging enabled.
 
 The [Makefile](file:///home/arno/dev/Alwide/Makefile) has two build configurations:
-1. **Debug & Logging Build (Default):** Compiles with debug symbols (`-g`), AddressSanitizer (`-fsanitize=address`) to catch memory bugs, and redirects standard error to log files.
+
+1. **Debug & Logging Build (Default):** Compiles with debug symbols (`-g`), AddressSanitizer (`-fsanitize=address`) to
+   catch memory bugs, and redirects standard error to log files.
 2. **Release Build:** Optimized for speed (`-O3`), with asserts and logging disabled (`-DNDEBUG`).
 
-*Note: The build system automatically tracks configuration/mode changes. You don't need to run `make clean` or use `-B` when switching between debug and release builds; it will detect changes and rebuild accordingly.*
+*Note: The build system automatically tracks configuration/mode changes. You don't need to run `make clean` or use `-B`
+when switching between debug and release builds; it will detect changes and rebuild accordingly.*
 
 #### Steps to Generate Logs
 

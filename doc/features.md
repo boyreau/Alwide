@@ -90,7 +90,7 @@ Defined in [src/advanced/intelligence/comments.c](file:///home/arno/dev/Alwide/s
 Alwide supports global and project-level settings to customize layout bounds and core behaviors.
 
 ### Global Settings File
-User-specific preferences are stored inside `~/.config/al/config.json`. On startup, `loadConfig()` reads this JSON configuration using `cJSON`. Global configurations include:
+User-specific preferences are stored inside `~/.config/alwide/config.json`. On startup, `loadConfig()` reads this JSON configuration using `cJSON`. Global configurations include:
 * **UI Themes**: Set color schemes for backgrounds (`BG_COLOR_DEFAULT`), hover selections (`BG_COLOR_HOVER`), and popup overlays (`BG_COLOR_POPUP`).
 * **LSP Executables**: Specify custom paths and arguments for language servers.
 * **Tabulation Default**: Set fallback tab width (e.g. 2 or 4) and choose whether to insert spaces or raw tabs.

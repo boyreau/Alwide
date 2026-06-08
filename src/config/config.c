@@ -51,7 +51,7 @@ cJSON* loadConfig() {
       fprintf(stderr, "ERROR opening config file.\n");
       return NULL;
     }
-    fprintf(f, DEFAULT_CONFIG, home);
+    fprintf(f, DEFAULT_CONFIG);
     fclose(f);
   }
 
