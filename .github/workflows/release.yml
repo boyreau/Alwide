@@ -49,10 +49,11 @@ jobs:
 
       - name: Build AppImage
         run: |
+          sudo apt-get install -y imagemagick
           mkdir -p AppDir/usr/share/alwide
           cp -r assets/* AppDir/usr/share/alwide/
-          # Create a 64x64 valid PNG icon (white square)
-          echo "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH6AYIEhUvS796mAAAAF1JREFUeNrt07ENwDAMwMAn+f8vX+MOfIEqIKZIrq7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu7qnu6p7ul+A0F/EAnU65oEAAAAAElFTkSuQmCC" | base64 -d > alwide.png
+          # Convert SVG to PNG
+          convert -background none favicon.svg -resize 256x256 alwide.png
           ./linuxdeploy-x86_64.AppImage --appdir AppDir -e al -i alwide.png -d alwide.desktop --output appimage
           mv Alwide-x86_64.AppImage alwide-x86_64.AppImage
 
