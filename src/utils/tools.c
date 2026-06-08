@@ -140,6 +140,27 @@ void encodeURI(const char* src, char* dest, size_t dest_size) {
   *dest = '\0';
 }
 
+void resolvePath(char* dest, size_t dest_size, const char* src) {
+  if (src == NULL) {
+    dest[0] = '\0';
+    return;
+  }
+  const char* home = getenv("HOME");
+  if (home != NULL) {
+    if (src[0] == '~') {
+      snprintf(dest, dest_size, "%s%s", home, src + 1);
+      return;
+    }
+    // Support legacy %s placeholder
+    if (strstr(src, "%s") == src) {
+      snprintf(dest, dest_size, "%s%s", home, src + 2);
+      return;
+    }
+  }
+  strncpy(dest, src, dest_size - 1);
+  dest[dest_size - 1] = '\0';
+}
+
 void getLocalURI(char* realive_abs_path, char* uri) {
   char abs_path[PATH_MAX];
   if (realpath(realive_abs_path, abs_path) == NULL) {

@@ -8,7 +8,7 @@
 #define CONFIG_FOLDER    ".config/alwide/"
 #define CONFIG_FILENAME  "config"
 
-#define DEFAULT_CONFIG "{\n    \"default_path\": \"%s/.config/alwide\"\n}\n"
+#define DEFAULT_CONFIG "{\n    \"default_path\": \"~/.config/alwide\"\n}\n"
 
 
 // TODO implement a config file for theme and parser highlight.scm. Using JSON.

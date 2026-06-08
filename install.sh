@@ -21,10 +21,23 @@ if ! command -v tar &> /dev/null; then
     exit 1
 fi
 
+if ! command -v unzip &> /dev/null; then
+    echo "❌ Error: unzip is not installed."
+    exit 1
+fi
+
 # Get latest release info
+echo "🔍 Fetching latest release information..."
 RELEASE_INFO=$(curl -s "https://api.github.com/repos/$REPO/releases/latest")
-BINARY_URL=$(echo "$RELEASE_INFO" | grep "browser_download_url" | grep "linux-x86_64.tar.gz" | cut -d '"' -f 4)
-ASSETS_URL=$(echo "$RELEASE_INFO" | grep "browser_download_url" | grep "alwide-assets.zip" | cut -d '"' -f 4)
+
+# Check if we got a valid response
+if echo "$RELEASE_INFO" | grep -q "message.*Not Found"; then
+    echo "❌ Error: No release found. Please create a release (tag starting with 'v') on GitHub first."
+    exit 1
+fi
+
+BINARY_URL=$(echo "$RELEASE_INFO" | grep "browser_download_url" | grep "linux-x86_64.tar.gz" | head -n 1 | cut -d '"' -f 4)
+ASSETS_URL=$(echo "$RELEASE_INFO" | grep "browser_download_url" | grep "alwide-assets.zip" | head -n 1 | cut -d '"' -f 4)
 
 if [ -z "$BINARY_URL" ] || [ -z "$ASSETS_URL" ]; then
     echo "❌ Error: Could not find release assets. Please check if a release exists on GitHub."

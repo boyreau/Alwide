@@ -1,2 +1,4 @@
 #!/usr/bin/env bash
-sed -i "s|%s|$HOME/|g" ~/.config/alwide/config
+# Configuration is now handled dynamically by Alwide using ~ expansion.
+# This script is kept for backward compatibility but doesn't need to do sed anymore.
+echo "Configuration initialization complete."

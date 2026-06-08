@@ -57,6 +57,8 @@ void decodeURI(const char* src, char* dest, size_t dest_size);
 
 void encodeURI(const char* src, char* dest, size_t dest_size);
 
+void resolvePath(char* dest, size_t dest_size, const char* src);
+
 CursorDescriptor positionToCursorDescriptor(LSP_Position position);
 
 // Strictly 0-based LSP position constructor
