@@ -48,8 +48,8 @@ jobs:
         run: |
           mkdir -p AppDir/usr/share/alwide
           cp -r assets/* AppDir/usr/share/alwide/
-          # Create a dummy icon if not exists
-          touch alwide.png 
+          # Create a minimal valid PNG icon
+          echo "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=" | base64 -d > alwide.png
           ./linuxdeploy-x86_64.AppImage --appdir AppDir -e al -i alwide.png -d alwide.desktop --output appimage
           mv Alwide-x86_64.AppImage alwide-x86_64.AppImage
 
