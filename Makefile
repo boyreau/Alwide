@@ -205,6 +205,5 @@ install-data:
 install-config:
 	mkdir -p $(HOME)/.config/alwide
 	cp -rv assets/* $(HOME)/.config/alwide
-	./generate_config.sh
 
 .PHONY: all release clean clean_all install install-bin install-data install-config
