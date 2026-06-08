@@ -49,11 +49,8 @@ jobs:
 
       - name: Build AppImage
         run: |
-          sudo apt-get install -y imagemagick
           mkdir -p AppDir/usr/share/alwide
           cp -r assets/* AppDir/usr/share/alwide/
-          # Convert SVG to PNG
-          convert -background none favicon.svg -resize 256x256 alwide.png
           ./linuxdeploy-x86_64.AppImage --appdir AppDir -e al -i alwide.png -d alwide.desktop --output appimage
           mv Alwide-x86_64.AppImage alwide-x86_64.AppImage
 
