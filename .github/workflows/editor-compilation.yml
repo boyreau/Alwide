@@ -13,8 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      with:
-        submodules: 'true'
+
+    - name: Checkout submodules shallowly
+      run: |
+        git submodule update --init --recursive --depth 1
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
