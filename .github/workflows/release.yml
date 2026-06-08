@@ -18,6 +18,7 @@ jobs:
 
       - name: Checkout submodules shallowly
         run: |
+          git config --global url."https://github.com/".insteadOf "git@github.com:"
           git submodule update --init --recursive --depth 1
 
       - name: Setup Node.js
