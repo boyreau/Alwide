@@ -53,6 +53,18 @@ jobs:
           ./linuxdeploy-x86_64.AppImage --appdir AppDir -e al -i alwide.png -d alwide.desktop --output appimage
           mv Alwide-x86_64.AppImage alwide-x86_64.AppImage
 
+      - name: Install FPM
+        run: |
+          sudo apt-get install -y ruby ruby-dev rubygems build-essential
+          sudo gem install --no-document fpm
+
+      - name: Build .deb and .rpm packages
+        run: |
+          mkdir -p build_root
+          make DESTDIR=./build_root PREFIX=/usr install
+          fpm -s dir -t deb -n alwide -v $(echo ${{ github.ref_name }} | sed 's/v//') -C build_root usr/bin usr/share
+          fpm -s dir -t rpm -n alwide -v $(echo ${{ github.ref_name }} | sed 's/v//') -C build_root usr/bin usr/share
+
       - name: Prepare Assets
         run: |
           mkdir -p dist
@@ -67,6 +79,8 @@ jobs:
             alwide-linux-x86_64.tar.gz
             alwide-assets.zip
             alwide-x86_64.AppImage
+            alwide*.deb
+            alwide*.rpm
           draft: false
           prerelease: false
           generate_release_notes: true
