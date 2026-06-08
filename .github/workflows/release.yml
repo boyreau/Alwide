@@ -63,8 +63,9 @@ jobs:
         run: |
           mkdir -p build_root
           make DESTDIR=./build_root PREFIX=/usr install
-          fpm -s dir -t deb -n alwide -v $(echo ${{ github.ref_name }} | sed 's/v//') -C build_root usr/bin usr/share
-          fpm -s dir -t rpm -n alwide -v $(echo ${{ github.ref_name }} | sed 's/v//') -C build_root usr/bin usr/share
+          VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//' | sed 's/^\.//')
+          fpm -s dir -t deb -n alwide -v "$VERSION" -p alwide-linux-amd64.deb -C build_root usr/bin usr/share
+          fpm -s dir -t rpm -n alwide -v "$VERSION" -p alwide-linux-x86_64.rpm -C build_root usr/bin usr/share
 
       - name: Prepare Assets
         run: |
@@ -80,8 +81,8 @@ jobs:
             alwide-linux-x86_64.tar.gz
             alwide-assets.zip
             alwide-x86_64.AppImage
-            alwide*.deb
-            alwide*.rpm
+            alwide-linux-amd64.deb
+            alwide-linux-x86_64.rpm
           draft: false
           prerelease: false
           generate_release_notes: true
