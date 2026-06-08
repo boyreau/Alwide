@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Alwide
+Comment=A LightWeight IDE for the terminal
+Exec=al
+Icon=alwide
+Terminal=true
+Categories=Development;IDE;TextEditor;
+Keywords=Text;Editor;IDE;Terminal;

@@ -38,6 +38,21 @@ jobs:
       - name: Build Alwide (Release)
         run: make release -j$(nproc)
 
+      - name: Install AppImage dependencies
+        run: |
+          sudo apt-get install -y libfuse2
+          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage
+
+      - name: Build AppImage
+        run: |
+          mkdir -p AppDir/usr/share/alwide
+          cp -r assets/* AppDir/usr/share/alwide/
+          # Create a dummy icon if not exists
+          touch alwide.png 
+          ./linuxdeploy-x86_64.AppImage --appdir AppDir -e al -i alwide.png -d alwide.desktop --output appimage
+          mv Alwide-x86_64.AppImage alwide-x86_64.AppImage
+
       - name: Prepare Assets
         run: |
           mkdir -p dist
@@ -51,6 +66,7 @@ jobs:
           files: |
             alwide-linux-x86_64.tar.gz
             alwide-assets.zip
+            alwide-x86_64.AppImage
           draft: false
           prerelease: false
           generate_release_notes: true
