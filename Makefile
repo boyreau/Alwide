@@ -40,7 +40,7 @@ PKG_CONFIG ?= pkg-config
 NCURSES_CFLAGS := $(shell $(PKG_CONFIG) --cflags ncursesw 2>/dev/null || echo "")
 NCURSES_LIBS := $(shell $(PKG_CONFIG) --libs ncursesw 2>/dev/null || echo "-lncursesw -ltinfo")
 
-CFLAGS = $(MODE_CFLAGS) -Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 $(NCURSES_CFLAGS)
+CFLAGS = $(MODE_CFLAGS) -Ilib/tree-sitter/lib/src -Ilib/tree-sitter/lib/include -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 $(NCURSES_CFLAGS) -DDATADIR=\"$(DATADIR)\"
 
 # Write the mode and CFLAGS tracking files at parse time if they have changed
 $(shell mkdir -p $(BUILD_DIR))
@@ -190,7 +190,7 @@ BINDIR ?= $(PREFIX)/bin
 DATADIR ?= $(PREFIX)/share/alwide
 
 # Combined install target
-install: install-config install-bin install-data
+install: install-bin install-data
 
 # Install the binary
 install-bin: al

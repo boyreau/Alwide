@@ -200,69 +200,53 @@ Or compile the production/release version:
 > make release
 > ```
 
-#### To install and generate the config use :
+#### To install Alwide:
 
-> [!WARNING]
-> Install the config is required to get coloration and LSP.
+You can install Alwide system-wide or locally. 
 
-- The configuration generation must be run as a normal user (not sudo).
-- `make install-config`
-
-#### To make Alwide available globally:
-
-You can either install it to your system:
-
+**1. System-wide installation (requires sudo):**
+This installs the binary and the default assets for all users.
 ```bash
-sudo make install-bin install-data
+sudo make install
 ```
 
-Or simply add the Alwide directory to your `PATH` (recommended for developers):
-
+**2. User configuration (recommended):**
+This copies the default themes and language settings to your home directory so you can customize them.
 ```bash
-export PATH=$PATH:$(pwd)
+make install-config
 ```
-
-___
-
-### Nix-based systems
-
-Alwide provides a `flake.nix` and `shell.nix` for a reproducible development environment.
-
-```bash
-git clone --recursive https://github.com/arnauda-gh/Alwide.git
-cd Alwide
-```
-
-To enter the development environment:
-
-```bash
-nix develop  # If using Nix flakes
-# OR
-nix-shell    # If not using flakes
-```
-
-Once inside the shell, you have all the necessary tools (`clang`, `make`, `ncurses`, `rustup`, etc.). You can then
-compile and run Alwide:
-
-```bash
-rustup update stable
-make release
-./al
-```
-
-> [!TIP]
-> You don't need to install `tree-sitter` or other dependencies via `sudo` when using the Nix environment.
-
-
 
 ---
 
-## Configuration
+## Configuration & Assets
 
-Your preferences live in `~/.config/al/`:
+Alwide looks for its configuration (themes, language rules) in this order:
+1.  **Environment Variable**: `ALWIDE_ASSETS_PATH` (if set).
+2.  **User Folder**: `~/.config/alwide/`.
+3.  **System Folder**: `/usr/local/share/alwide/` (or your custom `PREFIX`).
 
+### Customizing Alwide
+Your personal settings live in `~/.config/alwide/`:
 - `languages-features.json`: Custom LSP commands and per-language tweaks.
-- `theme`: Color for alwide.
+- `theme/`: Color schemes for the editor.
+- `queries/`: Tree-sitter highlighting rules.
+
+---
+
+### Nix-based systems
+
+Alwide is Nix-compatible. You can use the provided `flake.nix` for a reproducible environment.
+
+```bash
+nix develop  # To enter the dev environment
+make release # To compile
+./al         # Run locally (uses local assets automatically)
+```
+
+To install it via Nix:
+```bash
+nix profile install .
+```
 
 ---
 
