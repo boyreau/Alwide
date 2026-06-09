@@ -158,25 +158,6 @@ int normalize_legacy(int c) {
       return K_SPECIAL(K_MOD_SHIFT, KEY_UP);
     case KEY_SF:
       return K_SPECIAL(K_MOD_SHIFT, KEY_DOWN);
-
-    /* Hardcoded fallbacks for the logged system keycodes */
-    case 554:
-      return K_SPECIAL(K_MOD_CTRL, KEY_LEFT);
-    case 569:
-      return K_SPECIAL(K_MOD_CTRL, KEY_RIGHT);
-    case 575:
-      return K_SPECIAL(K_MOD_CTRL, KEY_UP);
-    case 534:
-      return K_SPECIAL(K_MOD_CTRL, KEY_DOWN);
-
-    case 555:
-      return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_LEFT);
-    case 570:
-      return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_RIGHT);
-    case 576:
-      return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_UP);
-    case 535:
-      return K_SPECIAL(K_MOD_CTRL | K_MOD_SHIFT, KEY_DOWN);
   }
 
   /* 2. Map ASCII control codes 1-31 to Unified format. */
@@ -222,56 +203,54 @@ int normalize_legacy(int c) {
       if (c > 255) {
         /* Ultimate fallback: parse dynamically via Ncurses terminfo keyname */
         const char* name = keyname(c);
-        if (name && strlen(name) >= 4 && name[0] == 'k') {
+        if (name && name[0] == 'k') {
           int target_key = 0;
-          if (strncmp(name, "kUP", 3) == 0) {
+          if (strstr(name, "kUP") || strstr(name, "kcuu")) {
             target_key = KEY_UP;
           }
-          else if (strncmp(name, "kDN", 3) == 0) {
+          else if (strstr(name, "kDN") || strstr(name, "kcud")) {
             target_key = KEY_DOWN;
           }
-          else if (strncmp(name, "kLFT", 4) == 0) {
+          else if (strstr(name, "kLFT") || strstr(name, "kcub")) {
             target_key = KEY_LEFT;
           }
-          else if (strncmp(name, "kRGT", 4) == 0) {
+          else if (strstr(name, "kRGT") || strstr(name, "kRIT") || strstr(name, "kcuf")) {
             target_key = KEY_RIGHT;
           }
-          else if (strncmp(name, "kHOM", 4) == 0) {
+          else if (strstr(name, "kHOM") || strstr(name, "khome")) {
             target_key = KEY_HOME;
           }
-          else if (strncmp(name, "kEND", 4) == 0) {
+          else if (strstr(name, "kEND")) {
             target_key = KEY_END;
           }
-          else if (strncmp(name, "kDC", 3) == 0) {
+          else if (strstr(name, "kDC")) {
             target_key = KEY_DC;
           }
-          else if (strncmp(name, "kIC", 3) == 0) {
+          else if (strstr(name, "kIC")) {
             target_key = KEY_IC;
+          }
+          else if (strstr(name, "kPRV") || strstr(name, "kpp")) {
+            target_key = KEY_PPAGE;
+          }
+          else if (strstr(name, "kNXT") || strstr(name, "knp")) {
+            target_key = KEY_NPAGE;
           }
 
           if (target_key != 0) {
             int len = strlen(name);
-            char last_char = name[len - 1];
-            if (isdigit((unsigned char)last_char)) {
-              int val = (last_char - '0') - 1;
-              if (val < 0) {
-                val = 0;
-              }
+            /* Search for a digit at the end of the name (e.g., kUP5) */
+            for (int i = len - 1; i >= 0 && isdigit((unsigned char)name[i]); i--) {
+              int val = (name[i] - '0') - 1;
+              if (val < 0) continue; 
+
               int unified_mods = 0;
-              if (val & 1) {
-                unified_mods |= K_MOD_SHIFT;
-              }
-              if (val & 2) {
-                unified_mods |= K_MOD_ALT;
-              }
-              if (val & 4) {
-                unified_mods |= K_MOD_CTRL;
-              }
-              if (val & 8) {
-                unified_mods |= K_MOD_SUPER;
-              }
+              if (val & 1) unified_mods |= K_MOD_SHIFT;
+              if (val & 2) unified_mods |= K_MOD_ALT;
+              if (val & 4) unified_mods |= K_MOD_CTRL;
+              if (val & 8) unified_mods |= K_MOD_SUPER;
               return K_SPECIAL(unified_mods, target_key);
             }
+            return K_SPECIAL(0, target_key);
           }
         }
         return K_SPECIAL(0, c); /* Other Ncurses keys */

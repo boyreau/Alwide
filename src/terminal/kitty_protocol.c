@@ -196,21 +196,28 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, MEVENT* mouse_ev
     }
   }
 
-  /* 1. Parse parameters */
-  int p1 = 1, p2 = 1, p3 = 1;
-  int parsed = sscanf(buf, "%d;%d:%d", &p1, &p2, &p3);
-  if (parsed == 2) {
-    p3 = 1;
+  /* 1. Parse parameters manually to handle empty fields (e.g., [;5A) */
+  int p[3] = {1, 1, 1};
+  int p_idx = 0;
+  char* ptr = buf;
+
+  while (*ptr && p_idx < 3) {
+    if (*ptr == ';' || *ptr == ':') {
+      p_idx++;
+      ptr++;
+      continue;
+    }
+    if (isdigit((unsigned char)*ptr)) {
+      p[p_idx] = atoi(ptr);
+      while (isdigit((unsigned char)*ptr)) {
+        ptr++;
+      }
+    } else {
+      ptr++;
+    }
   }
-  else if (parsed == 1) {
-    p2 = 1;
-    p3 = 1;
-  }
-  else if (parsed == 0) {
-    p1 = 1;
-    p2 = 1;
-    p3 = 1;
-  }
+
+  int p1 = p[0], p2 = p[1], p3 = p[2];
 
   /* 2. Map terminators */
   event->modifiers = p2;
