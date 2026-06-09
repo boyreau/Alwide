@@ -235,6 +235,8 @@ Your personal settings live in `~/.config/alwide/`:
 
 ### Nix-based systems
 
+*Not fully tested.*
+
 Alwide is Nix-compatible. You can use the provided `flake.nix` for a reproducible environment.
 
 ```bash
