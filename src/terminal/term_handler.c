@@ -49,7 +49,7 @@ void gui_initNCurses(gui_Context* gui_context) {
   // Mouse setup
   mousemask(0, NULL);
   keyok(KEY_MOUSE, FALSE);
-  timeout(20);
+  timeout(TIME_OUT_DELAY);
   printf("\033[?1003h\033[?1006h\033[5 q"); // enable mouse tracking (including SGR 1006) and beam cursor
   kitty_enable();                           // Enable Kitty Keyboard Protocol (flags 1 and 2)
   fflush(stdout);

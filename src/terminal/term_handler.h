@@ -9,6 +9,8 @@
 #include "highlight.h"
 #include "windows/gui_entities.h"
 
+#define TIME_OUT_DELAY 20
+
 
 ////// -------------- WINDOWS MANAGEMENTS --------------
 

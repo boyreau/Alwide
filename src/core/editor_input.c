@@ -146,7 +146,6 @@ static int manualUtf8Decode(int first_byte) {
   if (bytes_to_read > 0) {
     bool valid = true;
     for (int i = 0; i < bytes_to_read; i++) {
-      timeout(20);
       int next_byte = getch();
       if (next_byte == ERR || (next_byte & 0xC0) != 0x80) {
         valid = false;
@@ -154,7 +153,6 @@ static int manualUtf8Decode(int first_byte) {
       }
       codepoint = (codepoint << 6) | (next_byte & 0x3F);
     }
-    timeout(20);
     if (valid) {
       return codepoint;
     }
@@ -170,7 +168,7 @@ static void processMouseInput(EditorContext* ctx) {
     while (true) {
       timeout(0); // Non-blocking peek
       int next_c = getch();
-      timeout(20); // Restore normal timeout
+      timeout(TIME_OUT_DELAY); // Restore normal timeout
 
       if (next_c == ERR) {
         break;

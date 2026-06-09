@@ -24,9 +24,7 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, MEVENT* mouse_ev
   }
 
   /* Patience: Wait up to 100ms for the very first char after Escape */
-  timeout(100);
   int next = getch();
-  timeout(20);
 
   if (next == ERR) {
     event->key_code = 27;
@@ -56,7 +54,6 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, MEVENT* mouse_ev
   char terminator = '\0';
 
   /* For the body of the sequence, wait up to 100ms per byte */
-  timeout(100);
   while (len < (int)sizeof(buf) - 1) {
     int c = getch();
     if (c == ERR) {
@@ -69,7 +66,6 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, MEVENT* mouse_ev
     }
     buf[len++] = (char)c;
   }
-  timeout(20);
   buf[len] = '\0';
 
   if (terminator == '\0') {
@@ -145,11 +141,9 @@ bool kitty_parse_sequence(int first_char, KittyKeyEvent* event, MEVENT* mouse_ev
   }
   else if (terminator == 'M' && len == 0) {
     /* Legacy X10/Xterm mouse sequence: \033[M + 3 bytes */
-    timeout(100);
     int b = getch();
     int x = getch();
     int y = getch();
-    timeout(20);
     if (b != ERR && x != ERR && y != ERR) {
       mouse_event->x = x - 33;
       mouse_event->y = y - 33;
