@@ -50,7 +50,7 @@
         devShells.default = pkgs.mkShell {
           name = "alwide-dev";
           
-          nativeBuildInputs = commonInputs.nativeBuildInputs ++ [ pkgs.rustup ];
+          nativeBuildInputs = commonInputs.nativeBuildInputs;
           buildInputs = commonInputs.buildInputs;
 
           shellHook = ''
