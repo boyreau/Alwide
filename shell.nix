@@ -15,7 +15,9 @@ pkgs.mkShell {
     pkgs.pkg-config
     pkgs.clang
     pkgs.gnumake
-    pkgs.rustup
+    # pkgs.rustup
+	pkgs.cargo
+	pkgs.rustc
     pkgs.nodejs
     pkgs.tree-sitter
   ];
